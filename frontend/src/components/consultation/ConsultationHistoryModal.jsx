@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../api/axios';
+import api from '../../api/axios';
 
 export default function ConsultationHistoryModal({ consultaId, onClose }) {
     const [history, setHistory] = useState([]);

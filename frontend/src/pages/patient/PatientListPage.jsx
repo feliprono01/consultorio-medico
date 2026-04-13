@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { pacienteService } from '../../api/pacienteService';
+import { consultaService } from '../../api/consultaService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -14,7 +15,7 @@ export default function PatientListPage() {
     useEffect(() => {
         const fetchPacientes = async () => {
             try {
-                const response = await api.get('/pacientes');
+                const response = await pacienteService.getAll();
                 setPacientes(response.data);
             } catch (err) {
                 console.error(err);
@@ -43,7 +44,7 @@ export default function PatientListPage() {
 
         if (window.confirm('¿Estás seguro de que quieres eliminar este paciente? Esta acción no se puede deshacer.')) {
             try {
-                await api.delete(`/pacientes/${id}`);
+                await pacienteService.delete(id);
                 setPacientes(pacientes.filter(p => p.id !== id));
             } catch (err) {
                 console.error(err);
@@ -65,12 +66,11 @@ export default function PatientListPage() {
 
         try {
             // 2. Fetch Data
-            const patientRes = await api.get(`/pacientes/${patient.id}`);
+            const patientRes = await pacienteService.getById(patient.id);
             const fullPatient = patientRes.data;
             const history = fullPatient.historiaPsiquiatrica || {};
 
-            const consultsRes = await api.get(`/consultas/paciente/${patient.id}`);
-            const consultations = consultsRes.data;
+            const consultsRes = await consultaService.getByPaciente(patient.id);            const consultations = consultsRes.data;
 
             const doc = new jsPDF();
 
@@ -330,3 +330,4 @@ export default function PatientListPage() {
         </div>
     );
 }
+

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../api/axios';
+import { userService } from '../../api/userService';
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState([]);
@@ -18,7 +18,7 @@ export default function UserManagementPage() {
 
     const loadUsers = async () => {
         try {
-            const res = await api.get('/users');
+            const res = await userService.getAll();
             setUsers(res.data);
             setIsAdmin(true);
         } catch (err) {
@@ -37,7 +37,7 @@ export default function UserManagementPage() {
         }
 
         try {
-            await api.post('/users', {
+            await userService.create({
                 username: newUser.username,
                 password: newUser.password,
                 role: newUser.role,
@@ -57,7 +57,7 @@ export default function UserManagementPage() {
     const handleDelete = async (id, username) => {
         if (window.confirm(`¿Seguro que desea eliminar al usuario ${username}?`)) {
             try {
-                await api.delete(`/users/${id}`);
+                await userService.delete(id);
                 setMessage('Usuario eliminado');
                 loadUsers();
             } catch (err) {
@@ -78,7 +78,7 @@ export default function UserManagementPage() {
         if (!resetModal.newPassword) return;
 
         try {
-            await api.put(`/users/${resetModal.userId}/password`, { password: resetModal.newPassword });
+            await userService.resetPassword(resetModal.userId, resetModal.newPassword);
             setMessage(`Contraseña actualizada para ${resetModal.username}`);
             setResetModal({ isOpen: false, userId: null, username: '', newPassword: '' });
         } catch (err) {
@@ -284,3 +284,4 @@ export default function UserManagementPage() {
         </div>
     );
 }
+

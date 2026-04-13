@@ -26,8 +26,8 @@ export default function PatientEvolutionChart({ consultations }) {
     const data = [...consultations]
         .sort((a, b) => new Date(a.fechaConsulta) - new Date(b.fechaConsulta))
         .map(c => ({
-            date: new Date(c.fechaConsulta).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-            fullDate: new Date(c.fechaConsulta).toLocaleDateString(),
+            date: new Date(c.fechaConsulta).toLocaleDateString('es-AR', { month: 'short', day: 'numeric' }),
+            fullDate: new Date(c.fechaConsulta).toLocaleDateString('es-AR'),
             animo: c.estadoAnimo || null,
             sueno: c.calidadSueno || null,
             motivo: c.motivo

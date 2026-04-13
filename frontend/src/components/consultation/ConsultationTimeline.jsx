@@ -84,7 +84,7 @@ export default function ConsultationTimeline({ consultations }) {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                                             <div>
                                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    {new Date(c.fechaConsulta).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                     {new Date(c.fechaConsulta).toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                                 </span>
                                                 <h4 style={{ margin: '0.2rem 0', fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{c.motivoConsulta}</h4>
                                             </div>

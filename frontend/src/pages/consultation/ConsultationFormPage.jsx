@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import api from '../api/axios';
-import ConsultationHistoryModal from '../components/ConsultationHistoryModal';
+import { pacienteService } from '../../api/pacienteService';
+import { consultaService } from '../../api/consultaService';
+import ConsultationHistoryModal from '../../components/consultation/ConsultationHistoryModal';
 
 export default function ConsultationFormPage() {
     const navigate = useNavigate();
@@ -60,12 +61,12 @@ export default function ConsultationFormPage() {
         const loadInitialData = async () => {
             try {
                 // 1. Cargar pacientes
-                const resPacientes = await api.get('/pacientes');
+                const resPacientes = await pacienteService.getAll();
                 setPacientes(resPacientes.data);
 
                 // 2. Si es edición, cargar consulta
                 if (isEdit) {
-                    const resConsulta = await api.get(`/consultas/${id}`);
+                    const resConsulta = await consultaService.getById(id);
                     const data = resConsulta.data;
                     // Mapear campos que difieren ligeramente en DTO
                     setForm({
@@ -106,7 +107,7 @@ export default function ConsultationFormPage() {
 
     const fetchLastConsultation = async (pacienteId) => {
         try {
-            const lastRes = await api.get(`/consultas/paciente/${pacienteId}/ultima`);
+            const lastRes = await consultaService.getUltimaByPaciente(pacienteId);
             if (lastRes.data) {
                 const last = lastRes.data;
                 setForm(prev => ({
@@ -137,7 +138,7 @@ export default function ConsultationFormPage() {
         if (!isEdit) {
             // Check for existing history to enforce "One Initial Consultation" rule
             try {
-                const historyRes = await api.get(`/consultas/paciente/${patient.id}`);
+                const historyRes = await consultaService.getByPaciente(patient.id);
                 if (historyRes.data && historyRes.data.length > 0) {
                     // Patient has history -> Redirect to Evolution
                     const confirmEvolution = window.confirm(
@@ -193,9 +194,9 @@ export default function ConsultationFormPage() {
 
         try {
             if (isEdit) {
-                await api.put(`/consultas/${id}`, form);
+                await consultaService.update(id, form);
             } else {
-                await api.post('/consultas', form);
+                await consultaService.create(form);
             }
             navigate('/consultas');
         } catch (err) {
@@ -586,3 +587,4 @@ export default function ConsultationFormPage() {
         </div>
     );
 }
+

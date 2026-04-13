@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../api/axios';
+import { pacienteService } from '../../api/pacienteService';
 
 export default function PatientFormPage() {
     const navigate = useNavigate();
@@ -50,7 +50,7 @@ export default function PatientFormPage() {
 
     const loadPatient = async () => {
         try {
-            const response = await api.get(`/pacientes/${id}`);
+            const response = await pacienteService.getById(id);
             setForm(response.data);
             if (response.data.historiaPsiquiatrica) {
                 setHistoryForm(response.data.historiaPsiquiatrica);
@@ -78,15 +78,15 @@ export default function PatientFormPage() {
         try {
             let patientId = id;
             if (isEdit) {
-                await api.put(`/pacientes/${id}`, form);
+                await pacienteService.update(id, form);
                 setSuccessMsg('Datos personales actualizados.');
             } else {
-                const res = await api.post('/pacientes', form);
+                const res = await pacienteService.create(form);
                 patientId = res.data.id;
                 // Si hay datos en el formulario de historia, guardarlos inmediatamente
                 const hasHistoryData = Object.values(historyForm).some(x => x !== '');
                 if (hasHistoryData && patientId) {
-                    await api.put(`/pacientes/${patientId}/historia-psiquiatrica`, historyForm);
+                    await pacienteService.updateHistoriaPsiquiatrica(patientId, historyForm);
                 }
                 navigate('/pacientes');
             }
@@ -106,7 +106,7 @@ export default function PatientFormPage() {
         setSuccessMsg('');
 
         try {
-            await api.put(`/pacientes/${id}/historia-psiquiatrica`, historyForm);
+            await pacienteService.updateHistoriaPsiquiatrica(id, historyForm);
             setSuccessMsg('Historia psiquiátrica actualizada.');
         } catch (err) {
             console.error(err);
@@ -397,3 +397,4 @@ export default function PatientFormPage() {
         </div>
     );
 }
+

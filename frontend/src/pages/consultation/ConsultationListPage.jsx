@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../api/axios';
+import { consultaService } from '../../api/consultaService';
+import { pacienteService } from '../../api/pacienteService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import PatientEvolutionChart from '../components/PatientEvolutionChart';
-import ConsultationTimeline from '../components/ConsultationTimeline';
+import PatientEvolutionChart from '../../components/patient/PatientEvolutionChart';
+import ConsultationTimeline from '../../components/consultation/ConsultationTimeline';
 
 export default function ConsultationListPage() {
     const [consultas, setConsultas] = useState([]);
@@ -24,7 +25,7 @@ export default function ConsultationListPage() {
 
     const fetchConsultas = async () => {
         try {
-            const response = await api.get('/consultas');
+            const response = await consultaService.getAll();
             setConsultas(response.data);
         } catch (err) {
             console.error(err);
@@ -63,7 +64,7 @@ export default function ConsultationListPage() {
         if (window.confirm('¿Seguro que desea eliminar esta consulta? Esta acción no se puede deshacer.')) {
             try {
                 console.log("Sending DELETE request...");
-                await api.delete(`/consultas/${id}`);
+                await consultaService.delete(id);
                 console.log("Delete successful");
                 setConsultas(prev => prev.filter(c => c.id !== id));
                 // Optional: success notification
@@ -85,7 +86,7 @@ export default function ConsultationListPage() {
 
         try {
             // Fetch full patient data to get psychiatric history
-            const patientResponse = await api.get(`/pacientes/${c.pacienteId}`);
+            const patientResponse = await pacienteService.getById(c.pacienteId);
             const paciente = patientResponse.data;
             const historia = paciente.historiaPsiquiatrica;
 
@@ -278,7 +279,7 @@ export default function ConsultationListPage() {
                             {filteredConsultas.map(c => (
                                 <tr key={c.id}>
                                     <td style={{ paddingLeft: '2rem', fontWeight: 500 }}>
-                                        {new Date(c.fechaConsulta).toLocaleDateString()} {new Date(c.fechaConsulta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(c.fechaConsulta).toLocaleDateString('es-AR')} {new Date(c.fechaConsulta).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                                     </td>
                                     <td>
                                         <div style={{ fontWeight: 600, color: 'var(--text-header)' }}>
@@ -345,3 +346,4 @@ export default function ConsultationListPage() {
         </div>
     );
 }
+

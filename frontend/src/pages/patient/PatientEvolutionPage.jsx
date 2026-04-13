@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import PatientEvolutionTab from '../components/PatientEvolutionTab';
+import PatientEvolutionTab from '../../components/patient/PatientEvolutionTab';
 
 export default function PatientEvolutionPage() {
     const { id } = useParams();
@@ -26,3 +26,4 @@ export default function PatientEvolutionPage() {
         </div>
     );
 }
+

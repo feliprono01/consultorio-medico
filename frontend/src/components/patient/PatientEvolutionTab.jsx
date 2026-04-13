@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import api from '../api/axios';
+import { consultaService } from '../../api/consultaService';
 
 export default function PatientEvolutionTab({ patientId }) {
     const [consultas, setConsultas] = useState([]);
@@ -15,7 +15,7 @@ export default function PatientEvolutionTab({ patientId }) {
 
     const loadHistory = async () => {
         try {
-            const res = await api.get(`/consultas/paciente/${patientId}`);
+            const res = await consultaService.getByPaciente(patientId);
             // Sort by date ascending for the chart
             const sortedData = res.data.sort((a, b) => new Date(a.fechaConsulta) - new Date(b.fechaConsulta));
             setConsultas(sortedData);
@@ -38,7 +38,7 @@ export default function PatientEvolutionTab({ patientId }) {
     // Prepare data for charts
     const chartData = consultas.map(c => ({
         date: formatDate(c.fechaConsulta),
-        fullDate: new Date(c.fechaConsulta).toLocaleDateString(),
+        fullDate: new Date(c.fechaConsulta).toLocaleDateString('es-AR'),
         estadoAnimo: c.estadoAnimo || null,
         calidadSueno: c.calidadSueno || null,
         alimentacion: c.alimentacion || null,

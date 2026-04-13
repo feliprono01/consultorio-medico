@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../api/axios';
+import { pacienteService } from '../../api/pacienteService';
 
 export default function PsychiatricHistoryDetail({ patientId }) {
     const [form, setForm] = useState({
@@ -25,7 +25,7 @@ export default function PsychiatricHistoryDetail({ patientId }) {
         setLoading(true);
         try {
             // Fetch patient which includes history nested
-            const response = await api.get(`/pacientes/${patientId}`);
+            const response = await pacienteService.getById(patientId);
             if (response.data.historiaPsiquiatrica) {
                 setForm(response.data.historiaPsiquiatrica);
             }
@@ -46,7 +46,7 @@ export default function PsychiatricHistoryDetail({ patientId }) {
         setIsSaving(true);
         setMessage({ type: '', text: '' });
         try {
-            await api.put(`/pacientes/${patientId}/historia-psiquiatrica`, form);
+            await pacienteService.updateHistoriaPsiquiatrica(patientId, form);
             setMessage({ type: 'success', text: 'Historia guardada correctamente.' });
         } catch (err) {
             console.error(err);

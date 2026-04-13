@@ -26,6 +26,8 @@ public class DataLoader implements CommandLineRunner {
                     .username("admin")
                     .password(passwordEncoder.encode("admin"))
                     .role(Role.ADMIN)
+                    .nombre("Administrador")
+                    .apellido("Sistema")
                     .build();
 
             usuarioRepository.save(admin);

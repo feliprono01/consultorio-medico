@@ -1,11 +1,13 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { role, logout } = useAuth();
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        logout();
         navigate('/login');
     };
 
@@ -27,7 +29,7 @@ export default function Sidebar() {
                 <Link to="/consultas" className={`nav-link ${isActive('/consultas') ? 'active' : ''}`}>
                     Consultas
                 </Link>
-                {localStorage.getItem('role') === 'ADMIN' && (
+                {role === 'ADMIN' && (
                     <>
                         <Link to="/usuarios" className={`nav-link ${isActive('/usuarios') ? 'active' : ''}`}>
                             Gestión Usuarios
