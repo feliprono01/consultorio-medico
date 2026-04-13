@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/axios';
+import { dashboardService } from '../../api/dashboardService';
 
 export default function DashboardHome() {
     const [stats, setStats] = useState({
@@ -13,7 +13,7 @@ export default function DashboardHome() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await api.get('/dashboard/stats');
+                const response = await dashboardService.getStats();
                 setStats(response.data);
             } catch (error) {
                 console.error('Error fetching dashboard stats:', error);
@@ -66,3 +66,4 @@ export default function DashboardHome() {
         </div>
     );
 }
+

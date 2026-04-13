@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../api/axios';
+import { backupService } from '../../api/backupService';
 
 export default function BackupPage() {
     const [backups, setBackups] = useState([]);
@@ -14,7 +14,7 @@ export default function BackupPage() {
     const fetchBackups = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/backups');
+            const response = await backupService.getAll();
             setBackups(response.data);
         } catch (error) {
             console.error('Error fetching backups:', error);
@@ -28,7 +28,7 @@ export default function BackupPage() {
         setCreating(true);
         setMessage(null);
         try {
-            await api.post('/backups');
+            await backupService.create();
             setMessage({ type: 'success', text: 'Backup creado exitosamente.' });
             fetchBackups();
         } catch (error) {
@@ -41,9 +41,7 @@ export default function BackupPage() {
 
     const handleDownload = async (filename) => {
         try {
-            const response = await api.get(`/backups/${filename}`, {
-                responseType: 'blob',
-            });
+            const response = await backupService.download(filename);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -130,3 +128,4 @@ export default function BackupPage() {
         </div>
     );
 }
+

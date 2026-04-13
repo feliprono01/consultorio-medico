@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { pacienteService } from '../../api/pacienteService';
+import { consultaService } from '../../api/consultaService';
 
 export default function EvolutionFormPage() {
     const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function EvolutionFormPage() {
 
     const loadPacientes = async () => {
         try {
-            const res = await api.get('/pacientes');
+            const res = await pacienteService.getAll();
             setPacientes(res.data);
         } catch (err) {
             console.error("Error loading patients", err);
@@ -59,7 +60,7 @@ export default function EvolutionFormPage() {
         setLastConsult(null);
 
         try {
-            const res = await api.get(`/consultas/paciente/${patient.id}/ultima`);
+            const res = await consultaService.getUltimaByPaciente(patient.id);
             if (res.data) {
                 const last = res.data;
                 setLastConsult(last);
@@ -116,7 +117,7 @@ export default function EvolutionFormPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.post('/consultas', form);
+            await consultaService.create(form);
             navigate('/consultas');
         } catch (err) {
             console.error(err);
@@ -299,3 +300,4 @@ export default function EvolutionFormPage() {
         </div>
     );
 }
+

@@ -35,6 +35,10 @@ public class UserController {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole() != null ? request.getRole() : Role.USER)
+                .nombre(request.getNombre())
+                .apellido(request.getApellido())
+                .dni(request.getDni())
+                .matricula(request.getMatricula())
                 .build();
 
         return ResponseEntity.ok(usuarioRepository.save(user));
@@ -60,6 +64,10 @@ public class UserController {
         private String username;
         private String password;
         private Role role;
+        private String nombre;
+        private String apellido;
+        private String dni;
+        private String matricula;
     }
 
     @Data

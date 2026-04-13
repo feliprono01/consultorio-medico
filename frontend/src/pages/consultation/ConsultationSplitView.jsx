@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import api from '../api/axios';
+import { consultaService } from '../../api/consultaService';
 import ConsultationFormPage from './ConsultationFormPage';
-import ConsultationHistoryViewer from '../components/consultation/ConsultationHistoryViewer';
+import ConsultationHistoryViewer from '../../components/consultation/ConsultationHistoryViewer';
 
 export default function ConsultationSplitView() {
     const { id } = useParams();
@@ -27,7 +27,7 @@ export default function ConsultationSplitView() {
         if (!pid) return;
         setLoadingHistory(true);
         try {
-            const res = await api.get(`/consultas/paciente/${pid}`);
+            const res = await consultaService.getByPaciente(pid);
             setHistory(res.data);
             // Seleccionar la última o la anterior a la actual si estamos editando
             if (res.data.length > 0) {
@@ -52,7 +52,7 @@ export default function ConsultationSplitView() {
             fetchHistory(pacienteId);
         } else if (id) {
             // Si es edición, primero obtenemos la consulta para saber el pacienteId
-            api.get(`/consultas/${id}`)
+            consultaService.getById(id)
                 .then(res => {
                     fetchHistory(res.data.pacienteId);
                 })
@@ -93,7 +93,7 @@ export default function ConsultationSplitView() {
                         <option value="">Seleccione consulta...</option>
                         {history.map(c => (
                             <option key={c.id} value={c.id}>
-                                {new Date(c.fechaConsulta).toLocaleDateString()} - {c.motivo || 'Sin motivo'}
+                                {new Date(c.fechaConsulta).toLocaleDateString('es-AR')} - {c.motivo || 'Sin motivo'}
                             </option>
                         ))}
                     </select>
@@ -121,3 +121,5 @@ export default function ConsultationSplitView() {
         </div>
     );
 }
+
+

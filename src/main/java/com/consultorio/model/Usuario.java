@@ -26,7 +26,7 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private String apellido;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String dni;
 
     private String matricula;

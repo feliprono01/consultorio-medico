@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { authService } from '../../api/authService';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function LoginPage() {
     const [username, setUsername] = useState('');
@@ -10,6 +11,7 @@ export default function LoginPage() {
     const [focusedField, setFocusedField] = useState(null);
     const [rememberMe, setRememberMe] = useState(false);
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     useEffect(() => {
         const savedUser = localStorage.getItem('savedUsername');
@@ -31,12 +33,11 @@ export default function LoginPage() {
         }
 
         try {
-            const response = await api.post('/auth/login', { username, password });
+            const response = await authService.login(username, password);
             const { token, role } = response.data;
 
-            // Guardar token y role
-            localStorage.setItem('token', token);
-            localStorage.setItem('role', role);
+            // Persistir sesión y actualizar estado global
+            login(token, role);
 
             // Redirigir al dashboard
             navigate('/dashboard');
@@ -163,3 +164,4 @@ export default function LoginPage() {
         </div>
     );
 }
+
