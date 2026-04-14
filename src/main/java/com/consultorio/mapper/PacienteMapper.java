@@ -23,7 +23,9 @@ public interface PacienteMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "active", ignore = true)
-    @Mapping(target = "historiaPsiquiatrica", ignore = true) // Created separately or in specific update
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "historiaPsiquiatrica", ignore = true)
     Paciente toEntity(PacienteRequestDTO dto);
 
     /**
@@ -47,6 +49,8 @@ public interface PacienteMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "active", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "consultas", ignore = true)
     @Mapping(target = "historiaPsiquiatrica", ignore = true)
     void updateEntityFromDTO(PacienteRequestDTO dto, @MappingTarget Paciente paciente);

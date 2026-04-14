@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../../api/axios';
+import { consultaService } from '../../api/consultaService';
 
 export default function ConsultationHistoryModal({ consultaId, onClose }) {
     const [history, setHistory] = useState([]);
@@ -8,7 +8,7 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const res = await api.get(`/consultas/${consultaId}/historial`);
+                const res = await consultaService.getHistorial(consultaId);
                 setHistory(res.data);
             } catch (err) {
                 console.error("Error fetching history", err);
@@ -51,7 +51,7 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
                         <tbody>
                             {history.map((log) => (
                                 <tr key={log.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                    <td style={{ padding: '0.8rem' }}>{new Date(log.fechaCambio).toLocaleString()}</td>
+                                    <td style={{ padding: '0.8rem' }}>{new Date(log.fechaCambio).toLocaleString('es-AR')}</td>
                                     <td style={{ padding: '0.8rem' }}>{log.modificadoPor}</td>
                                     <td style={{ padding: '0.8rem', fontWeight: 600 }}>{log.campo}</td>
                                     <td style={{ padding: '0.8rem', color: '#ef4444', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.valorAnterior}>{log.valorAnterior || '-'}</td>

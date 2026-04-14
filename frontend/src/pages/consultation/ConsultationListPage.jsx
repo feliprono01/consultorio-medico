@@ -50,7 +50,7 @@ export default function ConsultationListPage() {
         return (
             nombreCompleto.includes(term) ||
             (c.dniPaciente && c.dniPaciente.toString().toLowerCase().includes(term)) ||
-            (c.motivoConsulta && c.motivoConsulta.toLowerCase().includes(term)) ||
+            ((c.motivo || c.motivoConsulta) && (c.motivo || c.motivoConsulta).toLowerCase().includes(term)) ||
             (c.diagnostico && c.diagnostico.toLowerCase().includes(term))
         );
     });
@@ -128,7 +128,7 @@ export default function ConsultationListPage() {
                 startY: 75,
                 head: [['Concepto', 'Descripción']],
                 body: [
-                    ['Motivo de Consulta', c.motivoConsulta],
+                    ['Motivo de Consulta', c.motivo || c.motivoConsulta],
                     ['Diagnóstico', c.diagnostico],
                     ['Tratamiento', c.tratamiento || 'N/A'],
                     ['Notas Adicionales', c.notas || 'N/A']
@@ -289,7 +289,7 @@ export default function ConsultationListPage() {
                                             DNI: {c.dniPaciente}
                                         </div>
                                     </td>
-                                    <td>{c.motivoConsulta}</td>
+                                    <td>{c.motivo || c.motivoConsulta}</td>
                                     <td>{c.diagnostico}</td>
                                     <td style={{ paddingRight: '2rem', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>

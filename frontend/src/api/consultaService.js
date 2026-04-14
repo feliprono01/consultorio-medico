@@ -21,4 +21,7 @@ export const consultaService = {
 
     delete: (id) =>
         api.delete(`/consultas/${id}`),
+
+    getHistorial: (id) =>
+        api.get(`/consultas/${id}/historial`),
 };
