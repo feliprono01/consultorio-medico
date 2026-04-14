@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
+import { useFormValidation, rules } from '../../hooks/useFormValidation';
 
 export default function PatientFormPage() {
     const navigate = useNavigate();
@@ -42,6 +43,20 @@ export default function PatientFormPage() {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
 
+    const pacienteRules = {
+        nombre:   (v) => rules.requerido('El nombre')(v) || rules.minLength('El nombre', 2)(v),
+        apellido: (v) => rules.requerido('El apellido')(v) || rules.minLength('El apellido', 2)(v),
+        dni:      rules.dni(),
+        email:    rules.email(),
+        telefono: rules.telefono(),
+    };
+
+    const { errors: fieldErrors, validate, clearError } = useFormValidation(pacienteRules);
+
+    const FieldError = ({ field }) => fieldErrors[field]
+        ? <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.2rem', display: 'block' }}>{fieldErrors[field]}</span>
+        : null;
+
     useEffect(() => {
         if (isEdit) {
             loadPatient();
@@ -71,6 +86,7 @@ export default function PatientFormPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validate(form)) return; // detiene si hay errores
         setLoading(true);
         setError('');
         setSuccessMsg('');
@@ -160,12 +176,26 @@ export default function PatientFormPage() {
                     <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.5rem' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                             <div className="form-group" style={{ margin: 0 }}>
-                                <label>Nombre</label>
-                                <input className="form-input" name="nombre" value={form.nombre} onChange={handleChange} required placeholder="Nombre" />
+                                <label>Nombre *</label>
+                                <input
+                                    className={`form-input${fieldErrors.nombre ? ' input-error' : ''}`}
+                                    name="nombre"
+                                    value={form.nombre}
+                                    onChange={(e) => { handleChange(e); clearError('nombre'); }}
+                                    placeholder="Nombre"
+                                />
+                                <FieldError field="nombre" />
                             </div>
                             <div className="form-group" style={{ margin: 0 }}>
-                                <label>Apellido</label>
-                                <input className="form-input" name="apellido" value={form.apellido} onChange={handleChange} required placeholder="Apellido" />
+                                <label>Apellido *</label>
+                                <input
+                                    className={`form-input${fieldErrors.apellido ? ' input-error' : ''}`}
+                                    name="apellido"
+                                    value={form.apellido}
+                                    onChange={(e) => { handleChange(e); clearError('apellido'); }}
+                                    placeholder="Apellido"
+                                />
+                                <FieldError field="apellido" />
                             </div>
                         </div>
 
@@ -213,19 +243,41 @@ export default function PatientFormPage() {
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
-                            <label>DNI</label>
-                            <input className="form-input" name="dni" value={form.dni} onChange={handleChange} required placeholder="12.345.678" />
+                            <label>DNI *</label>
+                            <input
+                                className={`form-input${fieldErrors.dni ? ' input-error' : ''}`}
+                                name="dni"
+                                value={form.dni}
+                                onChange={(e) => { handleChange(e); clearError('dni'); }}
+                                placeholder="12345678"
+                            />
+                            <FieldError field="dni" />
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
                             <label>Email</label>
-                            <input className="form-input" type="email" name="email" value={form.email} onChange={handleChange} required placeholder="ejemplo@email.com" />
+                            <input
+                                className={`form-input${fieldErrors.email ? ' input-error' : ''}`}
+                                type="text"
+                                name="email"
+                                value={form.email}
+                                onChange={(e) => { handleChange(e); clearError('email'); }}
+                                placeholder="ejemplo@email.com"
+                            />
+                            <FieldError field="email" />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                             <div className="form-group" style={{ margin: 0 }}>
                                 <label>Teléfono</label>
-                                <input className="form-input" name="telefono" value={form.telefono} onChange={handleChange} placeholder="555-1234" />
+                                <input
+                                    className={`form-input${fieldErrors.telefono ? ' input-error' : ''}`}
+                                    name="telefono"
+                                    value={form.telefono}
+                                    onChange={(e) => { handleChange(e); clearError('telefono'); }}
+                                    placeholder="1155551234"
+                                />
+                                <FieldError field="telefono" />
                             </div>
                             <div className="form-group" style={{ margin: 0 }}>
                                 <label>Fecha de Nacimiento</label>

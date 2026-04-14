@@ -131,6 +131,16 @@ body {
   box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.3);
 }
 
+.form-input.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.form-input.input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
 /* Typography */
 h1 {
   font-size: 1.8rem;

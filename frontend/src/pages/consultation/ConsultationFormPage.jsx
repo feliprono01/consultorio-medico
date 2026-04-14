@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
 import ConsultationHistoryModal from '../../components/consultation/ConsultationHistoryModal';
+import { useFormValidation, rules } from '../../hooks/useFormValidation';
 
 export default function ConsultationFormPage() {
     const navigate = useNavigate();
@@ -56,6 +57,15 @@ export default function ConsultationFormPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+
+    const consultaRules = {
+        pacienteId: rules.requeridoSelect('un paciente'),
+        motivo:     (v) => rules.requerido('El motivo')(v) || rules.minLength('El motivo', 5)(v),
+    };
+    const { errors: fieldErrors, validate, clearError } = useFormValidation(consultaRules);
+    const FieldError = ({ field }) => fieldErrors[field]
+        ? <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{fieldErrors[field]}</span>
+        : null;
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -189,6 +199,11 @@ export default function ConsultationFormPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validate(form)) {
+            // Si el error es de paciente, ir a la tab general
+            if (!form.pacienteId || !form.motivo) setActiveTab('general');
+            return;
+        }
         setLoading(true);
         setError('');
 
@@ -266,7 +281,7 @@ export default function ConsultationFormPage() {
                     {/* Tab: General */}
                     <div style={{ display: activeTab === 'general' ? 'grid' : 'none', gap: '1.5rem' }}>
                         <div className="form-group">
-                            <label>Paciente</label>
+                            <label>Paciente *</label>
                             {form.pacienteId && selectedPatient ? (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
                                     <span style={{ fontWeight: 600, color: '#15803d' }}>
@@ -312,9 +327,18 @@ export default function ConsultationFormPage() {
                                 </div>
                             )}
                         </div>
+                        {fieldErrors.pacienteId && <FieldError field="pacienteId" />}
+
                         <div className="form-group">
-                            <label>Motivo de Consulta</label>
-                            <input className="form-input" name="motivo" value={form.motivo} onChange={handleChange} required placeholder="Ej. Ansiedad, Insomnio..." />
+                            <label>Motivo de Consulta *</label>
+                            <input
+                                className={`form-input${fieldErrors.motivo ? ' input-error' : ''}`}
+                                name="motivo"
+                                value={form.motivo}
+                                onChange={(e) => { handleChange(e); clearError('motivo'); }}
+                                placeholder="Ej. Ansiedad, Insomnio... (mín. 5 caracteres)"
+                            />
+                            <FieldError field="motivo" />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
