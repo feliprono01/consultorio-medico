@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { userService } from '../../api/userService';
+import { useFormValidation, rules } from '../../hooks/useFormValidation';
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState([]);
@@ -9,6 +10,18 @@ export default function UserManagementPage() {
 
     // Reset Password Modal State
     const [resetModal, setResetModal] = useState({ isOpen: false, userId: null, username: '', newPassword: '' });
+
+    const userRules = {
+        nombre:           rules.requerido('El nombre'),
+        apellido:         rules.requerido('El apellido'),
+        username:         rules.emailRequerido(),
+        password:         rules.passwordMinLength(),
+        confirmPassword:  rules.passwordMatch(),
+    };
+    const { errors: fieldErrors, validate, clearError } = useFormValidation(userRules);
+    const FE = ({ field }) => fieldErrors[field]
+        ? <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.2rem', display: 'block' }}>{fieldErrors[field]}</span>
+        : null;
 
     useEffect(() => {
         // En un caso real, decodificaríamos el JWT para ver el rol.
@@ -31,9 +44,10 @@ export default function UserManagementPage() {
         e.preventDefault();
         setMessage('');
 
+        if (!validate(newUser)) return;
+
         if (newUser.password !== newUser.confirmPassword) {
-            setMessage('Error: Las contraseñas no coinciden.');
-            return;
+            return; // ya lo maneja la regla passwordMatch
         }
 
         try {
@@ -97,26 +111,26 @@ export default function UserManagementPage() {
             <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
                 <h3>Crear Nuevo Usuario</h3>
                 <form onSubmit={handleCreate} style={{ display: 'grid', gap: '1.5rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                         <div className="form-group">
-                            <label>Nombre</label>
+                            <label>Nombre *</label>
                             <input
-                                className="form-input"
+                                className={`form-input${fieldErrors.nombre ? ' input-error' : ''}`}
                                 value={newUser.nombre || ''}
-                                onChange={e => setNewUser({ ...newUser, nombre: e.target.value })}
-                                required
+                                onChange={e => { setNewUser({ ...newUser, nombre: e.target.value }); clearError('nombre'); }}
                                 placeholder="Juan"
                             />
+                            <FE field="nombre" />
                         </div>
                         <div className="form-group">
-                            <label>Apellido</label>
+                            <label>Apellido *</label>
                             <input
-                                className="form-input"
+                                className={`form-input${fieldErrors.apellido ? ' input-error' : ''}`}
                                 value={newUser.apellido || ''}
-                                onChange={e => setNewUser({ ...newUser, apellido: e.target.value })}
-                                required
+                                onChange={e => { setNewUser({ ...newUser, apellido: e.target.value }); clearError('apellido'); }}
                                 placeholder="Pérez"
                             />
+                            <FE field="apellido" />
                         </div>
                         <div className="form-group">
                             <label>DNI</label>
@@ -124,7 +138,6 @@ export default function UserManagementPage() {
                                 className="form-input"
                                 value={newUser.dni || ''}
                                 onChange={e => setNewUser({ ...newUser, dni: e.target.value })}
-                                required
                                 placeholder="12345678"
                             />
                         </div>
@@ -141,14 +154,14 @@ export default function UserManagementPage() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                         <div className="form-group">
-                            <label>Usuario (Email)</label>
+                            <label>Usuario (Email) *</label>
                             <input
-                                className="form-input"
+                                className={`form-input${fieldErrors.username ? ' input-error' : ''}`}
                                 value={newUser.username}
-                                onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                                required
+                                onChange={e => { setNewUser({ ...newUser, username: e.target.value }); clearError('username'); }}
                                 placeholder="juan@email.com"
                             />
+                            <FE field="username" />
                         </div>
                         <div className="form-group">
                             <label>Rol</label>
@@ -165,26 +178,26 @@ export default function UserManagementPage() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                         <div className="form-group">
-                            <label>Contraseña</label>
+                            <label>Contraseña *</label>
                             <input
                                 type="password"
-                                className="form-input"
+                                className={`form-input${fieldErrors.password ? ' input-error' : ''}`}
                                 value={newUser.password}
-                                onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                required
+                                onChange={e => { setNewUser({ ...newUser, password: e.target.value }); clearError('password'); }}
                                 placeholder="••••••"
                             />
+                            <FE field="password" />
                         </div>
                         <div className="form-group">
-                            <label>Confirmar Clave</label>
+                            <label>Confirmar Clave *</label>
                             <input
                                 type="password"
-                                className="form-input"
+                                className={`form-input${fieldErrors.confirmPassword ? ' input-error' : ''}`}
                                 value={newUser.confirmPassword}
-                                onChange={e => setNewUser({ ...newUser, confirmPassword: e.target.value })}
-                                required
+                                onChange={e => { setNewUser({ ...newUser, confirmPassword: e.target.value }); clearError('confirmPassword'); }}
                                 placeholder="••••••"
                             />
+                            <FE field="confirmPassword" />
                         </div>
                     </div>
 
