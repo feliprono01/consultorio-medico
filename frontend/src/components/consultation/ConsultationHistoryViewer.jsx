@@ -46,7 +46,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('es-ES', {
+        return new Date(dateString).toLocaleDateString('es-AR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',

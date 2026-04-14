@@ -86,7 +86,7 @@ export default function ConsultationTimeline({ consultations }) {
                                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                                      {new Date(c.fechaConsulta).toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                                 </span>
-                                                <h4 style={{ margin: '0.2rem 0', fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{c.motivoConsulta}</h4>
+                                                <h4 style={{ margin: '0.2rem 0', fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{c.motivo || c.motivoConsulta}</h4>
                                             </div>
                                             <Link
                                                 to={`/consultas/edit/${c.id}`}

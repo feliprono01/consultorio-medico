@@ -158,7 +158,7 @@ export default function PatientListPage() {
             if (consultations.length > 0) {
                 const consultRows = consultations.map(c => [
                     new Date(c.fechaConsulta).toLocaleDateString(),
-                    c.motivoConsulta || '',
+                    c.motivo || c.motivoConsulta || '',
                     c.diagnostico || '',
                     c.tratamiento || '',
                     // Summarize risks if present
