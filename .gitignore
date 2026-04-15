@@ -21,7 +21,9 @@ replay_pid*
 # ========================
 application-local.properties
 application-local.yml
-*.env
+# Docker env (credenciales reales — NO subir)
+.env
+# .env.example sí se puede subir (no tiene credenciales reales)
 
 # ========================
 # Archivos sensibles / secretos

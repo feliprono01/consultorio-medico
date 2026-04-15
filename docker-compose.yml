@@ -1,0 +1,61 @@
+services:
+
+  # ────────────────────────────────
+  # Base de datos MySQL
+  # ────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: consultorio_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: consultorio_medico
+    volumes:
+      - mysql_data:/var/lib/mysql   # Persiste los datos entre reinicios
+    ports:
+      - "3307:3306"                 # 3307 en tu PC para no chocar con XAMPP
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────
+  # Backend Spring Boot
+  # ────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: consultorio_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy   # Espera a que MySQL esté listo
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/consultorio_medico?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    ports:
+      - "8080:8080"
+
+  # ────────────────────────────────
+  # Frontend React (nginx)
+  # ────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: consultorio_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"                     # App disponible en http://localhost
+
+volumes:
+  mysql_data:                       # Volumen persistente para MySQL
