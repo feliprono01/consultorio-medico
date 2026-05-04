@@ -33,13 +33,26 @@ services:
       db:
         condition: service_healthy   # Espera a que MySQL esté listo
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/consultorio_medico?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
-      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
-      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
-      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      # Admin inicial
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # Email para backups
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      # Configuración de backups
+      MYSQLDUMP_PATH: mysqldump          # Disponible en la imagen MySQL
+      BACKUP_OUTPUT_DIR: /app/backups   # Dentro del contenedor → mapeado al volumen
+      BACKUP_CRON: ${BACKUP_CRON:-0 0 2 * * ?}
+      BACKUP_EMAIL_TO: ${BACKUP_EMAIL_TO:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+    volumes:
+      - backups_data:/app/backups       # Persiste los backups entre reinicios
     ports:
       - "8080:8080"
 
@@ -59,3 +72,4 @@ services:
 
 volumes:
   mysql_data:                       # Volumen persistente para MySQL
+  backups_data:                     # Volumen persistente para los backups SQL

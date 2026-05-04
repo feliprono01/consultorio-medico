@@ -2,6 +2,7 @@ package com.consultorio.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 
+@Slf4j
 @Service
 public class EmailService {
 
@@ -22,7 +24,7 @@ public class EmailService {
 
     public void sendEmailWithAttachment(String to, String subject, String text, String pathToAttachment) {
         if (emailSender == null) {
-            System.out.println("EmailService: MailSender not configured. Skipping email.");
+            log.warn("EmailService: MailSender no configurado. El backup no se enviará por email.");
             return;
         }
 
@@ -40,11 +42,10 @@ public class EmailService {
             helper.addAttachment(file.getFilename(), file);
 
             emailSender.send(message);
-            System.out.println("EmailService: Email sent successfully to " + to);
+            log.info("EmailService: Email enviado exitosamente a {}", to);
 
         } catch (MessagingException e) {
-            System.err.println("EmailService: Failed to send email: " + e.getMessage());
-            e.printStackTrace();
+            log.error("EmailService: Error al enviar el email a {}: {}", to, e.getMessage(), e);
         }
     }
 }

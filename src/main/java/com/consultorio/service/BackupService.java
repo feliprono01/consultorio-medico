@@ -47,8 +47,9 @@ public class BackupService {
     @Autowired
     private EmailService emailService;
 
-    // Ejecutar backup automático todos los días a las 02:00 AM
-    @Scheduled(cron = "0 0 2 * * ?")
+    // Backup automático según la expresión cron configurada (default: 02:00 AM diario)
+    // Cambiar via variable de entorno BACKUP_CRON sin tocar el código
+    @Scheduled(cron = "${backup.cron:0 0 2 * * ?}")
     public void performScheduledBackup() {
         try {
             logger.info("Iniciando backup automático...");
