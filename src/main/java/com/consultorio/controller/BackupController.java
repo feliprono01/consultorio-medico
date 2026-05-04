@@ -44,12 +44,18 @@ public class BackupController {
 
     @GetMapping("/{filename}")
     public ResponseEntity<Resource> downloadBackup(@PathVariable String filename) {
+        // Rechazar filenames con caracteres sospechosos
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\") || !filename.endsWith(".sql")) {
+            return ResponseEntity.badRequest().build();
+        }
         try {
             Resource file = backupService.loadBackupAsResource(filename);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
                     .contentType(MediaType.parseMediaType("application/sql"))
                     .body(file);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).build();
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }

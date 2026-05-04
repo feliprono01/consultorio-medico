@@ -135,9 +135,17 @@ public class BackupService {
     }
 
     public Resource loadBackupAsResource(String filename) throws MalformedURLException {
-        Path file = Paths.get(outputDir).resolve(filename);
+        Path backupDir = Paths.get(outputDir).toAbsolutePath().normalize();
+        Path file = backupDir.resolve(filename).normalize();
+
+        // Verificar que el archivo resuelto esté dentro del directorio de backups
+        // Esto previene ataques de path traversal (ej: ../../etc/passwd)
+        if (!file.startsWith(backupDir)) {
+            throw new SecurityException("Acceso denegado: el archivo está fuera del directorio de backups.");
+        }
+
         Resource resource = new UrlResource(file.toUri());
-        if (resource.exists() || resource.isReadable()) {
+        if (resource.exists() && resource.isReadable()) {
             return resource;
         } else {
             throw new RuntimeException("Could not read file: " + filename);
