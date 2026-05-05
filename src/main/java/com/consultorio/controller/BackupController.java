@@ -32,6 +32,22 @@ public class BackupController {
         }
     }
 
+    /**
+     * Dispara el backup completo (genera .sql + envía email) de forma inmediata.
+     * Equivale a lo que ejecutaría el cron automático.
+     * Solo para testing y verificación manual.
+     */
+    @PostMapping("/test-email")
+    public ResponseEntity<Map<String, String>> testBackupWithEmail() {
+        try {
+            backupService.performScheduledBackup();
+            return ResponseEntity.ok(Map.of("message", "Backup con email disparado. Revisá los logs del servidor y tu bandeja de entrada."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error: " + e.getMessage()));
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<String>> listBackups() {
         try {
