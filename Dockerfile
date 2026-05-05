@@ -18,17 +18,18 @@ RUN mvn clean package -DskipTests -B
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
+# Instalar mysql-client para que mysqldump esté disponible en el contenedor
+RUN apk add --no-cache mysql-client
+
+# Crear directorio de backups (mapeado al volumen en docker-compose)
+RUN mkdir -p /app/backups
+
 # Copiamos solo el JAR del stage anterior
 COPY --from=build /app/target/*.jar app.jar
 
 # Puerto que expone Spring Boot
 EXPOSE 8080
 
-# Variables de entorno con valores por defecto (sobreescribibles en docker-compose)
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/consultorio_medico?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-ENV SPRING_DATASOURCE_USERNAME=root
-ENV SPRING_DATASOURCE_PASSWORD=root
-ENV JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-ENV JWT_EXPIRATION=86400000
-
+# Las variables de entorno sensibles (JWT_SECRET, passwords) se inyectan
+# exclusivamente desde docker-compose o el servidor. No van hardcodeadas aquí.
 ENTRYPOINT ["java", "-jar", "app.jar"]
