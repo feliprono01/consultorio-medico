@@ -10,6 +10,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
       MYSQL_DATABASE: consultorio_medico
+      # Usuario dedicado (no root) para el backend
+      MYSQL_USER: ${DB_USER:-consultorio_user}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD:-${DB_PASSWORD:-root}}
     volumes:
       - mysql_data:/var/lib/mysql   # Persiste los datos entre reinicios
     ports:
@@ -19,6 +22,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # ── Límites de recursos (anti DDoS / consumo descontrolado) ──
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   # ────────────────────────────────
   # Backend Spring Boot
@@ -35,8 +47,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/consultorio_medico?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
+      # Usar usuario dedicado en lugar de root
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-consultorio_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_USER_PASSWORD:-${DB_PASSWORD:-root}}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       # Admin inicial
@@ -55,6 +68,21 @@ services:
       - backups_data:/app/backups       # Persiste los backups entre reinicios
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # ── Límites de recursos (anti DDoS / consumo descontrolado) ──
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
   # ────────────────────────────────
   # Frontend React (nginx)
@@ -69,6 +97,12 @@ services:
       - backend
     ports:
       - "80:80"                     # App disponible en http://localhost
+    # ── Límites de recursos ──
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
 
 volumes:
   mysql_data:                       # Volumen persistente para MySQL

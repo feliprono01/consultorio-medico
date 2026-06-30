@@ -1,6 +1,7 @@
 package com.consultorio.config;
 
 import com.consultorio.security.JwtAuthenticationFilter;
+import com.consultorio.security.LoginRateLimitFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +18,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthFilter;
+        private final LoginRateLimitFilter loginRateLimitFilter;
         private final AuthenticationProvider authenticationProvider;
 
-        public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) {
+        public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
+                        LoginRateLimitFilter loginRateLimitFilter,
+                        AuthenticationProvider authenticationProvider) {
                 this.jwtAuthFilter = jwtAuthFilter;
+                this.loginRateLimitFilter = loginRateLimitFilter;
                 this.authenticationProvider = authenticationProvider;
         }
 
@@ -38,6 +43,8 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authenticationProvider(authenticationProvider)
+                                // Rate limiting ANTES del JWT filter — rechaza brute force sin tocar la DB
+                                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();

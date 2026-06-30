@@ -9,8 +9,15 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
+/**
+ * Configuración de Swagger/OpenAPI.
+ * Solo activa en perfiles que NO sean "prod".
+ * En producción, /swagger-ui/** y /v3/api-docs/** devuelven 404.
+ */
 @Configuration
+@Profile("!prod")  // Deshabilitado en producción
 public class OpenApiConfig {
 
     @Bean
