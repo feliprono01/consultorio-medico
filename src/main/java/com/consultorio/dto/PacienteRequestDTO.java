@@ -48,13 +48,15 @@ public class PacienteRequestDTO {
     private String datosHijos;
     private String datosHermanos;
 
+    private Long version;
+
     public PacienteRequestDTO() {
     }
 
     public PacienteRequestDTO(String nombre, String apellido, String dni, String email, String telefono,
             LocalDate fechaNacimiento, String ciudad, String direccion, String sexo,
             String ocupacion, String estadoCivil, String escolaridad,
-            String datosPadres, String datosHijos, String datosHermanos) {
+            String datosPadres, String datosHijos, String datosHermanos, Long version) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -64,6 +66,13 @@ public class PacienteRequestDTO {
         this.ciudad = ciudad;
         this.direccion = direccion;
         this.sexo = sexo;
+        this.ocupacion = ocupacion;
+        this.estadoCivil = estadoCivil;
+        this.escolaridad = escolaridad;
+        this.datosPadres = datosPadres;
+        this.datosHijos = datosHijos;
+        this.datosHermanos = datosHermanos;
+        this.version = version;
     }
 
     public String getNombre() {
@@ -207,6 +216,7 @@ public class PacienteRequestDTO {
         private String datosPadres;
         private String datosHijos;
         private String datosHermanos;
+        private Long version;
 
         public PacienteRequestDTOBuilder nombre(String nombre) {
             this.nombre = nombre;
@@ -283,9 +293,22 @@ public class PacienteRequestDTO {
             return this;
         }
 
+        public PacienteRequestDTOBuilder version(Long version) {
+            this.version = version;
+            return this;
+        }
+
         public PacienteRequestDTO build() {
             return new PacienteRequestDTO(nombre, apellido, dni, email, telefono, fechaNacimiento, ciudad, direccion,
-                    sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos, datosHermanos);
+                    sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos, datosHermanos, version);
         }
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

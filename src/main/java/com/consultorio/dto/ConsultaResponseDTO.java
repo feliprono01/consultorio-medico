@@ -23,6 +23,7 @@ public class ConsultaResponseDTO {
     private Integer funcionalidadSocial;
     private Integer funcionalidadFamiliar;
     private EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica;
+    private Long version;
 
     public ConsultaResponseDTO() {
     }
@@ -32,7 +33,7 @@ public class ConsultaResponseDTO {
             String notas, String motivoConsulta, Integer estadoAnimo, Integer calidadSueno,
             Integer alimentacion, Integer sociabilidad, Integer funcionalidadLaboral,
             Integer funcionalidadSocial, Integer funcionalidadFamiliar,
-            EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica) {
+            EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica, Long version) {
         this.id = id;
         this.pacienteId = pacienteId;
         this.nombrePaciente = nombrePaciente;
@@ -52,6 +53,7 @@ public class ConsultaResponseDTO {
         this.funcionalidadSocial = funcionalidadSocial;
         this.funcionalidadFamiliar = funcionalidadFamiliar;
         this.evaluacionPsiquiatrica = evaluacionPsiquiatrica;
+        this.version = version;
     }
 
     public Long getId() {
@@ -230,6 +232,7 @@ public class ConsultaResponseDTO {
         private Integer funcionalidadSocial;
         private Integer funcionalidadFamiliar;
         private EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica;
+        private Long version;
 
         public ConsultaResponseDTOBuilder id(Long id) {
             this.id = id;
@@ -326,11 +329,24 @@ public class ConsultaResponseDTO {
             return this;
         }
 
+        public ConsultaResponseDTOBuilder version(Long version) {
+            this.version = version;
+            return this;
+        }
+
         public ConsultaResponseDTO build() {
             return new ConsultaResponseDTO(id, pacienteId, nombrePaciente, apellidoPaciente, dniPaciente, fechaConsulta,
                     motivo, diagnostico, tratamiento, notas, motivoConsulta, estadoAnimo, calidadSueno, alimentacion,
                     sociabilidad,
-                    funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica);
+                    funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica, version);
         }
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

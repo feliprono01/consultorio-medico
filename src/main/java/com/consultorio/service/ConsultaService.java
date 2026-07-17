@@ -118,6 +118,11 @@ public class ConsultaService {
         Consulta consulta = consultaRepository.findById(id)
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
 
+        // Validar versión para concurrencia optimista
+        if (dto.getVersion() != null && !dto.getVersion().equals(consulta.getVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Consulta.class, id);
+        }
+
         String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
 
         // Actualizar datos de consulta general con auditoría

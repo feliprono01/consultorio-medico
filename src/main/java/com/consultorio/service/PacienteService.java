@@ -107,6 +107,11 @@ public class PacienteService {
         Paciente pacienteExistente = pacienteRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", id));
 
+        // Validar versión para concurrencia optimista
+        if (requestDTO.getVersion() != null && !requestDTO.getVersion().equals(pacienteExistente.getVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Paciente.class, id);
+        }
+
         // Validar DNI único (si cambió)
         if (!pacienteExistente.getDni().equals(requestDTO.getDni())) {
             if (pacienteRepository.existsByDniAndActiveTrue(requestDTO.getDni())) {
@@ -170,6 +175,10 @@ public class PacienteService {
 
         HistoriaPsiquiatrica historia = paciente.getHistoriaPsiquiatrica();
         boolean esNueva = (historia == null);
+
+        if (!esNueva && dto.getVersion() != null && !dto.getVersion().equals(historia.getVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(HistoriaPsiquiatrica.class, historia.getId());
+        }
 
         if (esNueva) {
             historia = HistoriaPsiquiatrica.builder()

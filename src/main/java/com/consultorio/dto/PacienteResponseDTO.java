@@ -32,6 +32,7 @@ public class PacienteResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean active;
+    private Long version;
 
     /**
      * Campo calculado: nombre completo
@@ -48,7 +49,7 @@ public class PacienteResponseDTO {
             String ocupacion, String estadoCivil, String escolaridad,
             String datosPadres, String datosHijos, String datosHermanos,
             LocalDateTime createdAt, LocalDateTime updatedAt, Boolean active,
-            String nombreCompleto, HistoriaPsiquiatricaDTO historiaPsiquiatrica) {
+            String nombreCompleto, HistoriaPsiquiatricaDTO historiaPsiquiatrica, Long version) {
         this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
@@ -73,6 +74,7 @@ public class PacienteResponseDTO {
         this.active = active;
         this.nombreCompleto = nombreCompleto;
         this.historiaPsiquiatrica = historiaPsiquiatrica;
+        this.version = version;
     }
 
     public Long getId() {
@@ -282,6 +284,7 @@ public class PacienteResponseDTO {
         private Boolean active;
         private String nombreCompleto;
         private HistoriaPsiquiatricaDTO historiaPsiquiatrica;
+        private Long version;
 
         public PacienteResponseDTOBuilder id(Long id) {
             this.id = id;
@@ -388,11 +391,24 @@ public class PacienteResponseDTO {
             return this;
         }
 
+        public PacienteResponseDTOBuilder version(Long version) {
+            this.version = version;
+            return this;
+        }
+
         public PacienteResponseDTO build() {
             return new PacienteResponseDTO(id, nombre, apellido, dni, email, telefono, fechaNacimiento,
                     ciudad, direccion, sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos,
                     datosHermanos,
-                    createdAt, updatedAt, active, nombreCompleto, historiaPsiquiatrica);
+                    createdAt, updatedAt, active, nombreCompleto, historiaPsiquiatrica, version);
         }
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

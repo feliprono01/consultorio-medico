@@ -10,13 +10,14 @@ public class HistoriaPsiquiatricaDTO {
     private String desarrolloPsicomotor;
     private String personalidadPrevia;
     private String antecedentesPsicologicos;
+    private Long version;
 
     public HistoriaPsiquiatricaDTO() {
     }
 
     public HistoriaPsiquiatricaDTO(Long id, String antecedentesFamiliares, String antecedentesPersonales,
             String historiaConsumo, String enfermedadActual, String tratamientosPrevios, String desarrolloPsicomotor,
-            String personalidadPrevia, String antecedentesPsicologicos) {
+            String personalidadPrevia, String antecedentesPsicologicos, Long version) {
         this.id = id;
         this.antecedentesFamiliares = antecedentesFamiliares;
         this.antecedentesPersonales = antecedentesPersonales;
@@ -26,6 +27,7 @@ public class HistoriaPsiquiatricaDTO {
         this.desarrolloPsicomotor = desarrolloPsicomotor;
         this.personalidadPrevia = personalidadPrevia;
         this.antecedentesPsicologicos = antecedentesPsicologicos;
+        this.version = version;
     }
 
     public static HistoriaPsiquiatricaDTOBuilder builder() {
@@ -42,6 +44,7 @@ public class HistoriaPsiquiatricaDTO {
         private String desarrolloPsicomotor;
         private String personalidadPrevia;
         private String antecedentesPsicologicos;
+        private Long version;
 
         public HistoriaPsiquiatricaDTOBuilder id(Long id) {
             this.id = id;
@@ -88,10 +91,15 @@ public class HistoriaPsiquiatricaDTO {
             return this;
         }
 
+        public HistoriaPsiquiatricaDTOBuilder version(Long version) {
+            this.version = version;
+            return this;
+        }
+
         public HistoriaPsiquiatricaDTO build() {
             return new HistoriaPsiquiatricaDTO(id, antecedentesFamiliares, antecedentesPersonales, historiaConsumo,
                     enfermedadActual, tratamientosPrevios, desarrolloPsicomotor, personalidadPrevia,
-                    antecedentesPsicologicos);
+                    antecedentesPsicologicos, version);
         }
     }
 
@@ -165,5 +173,13 @@ public class HistoriaPsiquiatricaDTO {
 
     public void setAntecedentesPsicologicos(String antecedentesPsicologicos) {
         this.antecedentesPsicologicos = antecedentesPsicologicos;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

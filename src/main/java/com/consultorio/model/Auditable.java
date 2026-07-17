@@ -47,6 +47,10 @@ public abstract class Auditable {
     @Column(nullable = false)
     protected Boolean active = true;
 
+    @Version
+    @Column(name = "version")
+    protected Long version;
+
     public void softDelete() {
         this.active = false;
     }
@@ -101,5 +105,13 @@ public abstract class Auditable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

@@ -27,6 +27,8 @@ public class ConsultaRequestDTO {
     private Integer funcionalidadSocial;
     private Integer funcionalidadFamiliar;
 
+    private Long version;
+
     private EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica;
 
     public Long getPacienteId() {
@@ -131,5 +133,13 @@ public class ConsultaRequestDTO {
 
     public void setEvaluacionPsiquiatrica(EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica) {
         this.evaluacionPsiquiatrica = evaluacionPsiquiatrica;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }
