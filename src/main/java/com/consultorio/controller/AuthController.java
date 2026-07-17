@@ -5,6 +5,8 @@ import com.consultorio.dto.AuthResponseDTO;
 import com.consultorio.repository.UsuarioRepository;
 import com.consultorio.security.JwtService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +28,7 @@ public class AuthController {
         private final UsuarioRepository usuarioRepository;
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager;
+        private final TokenBlacklistService tokenBlacklistService;
 
         @Value("${jwt.expiration:86400000}")
         private long jwtExpiration;
@@ -39,10 +42,12 @@ public class AuthController {
 
         public AuthController(UsuarioRepository usuarioRepository,
                         JwtService jwtService,
-                        AuthenticationManager authenticationManager) {
+                        AuthenticationManager authenticationManager,
+                        TokenBlacklistService tokenBlacklistService) {
                 this.usuarioRepository = usuarioRepository;
                 this.jwtService = jwtService;
                 this.authenticationManager = authenticationManager;
+                this.tokenBlacklistService = tokenBlacklistService;
         }
 
         @PostMapping("/login")
@@ -74,7 +79,23 @@ public class AuthController {
         }
 
         @PostMapping("/logout")
-        public ResponseEntity<Void> logout(HttpServletResponse response) {
+        public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+
+                // Revocar el JWT activo en la blacklist antes de limpiar la cookie
+                if (request.getCookies() != null) {
+                        for (Cookie cookie : request.getCookies()) {
+                                if ("jwt_token".equals(cookie.getName())) {
+                                        String jwt = cookie.getValue();
+                                        try {
+                                                tokenBlacklistService.revokeToken(jwt, jwtService.extractExpiration(jwt));
+                                        } catch (Exception ignored) {
+                                                // Token ya expirado o inválido — no hace falta revocarlo
+                                        }
+                                        break;
+                                }
+                        }
+                }
+
                 // Limpiar la cookie seteando maxAge=0
                 ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
                         .httpOnly(true)
