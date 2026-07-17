@@ -4,6 +4,7 @@ import com.consultorio.dto.AuthRequestDTO;
 import com.consultorio.dto.AuthResponseDTO;
 import com.consultorio.repository.UsuarioRepository;
 import com.consultorio.security.JwtService;
+import com.consultorio.security.TokenBlacklistService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
