@@ -2,6 +2,7 @@ package com.consultorio.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -33,31 +34,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+        // 1️⃣ Intentar leer el JWT desde la HttpOnly cookie (método seguro)
+        // 2️⃣ Si no hay cookie, intentar el header Authorization: Bearer (fallback para dev/Postman)
+        final String jwt = extractJwt(request);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        final String username = jwtService.extractUsername(jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
                         userDetails.getAuthorities());
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Extrae el JWT primero desde la HttpOnly cookie, luego desde el header Authorization.
+     * Priorizar cookie es más seguro: no accesible desde JavaScript (anti-XSS).
+     */
+    private String extractJwt(HttpServletRequest request) {
+        // 1. Buscar en cookies
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        // 2. Fallback: header Authorization: Bearer <token>
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 }

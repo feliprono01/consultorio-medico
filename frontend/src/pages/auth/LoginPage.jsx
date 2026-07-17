@@ -34,10 +34,10 @@ export default function LoginPage() {
 
         try {
             const response = await authService.login(username, password);
-            const { token, role } = response.data;
-
-            // Persistir sesión y actualizar estado global
-            login(token, role);
+            const { role } = response.data;
+            // El JWT ya fue seteado en cookie HttpOnly por el backend
+            // Solo necesitamos guardar el rol para el routing del frontend
+            login(role);
 
             // Redirigir al dashboard
             navigate('/dashboard');
