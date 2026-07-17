@@ -118,4 +118,15 @@ public class PacienteController {
         PacienteResponseDTO response = pacienteService.actualizarHistoriaPsiquiatrica(id, historiaDTO);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Devuelve el historial de cambios de la Historia Psiquiátrica de un paciente.
+     * GET /api/pacientes/{id}/historia-psiquiatrica/historial-cambios
+     */
+    @GetMapping("/{id}/historia-psiquiatrica/historial-cambios")
+    public ResponseEntity<List<com.consultorio.model.HistoriaPsiquiatricaAuditLog>> historialCambiosHp(
+            @PathVariable Long id) {
+        log.info("GET /api/pacientes/{}/historia-psiquiatrica/historial-cambios", id);
+        return ResponseEntity.ok(pacienteService.getHistorialCambiosHp(id));
+    }
 }

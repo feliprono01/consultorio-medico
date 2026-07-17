@@ -4,17 +4,21 @@ import com.consultorio.dto.PacienteRequestDTO;
 import com.consultorio.dto.PacienteResponseDTO;
 import com.consultorio.exception.ResourceNotFoundException;
 import com.consultorio.mapper.PacienteMapper;
+import com.consultorio.model.HistoriaPsiquiatricaAuditLog;
 import com.consultorio.model.Paciente;
+import com.consultorio.repository.HistoriaPsiquiatricaAuditLogRepository;
 import com.consultorio.repository.PacienteRepository;
 
 import com.consultorio.dto.HistoriaPsiquiatricaDTO;
 import com.consultorio.model.HistoriaPsiquiatrica;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Servicio que contiene la lógica de negocio para la gestión de Pacientes.
@@ -27,6 +31,7 @@ public class PacienteService {
     private final PacienteRepository pacienteRepository;
     private final PacienteMapper pacienteMapper;
     private final AccessLogService accessLogService;
+    private final HistoriaPsiquiatricaAuditLogRepository hpAuditLogRepository;
 
     /**
      * Crea un nuevo paciente en el sistema.
@@ -154,6 +159,7 @@ public class PacienteService {
 
     /**
      * Actualiza o crea la Historia Psiquiátrica de un paciente.
+     * Registra campo por campo qué cambio, quién lo hizo y cuándo.
      */
     @Transactional
     public PacienteResponseDTO actualizarHistoriaPsiquiatrica(Long pacienteId, HistoriaPsiquiatricaDTO dto) {
@@ -163,11 +169,33 @@ public class PacienteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", pacienteId));
 
         HistoriaPsiquiatrica historia = paciente.getHistoriaPsiquiatrica();
-        if (historia == null) {
+        boolean esNueva = (historia == null);
+
+        if (esNueva) {
             historia = HistoriaPsiquiatrica.builder()
                     .paciente(paciente)
                     .build();
         }
+
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Auditar campo por campo — solo se registra si hubo cambio real
+        logHpIfChanged(pacienteId, "Antecedentes Familiares",
+                historia.getAntecedentesFamiliares(), dto.getAntecedentesFamiliares(), currentUser);
+        logHpIfChanged(pacienteId, "Antecedentes Personales",
+                historia.getAntecedentesPersonales(), dto.getAntecedentesPersonales(), currentUser);
+        logHpIfChanged(pacienteId, "Historia de Consumo",
+                historia.getHistoriaConsumo(), dto.getHistoriaConsumo(), currentUser);
+        logHpIfChanged(pacienteId, "Enfermedad Actual",
+                historia.getEnfermedadActual(), dto.getEnfermedadActual(), currentUser);
+        logHpIfChanged(pacienteId, "Tratamientos Previos",
+                historia.getTratamientosPrevios(), dto.getTratamientosPrevios(), currentUser);
+        logHpIfChanged(pacienteId, "Desarrollo Psicomotor",
+                historia.getDesarrolloPsicomotor(), dto.getDesarrolloPsicomotor(), currentUser);
+        logHpIfChanged(pacienteId, "Personalidad Previa",
+                historia.getPersonalidadPrevia(), dto.getPersonalidadPrevia(), currentUser);
+        logHpIfChanged(pacienteId, "Antecedentes Psicológicos",
+                historia.getAntecedentesPsicologicos(), dto.getAntecedentesPsicologicos(), currentUser);
 
         // Actualizar campos
         historia.setAntecedentesFamiliares(dto.getAntecedentesFamiliares());
@@ -177,10 +205,34 @@ public class PacienteService {
         historia.setTratamientosPrevios(dto.getTratamientosPrevios());
         historia.setDesarrolloPsicomotor(dto.getDesarrolloPsicomotor());
         historia.setPersonalidadPrevia(dto.getPersonalidadPrevia());
+        historia.setAntecedentesPsicologicos(dto.getAntecedentesPsicologicos());
 
         paciente.setHistoriaPsiquiatrica(historia);
         Paciente pacienteGuardado = pacienteRepository.save(paciente);
 
         return pacienteMapper.toResponseDTO(pacienteGuardado);
+    }
+
+    /**
+     * Devuelve el historial de cambios de la HistoriaPsiquiátrica de un paciente.
+     */
+    @Transactional(readOnly = true)
+    public List<HistoriaPsiquiatricaAuditLog> getHistorialCambiosHp(Long pacienteId) {
+        return hpAuditLogRepository.findByPacienteIdOrderByFechaCambioDesc(pacienteId);
+    }
+
+    /**
+     * Guarda un entrada de audit log si el valor del campo cambió.
+     * Ignora cambios de null/vacío a null/vacío.
+     */
+    private void logHpIfChanged(Long pacienteId, String campo,
+            String valorAnterior, String valorNuevo, String usuario) {
+        if (Objects.equals(valorAnterior, valorNuevo)) return;
+        // No loguear si ambos son null o vacíos
+        if ((valorAnterior == null || valorAnterior.isBlank())
+                && (valorNuevo == null || valorNuevo.isBlank())) return;
+
+        hpAuditLogRepository.save(
+                new HistoriaPsiquiatricaAuditLog(pacienteId, campo, valorAnterior, valorNuevo, usuario));
     }
 }
