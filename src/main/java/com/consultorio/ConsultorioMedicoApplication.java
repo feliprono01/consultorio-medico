@@ -2,6 +2,7 @@ package com.consultorio;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @SpringBootApplication
 @EnableScheduling   // Activa tareas programadas (limpieza automática de blacklist de JWT)
+@EnableAsync        // Activa ejecución asíncrona (@Async en AccessLogService)
 public class ConsultorioMedicoApplication {
 
     public static void main(String[] args) {

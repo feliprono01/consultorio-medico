@@ -26,6 +26,7 @@ public class PacienteService {
 
     private final PacienteRepository pacienteRepository;
     private final PacienteMapper pacienteMapper;
+    private final AccessLogService accessLogService;
 
     /**
      * Crea un nuevo paciente en el sistema.
@@ -71,6 +72,11 @@ public class PacienteService {
         log.info("Buscando paciente con ID: {}", id);
         Paciente paciente = pacienteRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", id));
+
+        // Auditoría de lectura — quién accedió a la ficha del paciente
+        accessLogService.registrar(id, AccessLogService.VER_FICHA,
+                "Ficha: %s %s".formatted(paciente.getNombre(), paciente.getApellido()));
+
         return pacienteMapper.toResponseDTO(paciente);
     }
 

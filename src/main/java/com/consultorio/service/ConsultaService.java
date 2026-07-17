@@ -26,6 +26,7 @@ public class ConsultaService {
     private final PacienteRepository pacienteRepository;
     private final ConsultaAuditLogRepository consultaAuditLogRepository;
     private final com.consultorio.mapper.ConsultaMapper consultaMapper;
+    private final AccessLogService accessLogService;
 
     @Transactional
     public ConsultaResponseDTO crearConsulta(ConsultaRequestDTO dto) {
@@ -76,6 +77,11 @@ public class ConsultaService {
         }
 
         List<Consulta> consultas = consultaRepository.findByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(pacienteId);
+
+        // Auditoría de lectura — quién accedió al historial completo y cuándo
+        accessLogService.registrar(pacienteId, AccessLogService.VER_HISTORIAL,
+                "Historial completo (%d consultas)".formatted(consultas.size()));
+
         return consultaMapper.toResponseDTOList(consultas);
     }
 
@@ -97,6 +103,13 @@ public class ConsultaService {
     public ConsultaResponseDTO obtenerPorId(Long id) {
         Consulta consulta = consultaRepository.findById(id)
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
+
+        // Auditoría de lectura — quién vio una consulta individual y cuándo
+        if (consulta.getPaciente() != null) {
+            accessLogService.registrar(consulta.getPaciente().getId(), AccessLogService.VER_CONSULTA,
+                    "Consulta #%d del %s".formatted(id, consulta.getFechaConsulta()));
+        }
+
         return consultaMapper.toResponseDTO(consulta);
     }
 
@@ -201,8 +214,14 @@ public class ConsultaService {
 
     @Transactional(readOnly = true)
     public ConsultaResponseDTO obtenerUltimaConsulta(Long pacienteId) {
-        return consultaRepository.findFirstByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(pacienteId)
+        var resultado = consultaRepository.findFirstByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(pacienteId)
                 .map(consultaMapper::toResponseDTO)
                 .orElse(null);
+
+        // Auditar solo si encontró consulta
+        if (resultado != null) {
+            accessLogService.registrar(pacienteId, AccessLogService.VER_CONSULTA, "Última consulta");
+        }
+        return resultado;
     }
 }
