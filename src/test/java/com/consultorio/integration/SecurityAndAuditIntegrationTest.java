@@ -1,0 +1,179 @@
+package com.consultorio.integration;
+
+import com.consultorio.dto.AuthRequestDTO;
+import com.consultorio.dto.PacienteRequestDTO;
+import com.consultorio.model.AccessLog;
+import com.consultorio.model.Paciente;
+import com.consultorio.model.Role;
+import com.consultorio.model.Usuario;
+import com.consultorio.repository.AccessLogRepository;
+import com.consultorio.repository.PacienteRepository;
+import com.consultorio.repository.UsuarioRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
+class SecurityAndAuditIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PacienteRepository pacienteRepository;
+
+    @Autowired
+    private AccessLogRepository accessLogRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private Usuario testUser;
+    private Paciente testPaciente;
+
+    @BeforeEach
+    void setUp() {
+        // Crear usuario para pruebas
+        testUser = Usuario.builder()
+                .username("doctor.test")
+                .password(passwordEncoder.encode("Password123!"))
+                .nombre("Doctor")
+                .apellido("Test")
+                .role(Role.USER)
+                .build();
+        usuarioRepository.save(testUser);
+
+        // Crear paciente para pruebas
+        testPaciente = Paciente.builder()
+                .nombre("Juan")
+                .apellido("Perez")
+                .dni("12345678")
+                .email("juan@test.com")
+                .fechaNacimiento(LocalDate.of(1990, 1, 1))
+                .active(true)
+                .build();
+        pacienteRepository.save(testPaciente);
+    }
+
+    @Test
+    void testLoginAndLogoutWithBlacklist() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        // 1. Login
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("jwt_token"))
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+        assertThat(jwtCookie).isNotNull();
+
+        // 2. Usar token para acceder a un recurso protegido (debe funcionar)
+        mockMvc.perform(get("/api/pacientes/" + testPaciente.getId())
+                        .cookie(jwtCookie))
+                .andExpect(status().isOk());
+
+        // 3. Logout
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(jwtCookie))
+                .andExpect(status().isNoContent())
+                .andExpect(cookie().value("jwt_token", ""));
+
+        // 4. Intentar usar el token revocado (debe fallar 403 Forbidden)
+        mockMvc.perform(get("/api/pacientes/" + testPaciente.getId())
+                        .cookie(jwtCookie))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testAccessLogIsGenerated() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        // Acceder a la ficha del paciente
+        mockMvc.perform(get("/api/pacientes/" + testPaciente.getId())
+                        .cookie(jwtCookie))
+                .andExpect(status().isOk());
+
+        // Verificar que se creó un registro de auditoría de lectura
+        List<AccessLog> logs = accessLogRepository.findAll();
+        assertThat(logs).isNotEmpty();
+        AccessLog log = logs.get(logs.size() - 1);
+        
+        assertThat(log.getUsuario()).isEqualTo("doctor.test");
+        assertThat(log.getPacienteId()).isEqualTo(testPaciente.getId());
+        assertThat(log.getAccion()).isEqualTo("VER_FICHA");
+    }
+
+    @Test
+    void testOptimisticLockingOnPacienteUpdate() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        // Crear payload con una versión incorrecta (1, cuando la actual es 0 u otra)
+        PacienteRequestDTO requestDTO = new PacienteRequestDTO();
+        requestDTO.setNombre("Juan Modificado");
+        requestDTO.setApellido("Perez");
+        requestDTO.setDni("12345678");
+        requestDTO.setEmail("juan@test.com");
+        requestDTO.setFechaNacimiento(LocalDate.of(1990, 1, 1));
+        requestDTO.setVersion(99L); // Versión desactualizada
+
+        // Intentar actualizar y esperar un 409 Conflict
+        mockMvc.perform(put("/api/pacientes/" + testPaciente.getId())
+                        .cookie(jwtCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message").value("El registro fue modificado por otro usuario. Por favor recarga la página e intenta nuevamente."));
+    }
+}

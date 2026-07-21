@@ -13,45 +13,21 @@ export default function ConsultationFormPage() {
     const isEdit = !!id;
 
     const [pacientes, setPacientes] = useState([]);
-
     const [activeTab, setActiveTab] = useState('general');
 
     const [form, setForm] = useState({
-        pacienteId: '',
-        motivo: '',
-        diagnostico: '',
-        tratamiento: '',
-
-        notas: '',
-        estadoAnimo: 5,
-        calidadSueno: 5,
-        alimentacion: 5,
-        sociabilidad: 5,
-        funcionalidadLaboral: 5,
-        funcionalidadSocial: 5,
-        funcionalidadFamiliar: 5,
+        pacienteId: '', motivo: '', diagnostico: '', tratamiento: '', notas: '',
+        estadoAnimo: 5, calidadSueno: 5, alimentacion: 5, sociabilidad: 5,
+        funcionalidadLaboral: 5, funcionalidadSocial: 5, funcionalidadFamiliar: 5,
         evaluacionPsiquiatrica: {
-            apariencia: '',
-            conducta: '',
-            lenguaje: '',
-            animo: '',
-            afecto: '',
-            pensamiento: '',
-            sensopercepcion: '',
-            juicio: '',
-            memoria: '',
-            atencion: '',
-            conciencia: '',
-            riesgoSuicida: '',
-            riesgoHomicida: '',
-            riesgoPropio: '',
-            eje1: '',
-            eje2: '',
-            eje3: '',
-            adherenciaTratamiento: '',
-            efectosAdversos: ''
+            apariencia: '', conducta: '', lenguaje: '', animo: '', afecto: '',
+            pensamiento: '', sensopercepcion: '', juicio: '', memoria: '',
+            atencion: '', conciencia: '', riesgoSuicida: '', riesgoHomicida: '',
+            riesgoPropio: '', eje1: '', eje2: '', eje3: '',
+            adherenciaTratamiento: '', efectosAdversos: ''
         }
     });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -63,22 +39,20 @@ export default function ConsultationFormPage() {
         motivo:     (v) => rules.requerido('El motivo')(v) || rules.minLength('El motivo', 5)(v),
     };
     const { errors: fieldErrors, validate, clearError } = useFormValidation(consultaRules);
+    
     const FieldError = ({ field }) => fieldErrors[field]
-        ? <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{fieldErrors[field]}</span>
+        ? <span style={{ color: 'var(--destructive)', fontSize: '0.78rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{fieldErrors[field]}</span>
         : null;
 
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                // 1. Cargar pacientes
                 const resPacientes = await pacienteService.getAll();
                 setPacientes(resPacientes.data);
 
-                // 2. Si es edición, cargar consulta
                 if (isEdit) {
                     const resConsulta = await consultaService.getById(id);
                     const data = resConsulta.data;
-                    // Mapear campos que difieren ligeramente en DTO
                     setForm({
                         pacienteId: data.pacienteId,
                         motivo: data.motivo || data.motivoConsulta,
@@ -105,15 +79,14 @@ export default function ConsultationFormPage() {
                     setForm(prev => ({ ...prev, pacienteId: initialPacienteId }));
                     try {
                         await fetchLastConsultation(initialPacienteId);
-                    } catch (ignore) { console.log("No previous consultation found."); }
+                    } catch (ignore) {}
                 }
             } catch (err) {
-                console.error("Error cargando datos", err);
                 setError('Error cargando la información.');
             }
         };
         loadInitialData();
-    }, [isEdit, id]);
+    }, [isEdit, id, initialPacienteId]);
 
     const fetchLastConsultation = async (pacienteId) => {
         try {
@@ -135,9 +108,7 @@ export default function ConsultationFormPage() {
                     }
                 }));
             }
-        } catch (ignore) {
-            console.log("No previous consultation found.");
-        }
+        } catch (ignore) {}
     };
 
     const handleSelectPatient = async (patient) => {
@@ -146,24 +117,16 @@ export default function ConsultationFormPage() {
         setIsSearching(false);
 
         if (!isEdit) {
-            // Check for existing history to enforce "One Initial Consultation" rule
             try {
                 const historyRes = await consultaService.getByPaciente(patient.id);
                 if (historyRes.data && historyRes.data.length > 0) {
-                    // Patient has history -> Redirect to Evolution
-                    const confirmEvolution = window.confirm(
-                        `El paciente ${patient.nombre} ${patient.apellido} ya tiene una consulta inicial registrada.\n\nEl sistema derivará automáticamente a "Agregar Evolución" para continuar el tratamiento.`
-                    );
-                    if (confirmEvolution || true) { // Always redirect effectively
+                    if (window.confirm(`El paciente ${patient.nombre} ${patient.apellido} ya tiene una consulta inicial registrada.\n\nEl sistema derivará automáticamente a "Agregar Evolución" para continuar el tratamiento.`)) {
                         navigate('/consultas/evolucion');
                     }
                     return;
                 }
-
-                // If no history, it's a valid First Time consultation.
-                // We don't need to fetchLastConsultation because there is none.
             } catch (err) {
-                console.error("Error checking patient history", err);
+                console.error(err);
             }
         }
     };
@@ -200,12 +163,10 @@ export default function ConsultationFormPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate(form)) {
-            // Si el error es de paciente, ir a la tab general
             if (!form.pacienteId || !form.motivo) setActiveTab('general');
             return;
         }
-        setLoading(true);
-        setError('');
+        setLoading(true); setError('');
 
         try {
             if (isEdit) {
@@ -215,400 +176,366 @@ export default function ConsultationFormPage() {
             }
             navigate('/consultas');
         } catch (err) {
-            console.error(err);
-            const msg = err.response?.data?.details?.[0] || err.response?.data?.message || 'Error al guardar.';
-            setError(msg);
+            setError(err.response?.data?.details?.[0] || err.response?.data?.message || 'Error al guardar.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper para las pestañas
     const TabButton = ({ id, label, icon }) => (
         <button
             type="button"
-            onClick={() => setActiveTab(id)}
+            onClick={() => { setActiveTab(id); setError(''); }}
             style={{
-                padding: '0.8rem 1.2rem',
-                background: activeTab === id ? 'var(--primary)' : 'transparent',
-                color: activeTab === id ? 'white' : 'var(--text-muted)',
+                padding: '0.6rem 1.25rem',
+                background: activeTab === id ? 'white' : 'transparent',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '99px',
+                fontWeight: activeTab === id ? 700 : 500,
+                color: activeTab === id ? 'var(--primary-darker)' : 'var(--text-muted)',
+                boxShadow: activeTab === id ? '0 2px 8px rgba(8, 145, 178, 0.15)' : 'none',
                 cursor: 'pointer',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s'
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                fontFamily: 'Figtree, sans-serif',
+                fontSize: '0.95rem',
+                whiteSpace: 'nowrap'
             }}
         >
+            {icon}
             {label}
         </button>
     );
 
+    const SectionHeader = ({ title, subtitle }) => (
+        <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
+            <h3 style={{ margin: 0, color: 'var(--text-header)', fontSize: '1.1rem' }}>{title}</h3>
+            {subtitle && <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{subtitle}</p>}
+        </div>
+    );
+
     return (
-        <div style={{ width: '100%' }}>
-            <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+            {/* Header Area */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem' }}>
                 <div>
-                    <h1 style={{ marginBottom: '0.5rem' }}>{isEdit ? 'Detalles de Consulta' : 'Nueva Consulta'}</h1>
-                    <p style={{ color: 'var(--text-muted)', margin: 0 }}>
-                        {isEdit ? 'Ver y modificar detalles de la atención' : 'Registrar nueva atención médica'}
+                    <button 
+                        onClick={() => navigate('/consultas')}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, fontFamily: 'Figtree, sans-serif', fontSize: '0.9rem' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        Volver a consultas
+                    </button>
+                    <h1 style={{ marginBottom: '0.25rem' }}>{isEdit ? 'Detalles de Consulta' : 'Nueva Consulta Inicial'}</h1>
+                    <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
+                        {isEdit ? 'Ver y modificar detalles de la atención médica.' : 'Registrar primera atención para evaluación y diagnóstico de un paciente.'}
                     </p>
                 </div>
                 {isEdit && (
                     <button className="btn btn-secondary" onClick={() => setShowHistory(true)}>
-                        <span style={{ marginRight: '0.5rem' }}>🕒</span> Ver Historial
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Ver Historial
                     </button>
                 )}
             </div>
 
             {showHistory && <ConsultationHistoryModal consultaId={id} onClose={() => setShowHistory(false)} />}
 
-            <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                {error && <p style={{ color: 'var(--accent)', marginBottom: '1.5rem', fontWeight: 500 }}>{error}</p>}
+            {/* Navigation Tabs (Pill style) */}
+            <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', padding: '0.35rem', background: 'var(--muted)', borderRadius: '99px', width: 'fit-content', border: '1px solid var(--border-subtle)', overflowX: 'auto' }}>
+                <TabButton id="general" label="Generales" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>} />
+                <TabButton id="examen" label="Examen Mental" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>} />
+                <TabButton id="riesgos" label="Riesgos" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} />
+                <TabButton id="diagnostico" label="Diagnóstico" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
+                <TabButton id="tratamiento" label="Tratamiento" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.5 20.5l-6-6a4.5 4.5 0 1 1 6.5-6.5l6 6a4.5 4.5 0 1 1-6.5 6.5z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/></svg>} />
+            </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '2rem' }}>
+            {error && (
+                <div className="animate-fadeInUp" style={{ background: 'var(--destructive-light)', color: 'var(--destructive)', padding: '1rem 1.5rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {error}
+                </div>
+            )}
 
-                    {/* Tabs Navigation */}
-                    <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', overflowX: 'auto' }}>
-                        <TabButton id="general" label="Gral" />
-                        <TabButton id="examen" label="Ex. Mental" />
-                        <TabButton id="riesgos" label="Riesgos" />
-                        <TabButton id="diagnostico" label="Diagnóstico" />
-                        <TabButton id="tratamiento" label="Tratamiento" />
-                    </div>
+            <div className="glass-panel" style={{ padding: '2.5rem', animation: 'fadeInUp 0.4s ease-out' }}>
+                <form onSubmit={handleSubmit}>
 
                     {/* Tab: General */}
-                    <div style={{ display: activeTab === 'general' ? 'grid' : 'none', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label>Paciente *</label>
-                            {form.pacienteId && selectedPatient ? (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
-                                    <span style={{ fontWeight: 600, color: '#15803d' }}>
-                                        {selectedPatient.nombre} {selectedPatient.apellido} <span style={{ fontWeight: 400, color: '#166534' }}>(DNI: {selectedPatient.dni})</span>
-                                    </span>
-                                    {!isEdit && (
-                                        <button type="button" onClick={handleClearPatient} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                            Cambiar
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <div style={{ position: 'relative' }}>
-                                    <input
-                                        className="form-input"
-                                        placeholder="Buscar por nombre, apellido o DNI..."
-                                        value={searchTerm}
-                                        onChange={(e) => { setSearchTerm(e.target.value); setIsSearching(true); }}
-                                        onFocus={() => setIsSearching(true)}
-                                        // onBlur={() => setTimeout(() => setIsSearching(false), 200)} // Delay to allow click
-                                        disabled={isEdit}
-                                    />
-                                    {isSearching && searchTerm && (
-                                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', marginTop: '4px', maxHeight: '250px', overflowY: 'auto', zIndex: 10, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
-                                            {filteredPacientes.length > 0 ? (
-                                                filteredPacientes.map(p => (
-                                                    <div
-                                                        key={p.id}
-                                                        onClick={() => handleSelectPatient(p)}
-                                                        style={{ padding: '0.8rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.2s' }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                                    >
-                                                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.nombre} {p.apellido}</div>
-                                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>DNI: {p.dni}</div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center' }}>No se encontraron pacientes.</div>
-                                            )}
+                    <div style={{ display: activeTab === 'general' ? 'grid' : 'none', gap: '2rem' }}>
+                        <div>
+                            <SectionHeader title="Datos del Paciente" subtitle="Seleccione el paciente y motivo de consulta principal." />
+                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                                <label>Paciente *</label>
+                                {form.pacienteId && selectedPatient ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--muted)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--primary-darker))', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
+                                                {selectedPatient.nombre.charAt(0)}{selectedPatient.apellido.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 700, color: 'var(--text-header)', fontSize: '1.05rem' }}>{selectedPatient.nombre} {selectedPatient.apellido}</div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>DNI: {selectedPatient.dni}</div>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        {fieldErrors.pacienteId && <FieldError field="pacienteId" />}
+                                        {!isEdit && (
+                                            <button type="button" onClick={handleClearPatient} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', textDecoration: 'underline' }}>
+                                                Cambiar Paciente
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div style={{ position: 'relative' }}>
+                                        <div style={{ position: 'relative' }}>
+                                            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                                            <input
+                                                className="form-input"
+                                                style={{ paddingLeft: '2.8rem' }}
+                                                placeholder="Buscar por nombre, apellido o DNI..."
+                                                value={searchTerm}
+                                                onChange={(e) => { setSearchTerm(e.target.value); setIsSearching(true); }}
+                                                onFocus={() => setIsSearching(true)}
+                                                disabled={isEdit}
+                                            />
+                                        </div>
+                                        {isSearching && searchTerm && (
+                                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid var(--border-subtle)', borderRadius: '12px', marginTop: '4px', maxHeight: '250px', overflowY: 'auto', zIndex: 10, boxShadow: 'var(--shadow-lg)' }}>
+                                                {filteredPacientes.length > 0 ? (
+                                                    filteredPacientes.map(p => (
+                                                        <div
+                                                            key={p.id}
+                                                            onClick={() => handleSelectPatient(p)}
+                                                            style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '0.8rem' }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                                        >
+                                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>
+                                                                {p.nombre.charAt(0)}{p.apellido.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ fontWeight: 600, color: 'var(--text-header)', fontSize: '0.95rem' }}>{p.nombre} {p.apellido}</div>
+                                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>DNI: {p.dni}</div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center' }}>No se encontraron pacientes.</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {fieldErrors.pacienteId && <FieldError field="pacienteId" />}
+                            </div>
 
-                        <div className="form-group">
-                            <label>Motivo de Consulta *</label>
-                            <input
-                                className={`form-input${fieldErrors.motivo ? ' input-error' : ''}`}
-                                name="motivo"
-                                value={form.motivo}
-                                onChange={(e) => { handleChange(e); clearError('motivo'); }}
-                                placeholder="Ej. Ansiedad, Insomnio... (mín. 5 caracteres)"
-                            />
-                            <FieldError field="motivo" />
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    Estado de Ánimo (1-10)
-                                    <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.2rem' }}>{form.estadoAnimo || 5}</span>
-                                </label>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="10"
-                                    name="estadoAnimo"
-                                    value={form.estadoAnimo || 5}
-                                    onChange={handleChange}
-                                    style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label>Motivo de Consulta *</label>
+                                <textarea
+                                    className={`form-input${fieldErrors.motivo ? ' input-error' : ''}`}
+                                    name="motivo"
+                                    value={form.motivo}
+                                    onChange={(e) => { handleChange(e); clearError('motivo'); }}
+                                    rows="2"
+                                    placeholder="Describa el motivo principal..."
                                 />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                    <span>Pésimo (1)</span>
-                                    <span>Excelente (10)</span>
+                                <FieldError field="motivo" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <SectionHeader title="Evaluación Basal" subtitle="Parámetros subjetivos de bienestar" />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', background: 'var(--muted)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-subtle)', marginBottom: '1.5rem' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Estado de Ánimo <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{form.estadoAnimo || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="estadoAnimo" value={form.estadoAnimo || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                        <span>Pésimo (1)</span><span>Excelente (10)</span>
+                                    </div>
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Calidad de Sueño <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{form.calidadSueno || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="calidadSueno" value={form.calidadSueno || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                        <span>Insomnio (1)</span><span>Reparador (10)</span>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    Calidad de Sueño (1-10)
-                                    <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '1.2rem' }}>{form.calidadSueno || 5}</span>
-                                </label>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="10"
-                                    name="calidadSueno"
-                                    value={form.calidadSueno || 5}
-                                    onChange={handleChange}
-                                    style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
-                                />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                    <span>Insomnio (1)</span>
-                                    <span>Reparador (10)</span>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', background: 'var(--muted)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Alimentación <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{form.alimentacion || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="alimentacion" value={form.alimentacion || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                        <span>Mala</span><span>Excelente</span>
+                                    </div>
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Sociabilidad <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{form.sociabilidad || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="sociabilidad" value={form.sociabilidad || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                        <span>Aislamiento</span><span>Muy Social</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    Alimentación (1-10)
-                                    <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.2rem' }}>{form.alimentacion || 5}</span>
-                                </label>
-                                <input type="range" min="1" max="10" name="alimentacion" value={form.alimentacion || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }} />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                    <span>Mala</span>
-                                    <span>Excelente</span>
+                        <div>
+                            <SectionHeader title="Funcionalidad" subtitle="Impacto en áreas de la vida diaria (1-10)" />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Laboral / Escolar <span style={{ fontWeight: 700, color: 'var(--primary-dark)' }}>{form.funcionalidadLaboral || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="funcionalidadLaboral" value={form.funcionalidadLaboral || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--primary-dark)', cursor: 'pointer' }} />
                                 </div>
-                            </div>
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    Sociabilidad (1-10)
-                                    <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '1.2rem' }}>{form.sociabilidad || 5}</span>
-                                </label>
-                                <input type="range" min="1" max="10" name="sociabilidad" value={form.sociabilidad || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                    <span>Aislamiento</span>
-                                    <span>Muy Social</span>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Social <span style={{ fontWeight: 700, color: 'var(--primary-dark)' }}>{form.funcionalidadSocial || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="funcionalidadSocial" value={form.funcionalidadSocial || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--primary-dark)', cursor: 'pointer' }} />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        Familiar <span style={{ fontWeight: 700, color: 'var(--primary-dark)' }}>{form.funcionalidadFamiliar || 5}</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" name="funcionalidadFamiliar" value={form.funcionalidadFamiliar || 5} onChange={handleChange} style={{ width: '100%', accentColor: 'var(--primary-dark)', cursor: 'pointer' }} />
                                 </div>
                             </div>
                         </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', background: '#f0f9ff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #bae6fd' }}>
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                    Func. Laboral
-                                    <span style={{ fontWeight: 700, color: '#0369a1' }}>{form.funcionalidadLaboral || 5}</span>
-                                </label>
-                                <input type="range" min="1" max="10" name="funcionalidadLaboral" value={form.funcionalidadLaboral || 5} onChange={handleChange} style={{ width: '100%', accentColor: '#0369a1', cursor: 'pointer' }} />
-                            </div>
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                    Func. Social
-                                    <span style={{ fontWeight: 700, color: '#0369a1' }}>{form.funcionalidadSocial || 5}</span>
-                                </label>
-                                <input type="range" min="1" max="10" name="funcionalidadSocial" value={form.funcionalidadSocial || 5} onChange={handleChange} style={{ width: '100%', accentColor: '#0369a1', cursor: 'pointer' }} />
-                            </div>
-                            <div className="form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                    Func. Familiar
-                                    <span style={{ fontWeight: 700, color: '#0369a1' }}>{form.funcionalidadFamiliar || 5}</span>
-                                </label>
-                                <input type="range" min="1" max="10" name="funcionalidadFamiliar" value={form.funcionalidadFamiliar || 5} onChange={handleChange} style={{ width: '100%', accentColor: '#0369a1', cursor: 'pointer' }} />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Notas Adicionales</label>
-                            <textarea className="form-input" name="notas" value={form.notas} onChange={handleChange} rows="4" />
+                        
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <SectionHeader title="Notas Libres" subtitle="Anotaciones generales de la consulta" />
+                            <textarea className="form-input" name="notas" value={form.notas} onChange={handleChange} rows="3" placeholder="Comentarios adicionales..." />
                         </div>
                     </div>
 
                     {/* Tab: Examen Mental */}
                     <div style={{ display: activeTab === 'examen' ? 'grid' : 'none', gap: '1.5rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                            <div className="form-group">
-                                <label>Conciencia/Atención</label>
-                                <input className="form-input" name="conciencia" value={form.evaluacionPsiquiatrica?.conciencia || ''} onChange={handlePsychChange} placeholder="Lúcido, distraído..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Apariencia/Porte</label>
-                                <input className="form-input" name="apariencia" value={form.evaluacionPsiquiatrica?.apariencia || ''} onChange={handlePsychChange} placeholder="Aseado, descuidado..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Conducta/Actitud</label>
-                                <input className="form-input" name="conducta" value={form.evaluacionPsiquiatrica?.conducta || ''} onChange={handlePsychChange} placeholder="Colaborador, hostil..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Ánimo/Humor</label>
-                                <input className="form-input" name="animo" value={form.evaluacionPsiquiatrica?.animo || ''} onChange={handlePsychChange} />
-                            </div>
-                            <div className="form-group">
-                                <label>Afecto</label>
-                                <input className="form-input" name="afecto" value={form.evaluacionPsiquiatrica?.afecto || ''} onChange={handlePsychChange} placeholder="Eutímico, plano..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Lenguaje</label>
-                                <input className="form-input" name="lenguaje" value={form.evaluacionPsiquiatrica?.lenguaje || ''} onChange={handlePsychChange} />
-                            </div>
-                            <div className="form-group">
-                                <label>Pensamiento</label>
-                                <input className="form-input" name="pensamiento" value={form.evaluacionPsiquiatrica?.pensamiento || ''} onChange={handlePsychChange} placeholder="Curso y contenido..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Senso-percepción</label>
-                                <input className="form-input" name="sensopercepcion" value={form.evaluacionPsiquiatrica?.sensopercepcion || ''} onChange={handlePsychChange} placeholder="Alucinaciones..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Juicio</label>
-                                <input className="form-input" name="juicio" value={form.evaluacionPsiquiatrica?.juicio || ''} onChange={handlePsychChange} />
-                            </div>
-                            <div className="form-group">
-                                <label>Memoria</label>
-                                <input className="form-input" name="memoria" value={form.evaluacionPsiquiatrica?.memoria || ''} onChange={handlePsychChange} />
-                            </div>
+                        <div style={{ padding: '1rem', background: 'var(--muted)', borderRadius: '12px', marginBottom: '0.5rem', border: '1px solid var(--border-subtle)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-header)' }}>Evaluación del estado mental actual del paciente.</p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                            <div className="form-group" style={{ margin: 0 }}><label>Conciencia/Atención</label><input className="form-input" name="conciencia" value={form.evaluacionPsiquiatrica?.conciencia || ''} onChange={handlePsychChange} placeholder="Lúcido, distraído..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Apariencia/Porte</label><input className="form-input" name="apariencia" value={form.evaluacionPsiquiatrica?.apariencia || ''} onChange={handlePsychChange} placeholder="Aseado, descuidado..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Conducta/Actitud</label><input className="form-input" name="conducta" value={form.evaluacionPsiquiatrica?.conducta || ''} onChange={handlePsychChange} placeholder="Colaborador, hostil..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Ánimo/Humor</label><input className="form-input" name="animo" value={form.evaluacionPsiquiatrica?.animo || ''} onChange={handlePsychChange} placeholder="Eutímico, deprimido..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Afecto</label><input className="form-input" name="afecto" value={form.evaluacionPsiquiatrica?.afecto || ''} onChange={handlePsychChange} placeholder="Plano, embotado..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Lenguaje</label><input className="form-input" name="lenguaje" value={form.evaluacionPsiquiatrica?.lenguaje || ''} onChange={handlePsychChange} placeholder="Coherente, verborrágico..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Pensamiento</label><input className="form-input" name="pensamiento" value={form.evaluacionPsiquiatrica?.pensamiento || ''} onChange={handlePsychChange} placeholder="Curso y contenido..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Senso-percepción</label><input className="form-input" name="sensopercepcion" value={form.evaluacionPsiquiatrica?.sensopercepcion || ''} onChange={handlePsychChange} placeholder="Sin alteraciones, alucinaciones..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Juicio</label><input className="form-input" name="juicio" value={form.evaluacionPsiquiatrica?.juicio || ''} onChange={handlePsychChange} placeholder="Conservado, desviado..." /></div>
+                            <div className="form-group" style={{ margin: 0 }}><label>Memoria</label><input className="form-input" name="memoria" value={form.evaluacionPsiquiatrica?.memoria || ''} onChange={handlePsychChange} placeholder="Conservada, amnesia..." /></div>
                         </div>
                     </div>
 
                     {/* Tab: Riesgos */}
-                    <div style={{ display: activeTab === 'riesgos' ? 'grid' : 'none', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label style={{ color: '#ef4444', fontWeight: 600 }}>Riesgo Suicida</label>
-                            <select
-                                className="form-input"
-                                name="riesgoSuicida"
-                                value={form.evaluacionPsiquiatrica?.riesgoSuicida || ''}
-                                onChange={handlePsychChange}
-                                style={{ borderColor: '#fca5a5' }}
-                            >
-                                <option value="">Seleccione riesgo...</option>
-                                <option value="Nulo">Nulo</option>
-                                <option value="Bajo">Bajo</option>
-                                <option value="Medio">Medio</option>
-                                <option value="Alto">Alto</option>
-                                <option value="Inminente">Inminente</option>
-                            </select>
+                    <div style={{ display: activeTab === 'riesgos' ? 'grid' : 'none', gap: '2rem' }}>
+                        <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', padding: '1.5rem', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', right: '-10px', top: '-10px', opacity: 0.05, transform: 'scale(3)' }}><svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                            <h4 style={{ margin: '0 0 1rem 0', color: '#be123c', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                Evaluación de Riesgo Vital
+                            </h4>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label style={{ color: '#9f1239' }}>Riesgo Suicida</label>
+                                <select className="form-input" name="riesgoSuicida" value={form.evaluacionPsiquiatrica?.riesgoSuicida || ''} onChange={handlePsychChange} style={{ borderColor: '#fecdd3', background: 'white' }}>
+                                    <option value="">Seleccione riesgo...</option>
+                                    <option value="Nulo">Nulo</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option><option value="Inminente">Inminente</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <label style={{ color: '#f59e0b', fontWeight: 600 }}>Riesgo Heteroagresivo (Hacia terceros)</label>
-                            <select
-                                className="form-input"
-                                name="riesgoHomicida"
-                                value={form.evaluacionPsiquiatrica?.riesgoHomicida || ''}
-                                onChange={handlePsychChange}
-                                style={{ borderColor: '#fcd34d' }}
-                            >
-                                <option value="">Seleccione riesgo...</option>
-                                <option value="Nulo">Nulo</option>
-                                <option value="Bajo">Bajo</option>
-                                <option value="Medio">Medio</option>
-                                <option value="Alto">Alto</option>
-                            </select>
+
+                        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '1.5rem', borderRadius: '12px' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label style={{ color: '#b45309' }}>Riesgo Heteroagresivo (Hacia terceros)</label>
+                                <select className="form-input" name="riesgoHomicida" value={form.evaluacionPsiquiatrica?.riesgoHomicida || ''} onChange={handlePsychChange} style={{ borderColor: '#fde68a', background: 'white' }}>
+                                    <option value="">Seleccione riesgo...</option>
+                                    <option value="Nulo">Nulo</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <label style={{ color: '#3b82f6', fontWeight: 600 }}>Riesgo Propio (Autocuidado)</label>
-                            <select
-                                className="form-input"
-                                name="riesgoPropio"
-                                value={form.evaluacionPsiquiatrica?.riesgoPropio || ''}
-                                onChange={handlePsychChange}
-                                style={{ borderColor: '#93c5fd' }}
-                            >
-                                <option value="">Seleccione riesgo...</option>
-                                <option value="Conservado">Conservado (Sin riesgo)</option>
-                                <option value="Leve">Leve (Descuido ocasional)</option>
-                                <option value="Moderado">Moderado</option>
-                                <option value="Grave">Grave (Abandono total)</option>
-                            </select>
+
+                        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1.5rem', borderRadius: '12px' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label style={{ color: '#1d4ed8' }}>Riesgo Propio (Autocuidado / Negligencia)</label>
+                                <select className="form-input" name="riesgoPropio" value={form.evaluacionPsiquiatrica?.riesgoPropio || ''} onChange={handlePsychChange} style={{ borderColor: '#bfdbfe', background: 'white' }}>
+                                    <option value="">Seleccione riesgo...</option>
+                                    <option value="Conservado">Conservado (Sin riesgo)</option><option value="Leve">Leve (Descuido ocasional)</option><option value="Moderado">Moderado</option><option value="Grave">Grave (Abandono total)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
                     {/* Tab: Diagnóstico */}
-                    <div style={{ display: activeTab === 'diagnostico' ? 'grid' : 'none', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label>Eje I: Trastornos Clínicos</label>
-                            <input className="form-input" name="eje1" value={form.evaluacionPsiquiatrica?.eje1 || ''} onChange={handlePsychChange} placeholder="Ej. Depresión Mayor Recurrente" />
+                    <div style={{ display: activeTab === 'diagnostico' ? 'grid' : 'none', gap: '2rem' }}>
+                        <div>
+                            <SectionHeader title="Ejes Diagnósticos" subtitle="Clasificación multiaxial" />
+                            <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label>Eje I: Trastornos Clínicos / Psiquiátricos</label>
+                                    <input className="form-input" name="eje1" value={form.evaluacionPsiquiatrica?.eje1 || ''} onChange={handlePsychChange} placeholder="Ej. Depresión Mayor Recurrente" />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label>Eje II: Trastornos de Personalidad / Retraso Mental</label>
+                                    <input className="form-input" name="eje2" value={form.evaluacionPsiquiatrica?.eje2 || ''} onChange={handlePsychChange} placeholder="Ej. Trastorno Límite de la Personalidad" />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label>Eje III: Enfermedades Médicas Generales</label>
+                                    <input className="form-input" name="eje3" value={form.evaluacionPsiquiatrica?.eje3 || ''} onChange={handlePsychChange} placeholder="Ej. Hipotiroidismo, Hipertensión" />
+                                </div>
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <label>Eje II: Trastornos de Personalidad / Retraso</label>
-                            <input className="form-input" name="eje2" value={form.evaluacionPsiquiatrica?.eje2 || ''} onChange={handlePsychChange} placeholder="Ej. Trastorno Límite de la Personalidad" />
-                        </div>
-                        <div className="form-group">
-                            <label>Eje III: Enfermedades Médicas</label>
-                            <input className="form-input" name="eje3" value={form.evaluacionPsiquiatrica?.eje3 || ''} onChange={handlePsychChange} placeholder="Ej. Hipotiroidismo" />
-                        </div>
-                        <div className="form-group">
-                            <label>Resumen Diagnóstico</label>
-                            <textarea
-                                className="form-input"
-                                name="diagnostico"
-                                value={form.diagnostico}
-                                onChange={handleChange}
-                                rows="3"
-                                placeholder="Resumen general del diagnóstico..."
-                            />
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <SectionHeader title="Resumen" subtitle="Descripción general del diagnóstico" />
+                            <textarea className="form-input" name="diagnostico" value={form.diagnostico} onChange={handleChange} rows="4" placeholder="Conclusión diagnóstica general..." />
                         </div>
                     </div>
 
                     {/* Tab: Tratamiento */}
-                    <div style={{ display: activeTab === 'tratamiento' ? 'grid' : 'none', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label>Plan Farmacológico</label>
-                            <textarea
-                                className="form-input"
-                                name="tratamiento"
-                                value={form.tratamiento}
-                                onChange={handleChange}
-                                rows="4"
-                                placeholder="Detalle de medicación y dosis..."
-                            />
+                    <div style={{ display: activeTab === 'tratamiento' ? 'grid' : 'none', gap: '2rem' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <SectionHeader title="Plan Terapéutico" subtitle="Indicaciones médicas y farmacológicas" />
+                            <textarea className="form-input" name="tratamiento" value={form.tratamiento} onChange={handleChange} rows="5" placeholder="Detalle de medicación, posología, indicaciones psicoterapéuticas..." />
                         </div>
-                        <div className="form-group">
-                            <label>Adherencia al Tratamiento</label>
-                            <select
-                                className="form-input"
-                                name="adherenciaTratamiento"
-                                value={form.evaluacionPsiquiatrica?.adherenciaTratamiento || ''}
-                                onChange={handlePsychChange}
-                            >
-                                <option value="">Seleccione...</option>
-                                <option value="Buena">Buena</option>
-                                <option value="Regular">Regular (Olvidos ocasionales)</option>
-                                <option value="Mala">Mala (Abandono frecuente)</option>
-                                <option value="Nula">Nula (No toma medicación)</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>Efectos Adversos / Secundarios</label>
-                            <input className="form-input" name="efectosAdversos" value={form.evaluacionPsiquiatrica?.efectosAdversos || ''} onChange={handlePsychChange} placeholder="Ej. Aumento de peso, somnolencia..." />
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label>Adherencia al Tratamiento</label>
+                                <select className="form-input" name="adherenciaTratamiento" value={form.evaluacionPsiquiatrica?.adherenciaTratamiento || ''} onChange={handlePsychChange}>
+                                    <option value="">Seleccione nivel...</option>
+                                    <option value="Buena">Buena</option>
+                                    <option value="Regular">Regular (Olvidos ocasionales)</option>
+                                    <option value="Mala">Mala (Abandono frecuente)</option>
+                                    <option value="Nula">Nula (No toma medicación)</option>
+                                </select>
+                            </div>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label>Efectos Adversos Observados</label>
+                                <input className="form-input" name="efectosAdversos" value={form.evaluacionPsiquiatrica?.efectosAdversos || ''} onChange={handlePsychChange} placeholder="Ej. Somnolencia, aumento de peso..." />
+                            </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9' }}>
-                        <button type="submit" className="btn" disabled={loading}>
-                            {loading ? 'Guardando...' : 'Guardar Consulta'}
-                        </button>
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
                         <button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
                             Cancelar
                         </button>
+                        <button type="submit" className="btn" disabled={loading}>
+                            {loading ? 'Guardando...' : (isEdit ? 'Guardar Cambios' : 'Registrar Consulta')}
+                        </button>
                     </div>
+
                 </form>
             </div>
         </div>
     );
 }
-

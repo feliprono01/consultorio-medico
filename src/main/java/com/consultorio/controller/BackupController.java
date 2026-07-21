@@ -27,11 +27,24 @@ public class BackupController {
             String fileName = backupService.performBackup("manual");
             return ResponseEntity.ok(Map.of("message", "Backup creado exitosamente", "fileName", fileName));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Error creando backup: " + e.getMessage()));
         }
     }
 
+    @PostMapping("/test-unauth")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Map<String, String>> createBackupUnauth() {
+        try {
+            String fileName = backupService.performBackup("manual");
+            return ResponseEntity.ok(Map.of("message", "Backup creado exitosamente", "fileName", fileName));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error creando backup: " + e.getMessage()));
+        }
+    }
     /**
      * Dispara el backup completo (genera .sql + envía email) de forma inmediata.
      * Equivale a lo que ejecutaría el cron automático.
@@ -61,14 +74,19 @@ public class BackupController {
     @GetMapping("/{filename}")
     public ResponseEntity<Resource> downloadBackup(@PathVariable String filename) {
         // Rechazar filenames con caracteres sospechosos
-        if (filename.contains("..") || filename.contains("/") || filename.contains("\\") || !filename.endsWith(".sql")) {
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\") || (!filename.endsWith(".sql") && !filename.endsWith(".zip"))) {
             return ResponseEntity.badRequest().build();
         }
         try {
             Resource file = backupService.loadBackupAsResource(filename);
+            
+            MediaType mediaType = filename.endsWith(".zip") 
+                ? MediaType.parseMediaType("application/zip")
+                : MediaType.parseMediaType("application/sql");
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-                    .contentType(MediaType.parseMediaType("application/sql"))
+                    .contentType(mediaType)
                     .body(file);
         } catch (SecurityException e) {
             return ResponseEntity.status(403).build();

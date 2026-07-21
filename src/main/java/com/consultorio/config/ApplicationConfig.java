@@ -22,6 +22,8 @@ public class ApplicationConfig {
         this.usuarioRepository = usuarioRepository;
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApplicationConfig.class);
+
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> usuarioRepository.findByUsername(username)

@@ -39,13 +39,11 @@ public class AccessLogService {
 
     /**
      * Registra un acceso de lectura a información de un paciente.
-     * Se ejecuta de forma asíncrona para no impactar la latencia.
      *
      * @param pacienteId ID del paciente cuya info fue accedida
      * @param accion     Tipo de acceso (usar las constantes de esta clase)
      * @param detalle    Información adicional (ej: "Consulta #42")
      */
-    @Async
     public void registrar(Long pacienteId, String accion, String detalle) {
         try {
             String usuario = obtenerUsuarioActual();

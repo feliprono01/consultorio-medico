@@ -14,7 +14,7 @@ export default function PatientEvolutionChart({ consultations }) {
                 alignItems: 'center',
                 gap: '0.75rem'
             }}>
-                <span style={{ fontSize: '1.25rem' }}>ℹ️</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <p style={{ margin: 0, color: '#1e40af', fontSize: '0.9rem' }}>
                     Se necesitan al menos 2 consultas con datos de evolución para mostrar el gráfico.
                 </p>
@@ -47,7 +47,7 @@ export default function PatientEvolutionChart({ consultations }) {
                 alignItems: 'center',
                 gap: '0.75rem'
             }}>
-                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <p style={{ margin: 0, color: '#92400e', fontSize: '0.9rem' }}>
                     No hay datos cuantitativos (Ánimo/Sueño) registrados para generar la curva de evolución.
                 </p>

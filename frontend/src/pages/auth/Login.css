@@ -1,0 +1,300 @@
+.login-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    background: var(--background);
+}
+
+.login-left {
+    flex: 1;
+    position: relative;
+    display: none; /* hidden on small screens */
+    background-color: var(--primary-darker);
+    overflow: hidden;
+}
+
+@media (min-width: 900px) {
+    .login-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+}
+
+.login-left-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.85;
+    mix-blend-mode: overlay;
+    transition: transform 10s ease;
+}
+.login-left:hover .login-left-bg {
+    transform: scale(1.05);
+}
+
+.login-left-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, rgba(8, 145, 178, 0.85) 0%, rgba(5, 150, 105, 0.9) 100%);
+    backdrop-filter: blur(4px);
+}
+
+.login-brand-info {
+    position: relative;
+    z-index: 10;
+    padding: 4rem;
+    color: white;
+}
+
+.login-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'Figtree', sans-serif;
+    letter-spacing: -0.5px;
+    margin-bottom: 2rem;
+}
+
+.login-brand-logo-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-quote {
+    position: relative;
+    z-index: 10;
+    padding: 4rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.login-quote h2 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    font-family: 'Figtree', sans-serif;
+    font-weight: 700;
+}
+
+.login-quote p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.login-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.login-card-modern {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    padding: 3rem 2.5rem;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(255,255,255,0.8);
+}
+
+.login-header {
+    margin-bottom: 2.5rem;
+}
+
+.login-header h1 {
+    font-size: 2rem;
+    color: var(--text-header);
+    margin-bottom: 0.5rem;
+    font-family: 'Figtree', sans-serif;
+    letter-spacing: -0.5px;
+}
+
+.login-header p {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.input-floating {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.input-floating input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1.25rem 1rem 0.5rem 3rem;
+    background: #f8fafc;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-header);
+    transition: all 0.2s;
+}
+
+.input-floating input:focus {
+    outline: none;
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.input-floating input:not(:placeholder-shown) {
+    background: #fff;
+    border-color: #e2e8f0;
+}
+
+.input-floating label {
+    position: absolute;
+    left: 3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.2s ease-out;
+}
+
+/* Float label upwards on focus or when having value */
+.input-floating input:focus ~ label,
+.input-floating input:not(:placeholder-shown) ~ label {
+    top: 0.5rem;
+    transform: translateY(0);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+.input-floating input:not(:placeholder-shown):not(:focus) ~ label {
+    color: var(--text-muted);
+}
+
+.input-floating-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.input-floating input:focus ~ .input-floating-icon {
+    color: var(--primary);
+}
+
+.btn-login-submit {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Figtree', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.btn-login-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(8, 145, 178, 0.4);
+}
+
+.btn-login-submit:active {
+    transform: translateY(0);
+}
+
+.btn-login-submit.loading {
+    opacity: 0.8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Custom Checkbox */
+.custom-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.custom-checkbox-container label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #f8fafc;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease-in-out;
+    margin: 0;
+}
+
+.custom-checkbox::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    transform: scale(0);
+    transition: 0.2s transform ease-in-out;
+    box-shadow: inset 1em 1em white;
+    background-color: white;
+    transform-origin: center;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.custom-checkbox:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.custom-checkbox:checked::before {
+    transform: scale(1);
+}
+
+.custom-checkbox:hover {
+    border-color: var(--primary-light);
+}

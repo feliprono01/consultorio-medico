@@ -1,25 +1,37 @@
-# Script para simular el entorno de produccion localmente
+# Script para iniciar el entorno de produccion localmente cargando variables desde el archivo .env
 
-Write-Host "Configurando variables de entorno para Produccion (Simulacion Local)..."
+Write-Host "Cargando variables de entorno desde .env..."
 
-# Limpiar cualquier valor previo de DB_PASSWORD para evitar conflictos
-Remove-Item Env:\DB_PASSWORD -ErrorAction SilentlyContinue
+# Buscar archivo .env
+$envFile = "$PSScriptRoot\.env"
+if (-Not (Test-Path $envFile)) {
+    Write-Host "No se encontró el archivo .env. Por favor, crea uno basándote en .env.example." -ForegroundColor Red
+    exit 1
+}
 
-# 1. Base de Datos
-$env:DB_URL = "jdbc:mysql://localhost:3306/consultorio_medico?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
-$env:DB_USER = "root"
-# NO establecemos DB_PASSWORD como variable de entorno.
+# Leer el archivo línea por línea y parsear las variables
+Get-Content $envFile | ForEach-Object {
+    $line = $_.Trim()
+    # Ignorar líneas vacías o comentarios
+    if ($line -ne "" -and -not $line.StartsWith("#")) {
+        # Extraer hasta el primer comentario inline (#) si existe
+        if ($line -match "^([^#]+)") {
+            $cleanedLine = $matches[1].Trim()
+            if ($cleanedLine -match "^([^=]+)=(.*)$") {
+                $key = $matches[1].Trim()
+                $value = $matches[2].Trim()
+                # Setear la variable de entorno
+                [Environment]::SetEnvironmentVariable($key, $value, "Process")
+                Write-Host "Cargada variable: $key"
+            }
+        }
+    }
+}
 
-# 2. Seguridad
-$env:JWT_SECRET = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
-
-# 3. CORS
-$env:CORS_ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:3002,http://localhost:5173"
-
-Write-Host "Iniciando Backend en modo PRODUCCION..."
+Write-Host ""
+Write-Host "Iniciando Backend..."
 Write-Host "Usa Ctrl+C para detener."
-Write-Host "Nota: Se fuerza spring.datasource.password vacia para compatibilidad con XAMPP."
+Write-Host ""
 
-# Ejecutar el JAR con el perfil 'prod'
-# Agregamos -Dspring.datasource.password= para sobreescribir cualquier configuracion y asegurar pass vacia
-java "-Dspring.profiles.active=prod" "-Dspring.datasource.password=" -jar target/consultorio-medico-1.0.0.jar
+# Ejecutar el proyecto usando Maven (sin hardcodear el JAR) para que auto-detecte cambios
+.\mvnw spring-boot:run
