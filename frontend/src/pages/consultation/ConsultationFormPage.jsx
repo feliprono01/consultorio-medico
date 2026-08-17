@@ -4,13 +4,29 @@ import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
 import ConsultationHistoryModal from '../../components/consultation/ConsultationHistoryModal';
 import { useFormValidation, rules } from '../../hooks/useFormValidation';
+import { useToast } from '../../hooks/useToast';
+import FieldError from '../../components/common/FieldError';
+import SectionHeader from '../../components/common/SectionHeader';
+import TabButton from '../../components/common/TabButton';
+import ErrorBanner from '../../components/common/ErrorBanner';
+import { MentalExamFields, RiskAssessmentFields } from '../../components/consultation/PsychiatricEvaluationFields';
 
-export default function ConsultationFormPage() {
+/**
+ * `pacienteId`/`consultaId`/`onSaved`/`hideHistoryButton` son opcionales —
+ * si no se pasan, el componente sigue leyendo la URL directamente
+ * (useParams/useSearchParams) y navegando tras guardar, igual que como
+ * ruta directa (/consultas/new, /consultas/edit/:id). Un padre que lo
+ * controle (ej. ConsultationSplitView) puede fijarlos para embeberlo sin
+ * depender de la URL.
+ */
+export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consultaId: consultaIdProp, onSaved, hideHistoryButton = false }) {
     const navigate = useNavigate();
-    const { id } = useParams();
+    const { id: idFromParams } = useParams();
     const [searchParams] = useSearchParams();
-    const initialPacienteId = searchParams.get('pacienteId');
+    const id = consultaIdProp ?? idFromParams;
+    const initialPacienteId = pacienteIdProp ?? searchParams.get('pacienteId');
     const isEdit = !!id;
+    const toast = useToast();
 
     const [pacientes, setPacientes] = useState([]);
     const [activeTab, setActiveTab] = useState('general');
@@ -39,10 +55,6 @@ export default function ConsultationFormPage() {
         motivo:     (v) => rules.requerido('El motivo')(v) || rules.minLength('El motivo', 5)(v),
     };
     const { errors: fieldErrors, validate, clearError } = useFormValidation(consultaRules);
-    
-    const FieldError = ({ field }) => fieldErrors[field]
-        ? <span style={{ color: 'var(--destructive)', fontSize: '0.78rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{fieldErrors[field]}</span>
-        : null;
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -86,6 +98,7 @@ export default function ConsultationFormPage() {
             }
         };
         loadInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isEdit, id, initialPacienteId]);
 
     const fetchLastConsultation = async (pacienteId) => {
@@ -127,6 +140,7 @@ export default function ConsultationFormPage() {
                 }
             } catch (err) {
                 console.error(err);
+                toast.error('No se pudo verificar si el paciente ya tiene una consulta inicial.');
             }
         }
     };
@@ -169,12 +183,15 @@ export default function ConsultationFormPage() {
         setLoading(true); setError('');
 
         try {
-            if (isEdit) {
-                await consultaService.update(id, form);
+            const res = isEdit
+                ? await consultaService.update(id, form)
+                : await consultaService.create(form);
+
+            if (onSaved) {
+                onSaved(res.data);
             } else {
-                await consultaService.create(form);
+                navigate('/consultas');
             }
-            navigate('/consultas');
         } catch (err) {
             setError(err.response?.data?.details?.[0] || err.response?.data?.message || 'Error al guardar.');
         } finally {
@@ -182,44 +199,12 @@ export default function ConsultationFormPage() {
         }
     };
 
-    const TabButton = ({ id, label, icon }) => (
-        <button
-            type="button"
-            onClick={() => { setActiveTab(id); setError(''); }}
-            style={{
-                padding: '0.6rem 1.25rem',
-                background: activeTab === id ? 'white' : 'transparent',
-                border: 'none',
-                borderRadius: '99px',
-                fontWeight: activeTab === id ? 700 : 500,
-                color: activeTab === id ? 'var(--primary-darker)' : 'var(--text-muted)',
-                boxShadow: activeTab === id ? '0 2px 8px rgba(8, 145, 178, 0.15)' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                fontFamily: 'Figtree, sans-serif',
-                fontSize: '0.95rem',
-                whiteSpace: 'nowrap'
-            }}
-        >
-            {icon}
-            {label}
-        </button>
-    );
-
-    const SectionHeader = ({ title, subtitle }) => (
-        <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ margin: 0, color: 'var(--text-header)', fontSize: '1.1rem' }}>{title}</h3>
-            {subtitle && <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{subtitle}</p>}
-        </div>
-    );
-
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
             {/* Header Area */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem' }}>
                 <div>
-                    <button 
+                    <button
                         onClick={() => navigate('/consultas')}
                         style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, fontFamily: 'Figtree, sans-serif', fontSize: '0.9rem' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -230,7 +215,7 @@ export default function ConsultationFormPage() {
                         {isEdit ? 'Ver y modificar detalles de la atención médica.' : 'Registrar primera atención para evaluación y diagnóstico de un paciente.'}
                     </p>
                 </div>
-                {isEdit && (
+                {isEdit && !hideHistoryButton && (
                     <button className="btn btn-secondary" onClick={() => setShowHistory(true)}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Ver Historial
@@ -242,19 +227,14 @@ export default function ConsultationFormPage() {
 
             {/* Navigation Tabs (Pill style) */}
             <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', padding: '0.35rem', background: 'var(--muted)', borderRadius: '99px', width: 'fit-content', border: '1px solid var(--border-subtle)', overflowX: 'auto' }}>
-                <TabButton id="general" label="Generales" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>} />
-                <TabButton id="examen" label="Examen Mental" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>} />
-                <TabButton id="riesgos" label="Riesgos" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} />
-                <TabButton id="diagnostico" label="Diagnóstico" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
-                <TabButton id="tratamiento" label="Tratamiento" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.5 20.5l-6-6a4.5 4.5 0 1 1 6.5-6.5l6 6a4.5 4.5 0 1 1-6.5 6.5z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/></svg>} />
+                <TabButton active={activeTab === 'general'} onClick={() => { setActiveTab('general'); setError(''); }} label="Generales" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>} />
+                <TabButton active={activeTab === 'examen'} onClick={() => { setActiveTab('examen'); setError(''); }} label="Examen Mental" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>} />
+                <TabButton active={activeTab === 'riesgos'} onClick={() => { setActiveTab('riesgos'); setError(''); }} label="Riesgos" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} />
+                <TabButton active={activeTab === 'diagnostico'} onClick={() => { setActiveTab('diagnostico'); setError(''); }} label="Diagnóstico" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
+                <TabButton active={activeTab === 'tratamiento'} onClick={() => { setActiveTab('tratamiento'); setError(''); }} label="Tratamiento" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.5 20.5l-6-6a4.5 4.5 0 1 1 6.5-6.5l6 6a4.5 4.5 0 1 1-6.5 6.5z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/></svg>} />
             </div>
 
-            {error && (
-                <div className="animate-fadeInUp" style={{ background: 'var(--destructive-light)', color: 'var(--destructive)', padding: '1rem 1.5rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    {error}
-                </div>
-            )}
+            <ErrorBanner message={error} />
 
             <div className="glass-panel" style={{ padding: '2.5rem', animation: 'fadeInUp 0.4s ease-out' }}>
                 <form onSubmit={handleSubmit}>
@@ -323,7 +303,7 @@ export default function ConsultationFormPage() {
                                         )}
                                     </div>
                                 )}
-                                {fieldErrors.pacienteId && <FieldError field="pacienteId" />}
+                                <FieldError message={fieldErrors.pacienteId} />
                             </div>
 
                             <div className="form-group" style={{ margin: 0 }}>
@@ -336,7 +316,7 @@ export default function ConsultationFormPage() {
                                     rows="2"
                                     placeholder="Describa el motivo principal..."
                                 />
-                                <FieldError field="motivo" />
+                                <FieldError message={fieldErrors.motivo} />
                             </div>
                         </div>
 
@@ -362,7 +342,7 @@ export default function ConsultationFormPage() {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', background: 'var(--muted)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -408,7 +388,7 @@ export default function ConsultationFormPage() {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="form-group" style={{ margin: 0 }}>
                             <SectionHeader title="Notas Libres" subtitle="Anotaciones generales de la consulta" />
                             <textarea className="form-input" name="notas" value={form.notas} onChange={handleChange} rows="3" placeholder="Comentarios adicionales..." />
@@ -417,60 +397,12 @@ export default function ConsultationFormPage() {
 
                     {/* Tab: Examen Mental */}
                     <div style={{ display: activeTab === 'examen' ? 'grid' : 'none', gap: '1.5rem' }}>
-                        <div style={{ padding: '1rem', background: 'var(--muted)', borderRadius: '12px', marginBottom: '0.5rem', border: '1px solid var(--border-subtle)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-header)' }}>Evaluación del estado mental actual del paciente.</p>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-                            <div className="form-group" style={{ margin: 0 }}><label>Conciencia/Atención</label><input className="form-input" name="conciencia" value={form.evaluacionPsiquiatrica?.conciencia || ''} onChange={handlePsychChange} placeholder="Lúcido, distraído..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Apariencia/Porte</label><input className="form-input" name="apariencia" value={form.evaluacionPsiquiatrica?.apariencia || ''} onChange={handlePsychChange} placeholder="Aseado, descuidado..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Conducta/Actitud</label><input className="form-input" name="conducta" value={form.evaluacionPsiquiatrica?.conducta || ''} onChange={handlePsychChange} placeholder="Colaborador, hostil..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Ánimo/Humor</label><input className="form-input" name="animo" value={form.evaluacionPsiquiatrica?.animo || ''} onChange={handlePsychChange} placeholder="Eutímico, deprimido..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Afecto</label><input className="form-input" name="afecto" value={form.evaluacionPsiquiatrica?.afecto || ''} onChange={handlePsychChange} placeholder="Plano, embotado..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Lenguaje</label><input className="form-input" name="lenguaje" value={form.evaluacionPsiquiatrica?.lenguaje || ''} onChange={handlePsychChange} placeholder="Coherente, verborrágico..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Pensamiento</label><input className="form-input" name="pensamiento" value={form.evaluacionPsiquiatrica?.pensamiento || ''} onChange={handlePsychChange} placeholder="Curso y contenido..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Senso-percepción</label><input className="form-input" name="sensopercepcion" value={form.evaluacionPsiquiatrica?.sensopercepcion || ''} onChange={handlePsychChange} placeholder="Sin alteraciones, alucinaciones..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Juicio</label><input className="form-input" name="juicio" value={form.evaluacionPsiquiatrica?.juicio || ''} onChange={handlePsychChange} placeholder="Conservado, desviado..." /></div>
-                            <div className="form-group" style={{ margin: 0 }}><label>Memoria</label><input className="form-input" name="memoria" value={form.evaluacionPsiquiatrica?.memoria || ''} onChange={handlePsychChange} placeholder="Conservada, amnesia..." /></div>
-                        </div>
+                        <MentalExamFields values={form.evaluacionPsiquiatrica} onChange={handlePsychChange} />
                     </div>
 
                     {/* Tab: Riesgos */}
                     <div style={{ display: activeTab === 'riesgos' ? 'grid' : 'none', gap: '2rem' }}>
-                        <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', padding: '1.5rem', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ position: 'absolute', right: '-10px', top: '-10px', opacity: 0.05, transform: 'scale(3)' }}><svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-                            <h4 style={{ margin: '0 0 1rem 0', color: '#be123c', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                Evaluación de Riesgo Vital
-                            </h4>
-                            <div className="form-group" style={{ margin: 0 }}>
-                                <label style={{ color: '#9f1239' }}>Riesgo Suicida</label>
-                                <select className="form-input" name="riesgoSuicida" value={form.evaluacionPsiquiatrica?.riesgoSuicida || ''} onChange={handlePsychChange} style={{ borderColor: '#fecdd3', background: 'white' }}>
-                                    <option value="">Seleccione riesgo...</option>
-                                    <option value="Nulo">Nulo</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option><option value="Inminente">Inminente</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '1.5rem', borderRadius: '12px' }}>
-                            <div className="form-group" style={{ margin: 0 }}>
-                                <label style={{ color: '#b45309' }}>Riesgo Heteroagresivo (Hacia terceros)</label>
-                                <select className="form-input" name="riesgoHomicida" value={form.evaluacionPsiquiatrica?.riesgoHomicida || ''} onChange={handlePsychChange} style={{ borderColor: '#fde68a', background: 'white' }}>
-                                    <option value="">Seleccione riesgo...</option>
-                                    <option value="Nulo">Nulo</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1.5rem', borderRadius: '12px' }}>
-                            <div className="form-group" style={{ margin: 0 }}>
-                                <label style={{ color: '#1d4ed8' }}>Riesgo Propio (Autocuidado / Negligencia)</label>
-                                <select className="form-input" name="riesgoPropio" value={form.evaluacionPsiquiatrica?.riesgoPropio || ''} onChange={handlePsychChange} style={{ borderColor: '#bfdbfe', background: 'white' }}>
-                                    <option value="">Seleccione riesgo...</option>
-                                    <option value="Conservado">Conservado (Sin riesgo)</option><option value="Leve">Leve (Descuido ocasional)</option><option value="Moderado">Moderado</option><option value="Grave">Grave (Abandono total)</option>
-                                </select>
-                            </div>
-                        </div>
+                        <RiskAssessmentFields values={form.evaluacionPsiquiatrica} onChange={handlePsychChange} />
                     </div>
 
                     {/* Tab: Diagnóstico */}
@@ -505,7 +437,7 @@ export default function ConsultationFormPage() {
                             <SectionHeader title="Plan Terapéutico" subtitle="Indicaciones médicas y farmacológicas" />
                             <textarea className="form-input" name="tratamiento" value={form.tratamiento} onChange={handleChange} rows="5" placeholder="Detalle de medicación, posología, indicaciones psicoterapéuticas..." />
                         </div>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                             <div className="form-group" style={{ margin: 0 }}>
                                 <label>Adherencia al Tratamiento</label>
