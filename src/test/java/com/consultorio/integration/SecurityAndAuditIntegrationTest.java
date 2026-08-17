@@ -145,6 +145,28 @@ class SecurityAndAuditIntegrationTest {
     }
 
     @Test
+    void testAuthMeConfirmaSesionValidaYRechazaSinCookie() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        mockMvc.perform(get("/api/auth/me").cookie(jwtCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("USER"));
+
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void testExportarPdfQuedaRegistradoEnAuditoria() throws Exception {
         AuthRequestDTO loginRequest = new AuthRequestDTO();
         loginRequest.setUsername("doctor.test");

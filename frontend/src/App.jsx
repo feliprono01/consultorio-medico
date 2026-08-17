@@ -37,8 +37,10 @@ function App() {
               <Route path="/consultas/new" element={<ConsultationSplitView />} />
               <Route path="/consultas/evolucion" element={<EvolutionFormPage />} />
               <Route path="/consultas/edit/:id" element={<ConsultationSplitView />} />
-              <Route path="/usuarios" element={<UserManagementPage />} />
-              <Route path="/backups" element={<BackupPage />} />
+              <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
+                <Route path="/usuarios" element={<UserManagementPage />} />
+                <Route path="/backups" element={<BackupPage />} />
+              </Route>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

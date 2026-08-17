@@ -15,6 +15,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -77,6 +79,29 @@ public class AuthController {
                 return ResponseEntity.ok(AuthResponseDTO.builder()
                                 .role(user.getRole().name())
                                 .build());
+        }
+
+        /**
+         * Confirma si la sesión (cookie httpOnly) sigue siendo válida y devuelve el rol
+         * actual. El frontend lo usa al montar la app para no confiar ciegamente en el
+         * flag de localStorage — si la cookie expiró, este endpoint devuelve 401.
+         */
+        @GetMapping("/me")
+        public ResponseEntity<AuthResponseDTO> me() {
+                var authentication = SecurityContextHolder.getContext().getAuthentication();
+                // Sin cookie válida, Spring Security asigna una autenticación anónima que
+                // igual devuelve isAuthenticated()=true — hay que descartarla explícitamente.
+                if (authentication == null || !authentication.isAuthenticated()
+                                || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+                        return ResponseEntity.status(401).build();
+                }
+
+                String role = authentication.getAuthorities().stream()
+                                .findFirst()
+                                .map(Object::toString)
+                                .orElse(null);
+
+                return ResponseEntity.ok(AuthResponseDTO.builder().role(role).build());
         }
 
         @PostMapping("/logout")
