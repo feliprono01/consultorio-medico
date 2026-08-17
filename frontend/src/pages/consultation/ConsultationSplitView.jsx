@@ -1,73 +1,91 @@
-import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { consultaService } from '../../api/consultaService';
 import ConsultationFormPage from './ConsultationFormPage';
 import ConsultationHistoryViewer from '../../components/consultation/ConsultationHistoryViewer';
+import { useToast } from '../../hooks/useToast';
 
 export default function ConsultationSplitView() {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
-    const pacienteId = searchParams.get('pacienteId');
+    const pacienteIdFromQuery = searchParams.get('pacienteId');
+    const navigate = useNavigate();
+    const toast = useToast();
 
-    // Si estamos editando, usamos el pacienteId de la consulta
-    // Pero primero necesitamos cargar los datos si es edición o usar el param si es nueva
-
+    // pacienteId resuelto: viene directo del query param al crear, o de la
+    // consulta cargada al editar (se completa async en el efecto de abajo).
+    const [resolvedPacienteId, setResolvedPacienteId] = useState(pacienteIdFromQuery);
     const [history, setHistory] = useState([]);
     const [selectedHistoryId, setSelectedHistoryId] = useState('');
     const [loadingHistory, setLoadingHistory] = useState(false);
 
-    // Estado para "inyectar" en el form visualmente si fuese necesario o coordinar
-    // En este MVP, ConsultationFormPage maneja su propio estado, y nosotros lo envolvemos.
-    // Sin embargo, para que el Form sepa que está en modo "Split", podríamos pasar props
-    // pero ConsultationFormPage actualmente no acepta muchas props de control.
-    // Vamos a renderizar el ConsultationFormPage tal cual en la derecha.
-    // Y el visor a la izquierda.
+    const fetchHistory = useCallback(async (pid, cancelledRef) => {
+        if (!pid) return;
+        setLoadingHistory(true);
+        try {
+            const res = await consultaService.getByPaciente(pid);
+            if (cancelledRef?.current) return;
+            setHistory(res.data);
+            // Seleccionar la última o la anterior a la actual si estamos editando
+            if (res.data.length > 0) {
+                // Si estamos editando (id presente), tratamos de no seleccionar la misma consulta
+                // sino la anterior. Si es nueva, la última.
+                const filtered = id ? res.data.filter(c => c.id !== parseInt(id)) : res.data;
+                setSelectedHistoryId((filtered[0] || res.data[0]).id);
+            }
+        } catch (err) {
+            if (!cancelledRef?.current) {
+                console.error("Error loading history", err);
+                toast.error('No se pudo cargar el historial de consultas.');
+            }
+        } finally {
+            if (!cancelledRef?.current) setLoadingHistory(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
 
     useEffect(() => {
-        let cancelled = false;
+        const cancelledRef = { current: false };
 
-        const fetchHistory = async (pid) => {
-            if (!pid) return;
-            setLoadingHistory(true);
-            try {
-                const res = await consultaService.getByPaciente(pid);
-                if (cancelled) return;
-                setHistory(res.data);
-                // Seleccionar la última o la anterior a la actual si estamos editando
-                if (res.data.length > 0) {
-                    // Si estamos editando (id presente), tratamos de no seleccionar la misma consulta
-                    // sino la anterior. Si es nueva, la última.
-                    const filtered = id ? res.data.filter(c => c.id !== parseInt(id)) : res.data;
-                    if (filtered.length > 0) {
-                        setSelectedHistoryId(filtered[0].id);
-                    } else if (res.data.length > 0) {
-                        setSelectedHistoryId(res.data[0].id);
-                    }
-                }
-            } catch (err) {
-                if (!cancelled) console.error("Error loading history", err);
-            } finally {
-                if (!cancelled) setLoadingHistory(false);
-            }
-        };
-
-        if (pacienteId) {
-            fetchHistory(pacienteId);
+        if (pacienteIdFromQuery) {
+            setResolvedPacienteId(pacienteIdFromQuery);
+            fetchHistory(pacienteIdFromQuery, cancelledRef);
         } else if (id) {
             // Si es edición, primero obtenemos la consulta para saber el pacienteId
             consultaService.getById(id)
                 .then(res => {
-                    if (!cancelled) fetchHistory(res.data.pacienteId);
+                    if (cancelledRef.current) return;
+                    setResolvedPacienteId(res.data.pacienteId);
+                    fetchHistory(res.data.pacienteId, cancelledRef);
                 })
                 .catch(err => {
-                    if (!cancelled) console.error(err);
+                    if (!cancelledRef.current) {
+                        console.error(err);
+                        toast.error('No se pudo cargar la consulta.');
+                    }
                 });
         }
 
         return () => {
-            cancelled = true;
+            cancelledRef.current = true;
         };
-    }, [id, pacienteId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, pacienteIdFromQuery]);
+
+    /**
+     * Se pasa como onSaved a ConsultationFormPage: en vez de navegar afuera
+     * del split view (comportamiento anterior, que rompía la vista dividida),
+     * refresca el panel de historial izquierdo. Si era una consulta nueva,
+     * pasa a modo edición de esa misma consulta sin salir de la vista.
+     */
+    const handleSaved = (consulta) => {
+        toast.success('Consulta guardada.');
+        if (!id && consulta?.id) {
+            navigate(`/consultas/edit/${consulta.id}`, { replace: true });
+        } else if (resolvedPacienteId) {
+            fetchHistory(resolvedPacienteId);
+        }
+    };
 
     const selectedConsultation = history.find(c => c.id === parseInt(selectedHistoryId));
 
@@ -121,14 +139,15 @@ export default function ConsultationSplitView() {
             {/* Right Panel: Active Form */}
             <div style={{ background: 'white', height: '100%', overflowY: 'auto', position: 'relative' }}>
                 <div style={{ padding: '1rem', maxWidth: '100%' }}>
-                    {/* We wrap the page component. Note: Ideally we would refactor Page to be more component-like, 
-                         but for now effectively rendering it works as long as routes/context are fine. */}
-                    <ConsultationFormPage />
+                    <ConsultationFormPage
+                        pacienteId={resolvedPacienteId}
+                        consultaId={id}
+                        onSaved={handleSaved}
+                        hideHistoryButton
+                    />
                 </div>
             </div>
 
         </div>
     );
 }
-
-

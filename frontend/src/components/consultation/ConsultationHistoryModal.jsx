@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { consultaService } from '../../api/consultaService';
+import { useToast } from '../../hooks/useToast';
 
 export default function ConsultationHistoryModal({ consultaId, onClose }) {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -12,11 +14,13 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
                 setHistory(res.data);
             } catch (err) {
                 console.error("Error fetching history", err);
+                toast.error('No se pudo cargar el historial de cambios.');
             } finally {
                 setLoading(false);
             }
         };
         fetchHistory();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [consultaId]);
 
     return (
