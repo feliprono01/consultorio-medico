@@ -46,13 +46,20 @@ public class PacienteService {
             throw new IllegalArgumentException("Ya existe un paciente activo con el DNI: " + requestDTO.getDni());
         }
 
-        // Validar que no exista un paciente activo con el mismo email
-        if (pacienteRepository.existsByEmailAndActiveTrue(requestDTO.getEmail())) {
+        // Validar que no exista un paciente activo con el mismo email (solo si se proporcionó email)
+        if (requestDTO.getEmail() != null && !requestDTO.getEmail().isBlank()
+                && pacienteRepository.existsByEmailAndActiveTrue(requestDTO.getEmail())) {
             throw new IllegalArgumentException("Ya existe un paciente activo con el email: " + requestDTO.getEmail());
         }
 
         // Convertir DTO a entidad y guardar
         Paciente paciente = pacienteMapper.toEntity(requestDTO);
+
+        // Si el paciente firmó el consentimiento y no se indicó una fecha, registrar la fecha de hoy
+        if (Boolean.TRUE.equals(paciente.getConsentimientoInformado()) && paciente.getFechaConsentimiento() == null) {
+            paciente.setFechaConsentimiento(java.time.LocalDate.now());
+        }
+
         Paciente pacienteGuardado = pacienteRepository.save(paciente);
 
         log.info("Paciente creado exitosamente con ID: {}", pacienteGuardado.getId());
@@ -119,9 +126,10 @@ public class PacienteService {
             }
         }
 
-        // Validar email único (si cambió)
-        if (!pacienteExistente.getEmail().equals(requestDTO.getEmail())) {
-            if (pacienteRepository.existsByEmailAndActiveTrue(requestDTO.getEmail())) {
+        // Validar email único (si cambió) — null-safe con Objects.equals
+        if (!java.util.Objects.equals(pacienteExistente.getEmail(), requestDTO.getEmail())) {
+            if (requestDTO.getEmail() != null && !requestDTO.getEmail().isBlank()
+                    && pacienteRepository.existsByEmailAndActiveTrue(requestDTO.getEmail())) {
                 throw new IllegalArgumentException(
                         "Ya existe un paciente activo con el email: " + requestDTO.getEmail());
             }
@@ -129,6 +137,13 @@ public class PacienteService {
 
         // Actualizar campos
         pacienteMapper.updateEntityFromDTO(requestDTO, pacienteExistente);
+
+        // Si acaba de dar el consentimiento y no tiene fecha, registrar la fecha de hoy
+        if (Boolean.TRUE.equals(pacienteExistente.getConsentimientoInformado())
+                && pacienteExistente.getFechaConsentimiento() == null) {
+            pacienteExistente.setFechaConsentimiento(java.time.LocalDate.now());
+        }
+
         Paciente pacienteActualizado = pacienteRepository.save(pacienteExistente);
 
         log.info("Paciente actualizado exitosamente con ID: {}", id);

@@ -73,7 +73,7 @@ public class AuthController {
 
                 response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-                // Devolver solo el rol en el body — el token ya viaja en la cookie
+                // Devolver solo el rol en el body — el token ya viaja en la cookie httpOnly (anti-XSS)
                 return ResponseEntity.ok(AuthResponseDTO.builder()
                                 .role(user.getRole().name())
                                 .build());

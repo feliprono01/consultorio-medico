@@ -1,6 +1,7 @@
 package com.consultorio.model;
 
 import jakarta.persistence.*;
+import com.consultorio.security.AttributeEncryptor;
 
 @Entity
 @Table(name = "historias_psiquiatricas")
@@ -11,28 +12,37 @@ public class HistoriaPsiquiatrica extends Auditable {
     private Paciente paciente;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String antecedentesFamiliares;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String antecedentesPersonales;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String historiaConsumo;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String enfermedadActual;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String tratamientosPrevios;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String desarrolloPsicomotor;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String personalidadPrevia;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String antecedentesPsicologicos;
+
 
     public HistoriaPsiquiatrica() {
     }

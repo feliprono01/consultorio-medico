@@ -22,10 +22,9 @@ public class PacienteRequestDTO {
     @Pattern(regexp = "^[0-9]{7,20}$", message = "El DNI debe contener solo números y tener entre 7 y 20 dígitos")
     private String dni;
 
-    @NotBlank(message = "El email es obligatorio")
     @Email(message = "El email debe tener un formato válido")
     @Size(max = 150, message = "El email no puede exceder 150 caracteres")
-    private String email;
+    private String email; // Opcional — no todos los pacientes tienen email
 
     @Pattern(regexp = "^[0-9+\\-\\s()]{0,20}$", message = "El teléfono debe contener solo números, espacios y los caracteres: + - ( )")
     private String telefono;
@@ -48,6 +47,16 @@ public class PacienteRequestDTO {
     private String datosHijos;
     private String datosHermanos;
 
+    /**
+     * Indica si el paciente firmó el Consentimiento Informado (Ley 25.326).
+     */
+    private Boolean consentimientoInformado = false;
+
+    /**
+     * Fecha en que el paciente otorgó el consentimiento informado.
+     */
+    private LocalDate fechaConsentimiento;
+
     private Long version;
 
     public PacienteRequestDTO() {
@@ -56,7 +65,8 @@ public class PacienteRequestDTO {
     public PacienteRequestDTO(String nombre, String apellido, String dni, String email, String telefono,
             LocalDate fechaNacimiento, String ciudad, String direccion, String sexo,
             String ocupacion, String estadoCivil, String escolaridad,
-            String datosPadres, String datosHijos, String datosHermanos, Long version) {
+            String datosPadres, String datosHijos, String datosHermanos,
+            Boolean consentimientoInformado, LocalDate fechaConsentimiento, Long version) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -72,6 +82,8 @@ public class PacienteRequestDTO {
         this.datosPadres = datosPadres;
         this.datosHijos = datosHijos;
         this.datosHermanos = datosHermanos;
+        this.consentimientoInformado = consentimientoInformado != null ? consentimientoInformado : false;
+        this.fechaConsentimiento = fechaConsentimiento;
         this.version = version;
     }
 
@@ -216,6 +228,8 @@ public class PacienteRequestDTO {
         private String datosPadres;
         private String datosHijos;
         private String datosHermanos;
+        private Boolean consentimientoInformado = false;
+        private LocalDate fechaConsentimiento;
         private Long version;
 
         public PacienteRequestDTOBuilder nombre(String nombre) {
@@ -293,6 +307,16 @@ public class PacienteRequestDTO {
             return this;
         }
 
+        public PacienteRequestDTOBuilder consentimientoInformado(Boolean consentimientoInformado) {
+            this.consentimientoInformado = consentimientoInformado;
+            return this;
+        }
+
+        public PacienteRequestDTOBuilder fechaConsentimiento(LocalDate fechaConsentimiento) {
+            this.fechaConsentimiento = fechaConsentimiento;
+            return this;
+        }
+
         public PacienteRequestDTOBuilder version(Long version) {
             this.version = version;
             return this;
@@ -300,8 +324,25 @@ public class PacienteRequestDTO {
 
         public PacienteRequestDTO build() {
             return new PacienteRequestDTO(nombre, apellido, dni, email, telefono, fechaNacimiento, ciudad, direccion,
-                    sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos, datosHermanos, version);
+                    sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos, datosHermanos,
+                    consentimientoInformado, fechaConsentimiento, version);
         }
+    }
+
+    public Boolean getConsentimientoInformado() {
+        return consentimientoInformado;
+    }
+
+    public void setConsentimientoInformado(Boolean consentimientoInformado) {
+        this.consentimientoInformado = consentimientoInformado;
+    }
+
+    public LocalDate getFechaConsentimiento() {
+        return fechaConsentimiento;
+    }
+
+    public void setFechaConsentimiento(LocalDate fechaConsentimiento) {
+        this.fechaConsentimiento = fechaConsentimiento;
     }
 
     public Long getVersion() {
@@ -312,3 +353,4 @@ public class PacienteRequestDTO {
         this.version = version;
     }
 }
+

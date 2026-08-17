@@ -35,6 +35,16 @@ public class PacienteResponseDTO {
     private Long version;
 
     /**
+     * Indica si el paciente firmó el Consentimiento Informado (Ley 25.326).
+     */
+    private Boolean consentimientoInformado;
+
+    /**
+     * Fecha en que el paciente otorgó el consentimiento informado.
+     */
+    private LocalDate fechaConsentimiento;
+
+    /**
      * Campo calculado: nombre completo
      */
     private String nombreCompleto;
@@ -49,7 +59,8 @@ public class PacienteResponseDTO {
             String ocupacion, String estadoCivil, String escolaridad,
             String datosPadres, String datosHijos, String datosHermanos,
             LocalDateTime createdAt, LocalDateTime updatedAt, Boolean active,
-            String nombreCompleto, HistoriaPsiquiatricaDTO historiaPsiquiatrica, Long version) {
+            String nombreCompleto, HistoriaPsiquiatricaDTO historiaPsiquiatrica, Long version,
+            Boolean consentimientoInformado, LocalDate fechaConsentimiento) {
         this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
@@ -75,6 +86,8 @@ public class PacienteResponseDTO {
         this.nombreCompleto = nombreCompleto;
         this.historiaPsiquiatrica = historiaPsiquiatrica;
         this.version = version;
+        this.consentimientoInformado = consentimientoInformado;
+        this.fechaConsentimiento = fechaConsentimiento;
     }
 
     public Long getId() {
@@ -258,6 +271,22 @@ public class PacienteResponseDTO {
         this.historiaPsiquiatrica = historiaPsiquiatrica;
     }
 
+    public Boolean getConsentimientoInformado() {
+        return consentimientoInformado;
+    }
+
+    public void setConsentimientoInformado(Boolean consentimientoInformado) {
+        this.consentimientoInformado = consentimientoInformado;
+    }
+
+    public LocalDate getFechaConsentimiento() {
+        return fechaConsentimiento;
+    }
+
+    public void setFechaConsentimiento(LocalDate fechaConsentimiento) {
+        this.fechaConsentimiento = fechaConsentimiento;
+    }
+
     public static PacienteResponseDTOBuilder builder() {
         return new PacienteResponseDTOBuilder();
     }
@@ -285,6 +314,8 @@ public class PacienteResponseDTO {
         private String nombreCompleto;
         private HistoriaPsiquiatricaDTO historiaPsiquiatrica;
         private Long version;
+        private Boolean consentimientoInformado;
+        private LocalDate fechaConsentimiento;
 
         public PacienteResponseDTOBuilder id(Long id) {
             this.id = id;
@@ -396,11 +427,21 @@ public class PacienteResponseDTO {
             return this;
         }
 
+        public PacienteResponseDTOBuilder consentimientoInformado(Boolean consentimientoInformado) {
+            this.consentimientoInformado = consentimientoInformado;
+            return this;
+        }
+
+        public PacienteResponseDTOBuilder fechaConsentimiento(LocalDate fechaConsentimiento) {
+            this.fechaConsentimiento = fechaConsentimiento;
+            return this;
+        }
+
         public PacienteResponseDTO build() {
             return new PacienteResponseDTO(id, nombre, apellido, dni, email, telefono, fechaNacimiento,
                     ciudad, direccion, sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos,
-                    datosHermanos,
-                    createdAt, updatedAt, active, nombreCompleto, historiaPsiquiatrica, version);
+                    datosHermanos, createdAt, updatedAt, active, nombreCompleto, historiaPsiquiatrica, version,
+                    consentimientoInformado, fechaConsentimiento);
         }
     }
 

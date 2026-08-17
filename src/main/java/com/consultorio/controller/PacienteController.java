@@ -3,11 +3,14 @@ package com.consultorio.controller;
 import com.consultorio.dto.PacienteRequestDTO;
 import com.consultorio.dto.PacienteResponseDTO;
 import com.consultorio.service.PacienteService;
+import com.consultorio.service.PdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +29,7 @@ public class PacienteController {
     private static final Logger log = LoggerFactory.getLogger(PacienteController.class);
 
     private final PacienteService pacienteService;
+    private final PdfService pdfService;
 
     /**
      * Crea un nuevo paciente.
@@ -128,5 +132,24 @@ public class PacienteController {
             @PathVariable Long id) {
         log.info("GET /api/pacientes/{}/historia-psiquiatrica/historial-cambios", id);
         return ResponseEntity.ok(pacienteService.getHistorialCambiosHp(id));
+    }
+
+    /**
+     * Genera y descarga la Historia Clínica completa de un paciente en formato PDF.
+     * Cumple con el Art. 19 y 20 de la Ley 26.529 (Derecho de acceso a la Historia Clínica).
+     * GET /api/pacientes/{id}/historia-clinica/exportar
+     */
+    @GetMapping("/{id}/historia-clinica/exportar")
+    public ResponseEntity<byte[]> exportarHistoriaClinica(@PathVariable Long id) {
+        log.info("GET /api/pacientes/{}/historia-clinica/exportar - Generando PDF", id);
+
+        byte[] pdfBytes = pdfService.generarHistoriaClinicaPdf(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "historia-clinica-paciente-" + id + ".pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }

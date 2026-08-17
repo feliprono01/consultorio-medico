@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.consultorio.security.AttributeEncryptor;
+
 
 /**
  * Entidad que representa un Paciente en el sistema.
@@ -27,7 +29,7 @@ public class Paciente extends Auditable {
     @Column(nullable = false, unique = true, length = 20)
     private String dni;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(nullable = true, unique = true, length = 150) // Opcional — no todos los pacientes tienen email
     private String email;
 
     @Column(length = 20)
@@ -55,13 +57,30 @@ public class Paciente extends Auditable {
     private String escolaridad;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String datosPadres;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String datosHijos;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String datosHermanos;
+
+
+    /**
+     * Indica si el paciente firmó el Consentimiento Informado.
+     * Requerido por la Ley 25.326 (Protección de Datos Personales).
+     */
+    @Column(name = "consentimiento_informado", nullable = false)
+    private Boolean consentimientoInformado = false;
+
+    /**
+     * Fecha en que el paciente otorgó el consentimiento informado.
+     */
+    @Column(name = "fecha_consentimiento")
+    private LocalDate fechaConsentimiento;
 
     @OneToMany(mappedBy = "paciente")
     private List<Consulta> consultas = new ArrayList<>();
@@ -77,6 +96,7 @@ public class Paciente extends Auditable {
             String ciudad, String direccion, String sexo,
             String ocupacion, String estadoCivil, String escolaridad,
             String datosPadres, String datosHijos, String datosHermanos,
+            Boolean consentimientoInformado, LocalDate fechaConsentimiento,
             List<Consulta> consultas, HistoriaPsiquiatrica historiaPsiquiatrica) {
         this.id = id;
         this.createdAt = createdAt;
@@ -97,6 +117,8 @@ public class Paciente extends Auditable {
         this.datosPadres = datosPadres;
         this.datosHijos = datosHijos;
         this.datosHermanos = datosHermanos;
+        this.consentimientoInformado = consentimientoInformado != null ? consentimientoInformado : false;
+        this.fechaConsentimiento = fechaConsentimiento;
         this.consultas = consultas != null ? consultas : new ArrayList<>();
         this.historiaPsiquiatrica = historiaPsiquiatrica;
     }
@@ -126,6 +148,8 @@ public class Paciente extends Auditable {
         private String datosPadres;
         private String datosHijos;
         private String datosHermanos;
+        private Boolean consentimientoInformado = false;
+        private LocalDate fechaConsentimiento;
         private List<Consulta> consultas = new ArrayList<>();
         private HistoriaPsiquiatrica historiaPsiquiatrica;
 
@@ -224,6 +248,16 @@ public class Paciente extends Auditable {
             return this;
         }
 
+        public PacienteBuilder consentimientoInformado(Boolean consentimientoInformado) {
+            this.consentimientoInformado = consentimientoInformado;
+            return this;
+        }
+
+        public PacienteBuilder fechaConsentimiento(LocalDate fechaConsentimiento) {
+            this.fechaConsentimiento = fechaConsentimiento;
+            return this;
+        }
+
         public PacienteBuilder consultas(List<Consulta> consultas) {
             this.consultas = consultas;
             return this;
@@ -237,7 +271,8 @@ public class Paciente extends Auditable {
         public Paciente build() {
             return new Paciente(id, createdAt, updatedAt, active, nombre, apellido, dni, email, telefono,
                     fechaNacimiento, ciudad, direccion, sexo, ocupacion, estadoCivil, escolaridad,
-                    datosPadres, datosHijos, datosHermanos, consultas, historiaPsiquiatrica);
+                    datosPadres, datosHijos, datosHermanos, consentimientoInformado, fechaConsentimiento,
+                    consultas, historiaPsiquiatrica);
         }
     }
 
@@ -363,6 +398,22 @@ public class Paciente extends Auditable {
 
     public void setDatosHermanos(String datosHermanos) {
         this.datosHermanos = datosHermanos;
+    }
+
+    public Boolean getConsentimientoInformado() {
+        return consentimientoInformado;
+    }
+
+    public void setConsentimientoInformado(Boolean consentimientoInformado) {
+        this.consentimientoInformado = consentimientoInformado;
+    }
+
+    public LocalDate getFechaConsentimiento() {
+        return fechaConsentimiento;
+    }
+
+    public void setFechaConsentimiento(LocalDate fechaConsentimiento) {
+        this.fechaConsentimiento = fechaConsentimiento;
     }
 
     public List<Consulta> getConsultas() {

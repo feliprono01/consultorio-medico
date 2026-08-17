@@ -2,6 +2,8 @@ package com.consultorio.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.consultorio.security.AttributeEncryptor;
+
 
 /**
  * Entidad que representa una Consulta Médica (visita) en el sistema.
@@ -26,20 +28,26 @@ public class Consulta extends Auditable {
     @Column(name = "fecha_consulta", nullable = false)
     private LocalDateTime fechaConsulta;
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false, columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String motivo;
 
-    @Column(name = "motivo_consulta", nullable = false, length = 500)
+    @Column(name = "motivo_consulta", nullable = false, columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String motivoConsulta;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String diagnostico;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String tratamiento;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String notas;
+
 
     @Column(name = "estado_animo")
     private Integer estadoAnimo; // 1-10

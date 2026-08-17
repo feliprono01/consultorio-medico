@@ -26,6 +26,7 @@ public interface PacienteMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "historiaPsiquiatrica", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Paciente toEntity(PacienteRequestDTO dto);
 
     /**
@@ -53,5 +54,6 @@ public interface PacienteMapper {
     @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "consultas", ignore = true)
     @Mapping(target = "historiaPsiquiatrica", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntityFromDTO(PacienteRequestDTO dto, @MappingTarget Paciente paciente);
 }

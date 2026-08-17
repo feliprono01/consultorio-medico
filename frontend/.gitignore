@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Variables de entorno — excluir archivos con valores reales de producción
+# El archivo .env.production se commitea SOLO como template (con TU_DOMINIO_AQUI)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

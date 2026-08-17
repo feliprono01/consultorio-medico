@@ -10,6 +10,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 
 /**
  * Servicio para registrar accesos de lectura a información clínica sensible.
@@ -44,8 +47,10 @@ public class AccessLogService {
      * @param accion     Tipo de acceso (usar las constantes de esta clase)
      * @param detalle    Información adicional (ej: "Consulta #42")
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrar(Long pacienteId, String accion, String detalle) {
         try {
+
             String usuario = obtenerUsuarioActual();
             String ip      = obtenerIpOrigen();
 
