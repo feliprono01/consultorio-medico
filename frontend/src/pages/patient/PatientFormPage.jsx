@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { useFormValidation, rules } from '../../hooks/useFormValidation';
+import FieldError from '../../components/common/FieldError';
+import SectionHeader from '../../components/common/SectionHeader';
+import TabButton from '../../components/common/TabButton';
+import ErrorBanner from '../../components/common/ErrorBanner';
+import SuccessBanner from '../../components/common/SuccessBanner';
 
 export default function PatientFormPage() {
     const navigate = useNavigate();
@@ -36,10 +41,6 @@ export default function PatientFormPage() {
     };
 
     const { errors: fieldErrors, validate, clearError } = useFormValidation(pacienteRules);
-
-    const FieldError = ({ field }) => fieldErrors[field]
-        ? <span style={{ color: 'var(--destructive)', fontSize: '0.78rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{fieldErrors[field]}</span>
-        : null;
 
     useEffect(() => {
         if (isEdit) loadPatient();
@@ -100,36 +101,7 @@ export default function PatientFormPage() {
         }
     };
 
-    const TabButton = ({ id, label, icon }) => (
-        <button
-            type="button"
-            onClick={() => { setActiveTab(id); setSuccessMsg(''); setError(''); }}
-            style={{
-                padding: '0.6rem 1.25rem',
-                background: activeTab === id ? 'white' : 'transparent',
-                border: 'none',
-                borderRadius: '99px',
-                fontWeight: activeTab === id ? 700 : 500,
-                color: activeTab === id ? 'var(--primary-darker)' : 'var(--text-muted)',
-                boxShadow: activeTab === id ? '0 2px 8px rgba(8, 145, 178, 0.15)' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                fontFamily: 'Figtree, sans-serif',
-                fontSize: '0.95rem'
-            }}
-        >
-            {icon}
-            {label}
-        </button>
-    );
-
-    const SectionHeader = ({ title, subtitle }) => (
-        <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ margin: 0, color: 'var(--text-header)', fontSize: '1.1rem' }}>{title}</h3>
-            {subtitle && <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{subtitle}</p>}
-        </div>
-    );
+    const goToTab = (tabId) => { setActiveTab(tabId); setSuccessMsg(''); setError(''); };
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
@@ -151,24 +123,13 @@ export default function PatientFormPage() {
 
             {/* Navigation Tabs */}
             <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', padding: '0.35rem', background: 'var(--muted)', borderRadius: '99px', width: 'fit-content', border: '1px solid var(--border-subtle)' }}>
-                <TabButton id="datos" label="Datos Personales" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
-                <TabButton id="familia" label="Familiares" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} />
-                <TabButton id="psiquiatria" label="Antecedentes Médicos" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
+                <TabButton active={activeTab === 'datos'} onClick={() => goToTab('datos')} label="Datos Personales" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
+                <TabButton active={activeTab === 'familia'} onClick={() => goToTab('familia')} label="Familiares" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} />
+                <TabButton active={activeTab === 'psiquiatria'} onClick={() => goToTab('psiquiatria')} label="Antecedentes Médicos" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
             </div>
 
-            {error && (
-                <div className="animate-fadeInUp" style={{ background: 'var(--destructive-light)', color: 'var(--destructive)', padding: '1rem 1.5rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    {error}
-                </div>
-            )}
-            
-            {successMsg && (
-                <div className="animate-fadeInUp" style={{ background: 'var(--accent-light)', color: '#065f46', padding: '1rem 1.5rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    {successMsg}
-                </div>
-            )}
+            <ErrorBanner message={error} />
+            <SuccessBanner message={successMsg} />
 
             <div className="glass-panel" style={{ padding: '2.5rem', animation: 'fadeInUp 0.4s ease-out' }}>
                 {activeTab === 'datos' && (
@@ -180,17 +141,17 @@ export default function PatientFormPage() {
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label>Nombres *</label>
                                     <input className={`form-input${fieldErrors.nombre ? ' input-error' : ''}`} name="nombre" value={form.nombre} onChange={(e) => { handleChange(e); clearError('nombre'); }} placeholder="Ej. Juan Carlos" />
-                                    <FieldError field="nombre" />
+                                    <FieldError message={fieldErrors.nombre} />
                                 </div>
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label>Apellidos *</label>
                                     <input className={`form-input${fieldErrors.apellido ? ' input-error' : ''}`} name="apellido" value={form.apellido} onChange={(e) => { handleChange(e); clearError('apellido'); }} placeholder="Ej. Pérez" />
-                                    <FieldError field="apellido" />
+                                    <FieldError message={fieldErrors.apellido} />
                                 </div>
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label>DNI *</label>
                                     <input className={`form-input${fieldErrors.dni ? ' input-error' : ''}`} name="dni" value={form.dni} onChange={(e) => { handleChange(e); clearError('dni'); }} placeholder="Sin puntos" />
-                                    <FieldError field="dni" />
+                                    <FieldError message={fieldErrors.dni} />
                                 </div>
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label>Fecha de Nacimiento</label>
@@ -217,7 +178,7 @@ export default function PatientFormPage() {
                                         <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
                                         <input className={`form-input${fieldErrors.telefono ? ' input-error' : ''}`} style={{ paddingLeft: '2.5rem' }} name="telefono" value={form.telefono} onChange={(e) => { handleChange(e); clearError('telefono'); }} placeholder="Código de área + número" />
                                     </div>
-                                    <FieldError field="telefono" />
+                                    <FieldError message={fieldErrors.telefono} />
                                 </div>
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label>Correo Electrónico</label>
@@ -225,7 +186,7 @@ export default function PatientFormPage() {
                                         <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
                                         <input className={`form-input${fieldErrors.email ? ' input-error' : ''}`} style={{ paddingLeft: '2.5rem' }} type="text" name="email" value={form.email} onChange={(e) => { handleChange(e); clearError('email'); }} placeholder="paciente@correo.com" />
                                     </div>
-                                    <FieldError field="email" />
+                                    <FieldError message={fieldErrors.email} />
                                 </div>
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label>Ciudad de Residencia</label>
