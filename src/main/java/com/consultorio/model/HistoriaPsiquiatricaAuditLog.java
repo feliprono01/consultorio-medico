@@ -2,6 +2,7 @@ package com.consultorio.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.consultorio.security.AttributeEncryptor;
 
 /**
  * Registro de cambios en la Historia Psiquiátrica de un paciente.
@@ -38,10 +39,12 @@ public class HistoriaPsiquiatricaAuditLog {
 
     /** Valor previo del campo (null si era nuevo). */
     @Column(name = "valor_anterior", columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String valorAnterior;
 
     /** Valor nuevo del campo. */
     @Column(name = "valor_nuevo", columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String valorNuevo;
 
     /** Usuario que realizó el cambio. */

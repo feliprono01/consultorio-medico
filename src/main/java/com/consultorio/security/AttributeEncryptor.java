@@ -124,8 +124,8 @@ public class AttributeEncryptor implements AttributeConverter<String, String> {
             byte[] plainTextBytes = cipher.doFinal(cipherText);
             return new String(plainTextBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            log.error("Error al desencriptar campo desde la base de datos (posible clave modificada o dato corrupto). Retornando dato crudo.", e);
-            return dbData;
+            log.error("Error al desencriptar campo desde la base de datos (posible clave modificada o dato corrupto).", e);
+            throw new IllegalStateException("Error de desencriptación de datos sensibles: clave incorrecta o dato corrupto", e);
         }
     }
 }

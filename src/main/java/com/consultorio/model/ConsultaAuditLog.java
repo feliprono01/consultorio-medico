@@ -2,6 +2,7 @@ package com.consultorio.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.consultorio.security.AttributeEncryptor;
 
 @Entity
 @Table(name = "consulta_audit_logs")
@@ -21,9 +22,11 @@ public class ConsultaAuditLog {
     private String campo; // "Diagnóstico", "Tratamiento", etc.
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String valorAnterior;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String valorNuevo;
 
     @Column(nullable = false)
