@@ -42,7 +42,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/auth/**", "/api/auth/logout", "/v3/api-docs/**", "/swagger-ui/**",
                                                                 "/swagger-ui.html")
                                                 .permitAll()
-                                                .requestMatchers("/api/users/**", "/api/access-logs/**").hasAuthority("ADMIN")
+                                                .requestMatchers("/api/users/**", "/api/access-logs/**", "/api/backups/**").hasAuthority("ADMIN")
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

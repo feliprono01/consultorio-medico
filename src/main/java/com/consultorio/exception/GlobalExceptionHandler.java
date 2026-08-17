@@ -3,6 +3,7 @@ package com.consultorio.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -90,6 +91,22 @@ public class GlobalExceptionHandler {
                 .message("No autorizado. Verificá tus credenciales.")
                 .build();
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Violación de una constraint de base de datos (ej. un unique duplicado que
+     * escapó a la validación de servicio por una condición de carrera).
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.warn("Violación de integridad de datos: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message("El registro no se pudo guardar por un conflicto de datos (posible duplicado).")
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     /**
