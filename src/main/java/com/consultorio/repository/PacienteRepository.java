@@ -17,9 +17,12 @@ import java.util.Optional;
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
 
     /**
-     * Encuentra todos los pacientes activos, ordenados por apellido
+     * Encuentra los primeros 500 pacientes activos, ordenados por apellido.
+     * Tope de seguridad: evita cargar la tabla completa en memoria si el
+     * consultorio llega a acumular muchos años de pacientes. Paginación real
+     * con UI de "página siguiente" queda como mejora futura.
      */
-    List<Paciente> findByActiveTrueOrderByApellidoAsc();
+    List<Paciente> findTop500ByActiveTrueOrderByApellidoAsc();
 
     /**
      * Busca un paciente activo por su DNI

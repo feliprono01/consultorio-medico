@@ -13,7 +13,11 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
     List<Consulta> findByPacienteIdAndActiveTrue(Long pacienteId);
 
-    List<Consulta> findByActiveTrueOrderByFechaConsultaDesc();
+    /**
+     * Últimas 500 consultas activas. Tope de seguridad — paginación real
+     * con UI de "página siguiente" queda como mejora futura.
+     */
+    List<Consulta> findTop500ByActiveTrueOrderByFechaConsultaDesc();
 
     /**
      * Cuenta las consultas entre dos fechas.

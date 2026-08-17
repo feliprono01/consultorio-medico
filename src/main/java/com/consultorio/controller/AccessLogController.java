@@ -32,7 +32,7 @@ public class AccessLogController {
      */
     @GetMapping("/paciente/{id}")
     public ResponseEntity<List<AccessLog>> porPaciente(@PathVariable Long id) {
-        List<AccessLog> logs = accessLogRepository.findByPacienteIdOrderByFechaAccesoDesc(id);
+        List<AccessLog> logs = accessLogRepository.findTop1000ByPacienteIdOrderByFechaAccesoDesc(id);
         return ResponseEntity.ok(logs);
     }
 
@@ -42,7 +42,7 @@ public class AccessLogController {
      */
     @GetMapping("/usuario/{username}")
     public ResponseEntity<List<AccessLog>> porUsuario(@PathVariable String username) {
-        List<AccessLog> logs = accessLogRepository.findByUsuarioOrderByFechaAccesoDesc(username);
+        List<AccessLog> logs = accessLogRepository.findTop1000ByUsuarioOrderByFechaAccesoDesc(username);
         return ResponseEntity.ok(logs);
     }
 }

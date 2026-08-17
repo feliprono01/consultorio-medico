@@ -72,7 +72,7 @@ public class PacienteService {
     @Transactional(readOnly = true)
     public List<PacienteResponseDTO> listarPacientesActivos() {
         log.info("Listando todos los pacientes activos");
-        List<Paciente> pacientes = pacienteRepository.findByActiveTrueOrderByApellidoAsc();
+        List<Paciente> pacientes = pacienteRepository.findTop500ByActiveTrueOrderByApellidoAsc();
         return pacienteMapper.toResponseDTOList(pacientes);
     }
 

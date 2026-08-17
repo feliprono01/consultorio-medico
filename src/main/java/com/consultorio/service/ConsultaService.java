@@ -69,7 +69,7 @@ public class ConsultaService {
 
     @Transactional(readOnly = true)
     public List<ConsultaResponseDTO> obtenerTodas() {
-        List<Consulta> consultas = consultaRepository.findByActiveTrueOrderByFechaConsultaDesc();
+        List<Consulta> consultas = consultaRepository.findTop500ByActiveTrueOrderByFechaConsultaDesc();
         return consultaMapper.toResponseDTOList(consultas);
     }
 
