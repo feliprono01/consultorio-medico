@@ -74,7 +74,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
             </div>
 
             <Section title="Motivo de Consulta">
-                <p>{consultation.motivo || consultation.motivoConsulta}</p>
+                <p>{consultation.motivo}</p>
             </Section>
 
             {(consultation.estadoAnimo || consultation.calidadSueno) && (

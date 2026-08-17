@@ -51,7 +51,6 @@ class EvaluacionPsiquiatricaEncryptionTest {
         Consulta consulta = new Consulta();
         consulta.setPaciente(paciente);
         consulta.setMotivo("Control");
-        consulta.setMotivoConsulta("Control");
         consulta.setFechaConsulta(LocalDateTime.now());
         consulta = consultaRepository.save(consulta);
 

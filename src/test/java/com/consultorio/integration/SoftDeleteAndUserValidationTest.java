@@ -118,7 +118,6 @@ class SoftDeleteAndUserValidationTest {
         var consulta = new com.consultorio.model.Consulta();
         consulta.setPaciente(pacienteActivo);
         consulta.setMotivo("Consulta a eliminar");
-        consulta.setMotivoConsulta("Consulta a eliminar");
         consulta.setFechaConsulta(java.time.LocalDateTime.now());
         consulta.softDelete();
         consulta = consultaRepository.save(consulta);

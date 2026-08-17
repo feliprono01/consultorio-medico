@@ -32,10 +32,6 @@ public class Consulta extends Auditable {
     @Convert(converter = AttributeEncryptor.class)
     private String motivo;
 
-    @Column(name = "motivo_consulta", nullable = false, columnDefinition = "TEXT")
-    @Convert(converter = AttributeEncryptor.class)
-    private String motivoConsulta;
-
     @Column(columnDefinition = "TEXT")
     @Convert(converter = AttributeEncryptor.class)
     private String diagnostico;
@@ -77,7 +73,7 @@ public class Consulta extends Auditable {
     }
 
     public Consulta(Long id, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean active, Paciente paciente,
-            LocalDateTime fechaConsulta, String motivo, String motivoConsulta, String diagnostico, String tratamiento,
+            LocalDateTime fechaConsulta, String motivo, String diagnostico, String tratamiento,
             String notas, Integer estadoAnimo, Integer calidadSueno,
             Integer alimentacion, Integer sociabilidad, Integer funcionalidadLaboral,
             Integer funcionalidadSocial, Integer funcionalidadFamiliar,
@@ -89,7 +85,6 @@ public class Consulta extends Auditable {
         this.paciente = paciente;
         this.fechaConsulta = fechaConsulta;
         this.motivo = motivo;
-        this.motivoConsulta = motivoConsulta;
         this.diagnostico = diagnostico;
         this.tratamiento = tratamiento;
         this.notas = notas;
@@ -115,7 +110,6 @@ public class Consulta extends Auditable {
         private Paciente paciente;
         private LocalDateTime fechaConsulta;
         private String motivo;
-        private String motivoConsulta;
         private String diagnostico;
         private String tratamiento;
         private String notas;
@@ -160,11 +154,6 @@ public class Consulta extends Auditable {
 
         public ConsultaBuilder motivo(String motivo) {
             this.motivo = motivo;
-            return this;
-        }
-
-        public ConsultaBuilder motivoConsulta(String motivoConsulta) {
-            this.motivoConsulta = motivoConsulta;
             return this;
         }
 
@@ -224,7 +213,7 @@ public class Consulta extends Auditable {
         }
 
         public Consulta build() {
-            return new Consulta(id, createdAt, updatedAt, active, paciente, fechaConsulta, motivo, motivoConsulta,
+            return new Consulta(id, createdAt, updatedAt, active, paciente, fechaConsulta, motivo,
                     diagnostico, tratamiento, notas, estadoAnimo, calidadSueno, alimentacion, sociabilidad,
                     funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica);
         }
@@ -260,14 +249,6 @@ public class Consulta extends Auditable {
 
     public void setMotivo(String motivo) {
         this.motivo = motivo;
-    }
-
-    public String getMotivoConsulta() {
-        return motivoConsulta;
-    }
-
-    public void setMotivoConsulta(String motivoConsulta) {
-        this.motivoConsulta = motivoConsulta;
     }
 
     public String getDiagnostico() {

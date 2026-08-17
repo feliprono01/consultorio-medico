@@ -269,7 +269,7 @@ public class PdfService {
         bodyCell.setBorderWidth(0.5f);
         bodyCell.setPadding(10);
 
-        agregarParrafoCampo(bodyCell, "Motivo de Consulta", c.getMotivoConsulta());
+        agregarParrafoCampo(bodyCell, "Motivo de Consulta", c.getMotivo());
         agregarParrafoCampo(bodyCell, "Diagnóstico",        c.getDiagnostico());
         agregarParrafoCampo(bodyCell, "Tratamiento",        c.getTratamiento());
         agregarParrafoCampo(bodyCell, "Notas",              c.getNotas());

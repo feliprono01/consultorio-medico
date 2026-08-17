@@ -55,7 +55,7 @@ export default function ConsultationFormPage() {
                     const data = resConsulta.data;
                     setForm({
                         pacienteId: data.pacienteId,
-                        motivo: data.motivo || data.motivoConsulta,
+                        motivo: data.motivo,
                         diagnostico: data.diagnostico || '',
                         tratamiento: data.tratamiento || '',
                         notas: data.notas || '',

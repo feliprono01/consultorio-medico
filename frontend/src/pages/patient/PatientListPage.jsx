@@ -172,7 +172,7 @@ export default function PatientListPage() {
                     head: [['Fecha', 'Motivo', 'Diagnóstico', 'Tratamiento', 'Riesgos']],
                     body: consultations.map(c => [
                         new Date(c.fechaConsulta).toLocaleDateString(),
-                        c.motivo || c.motivoConsulta || '',
+                        c.motivo || '',
                         c.diagnostico || '',
                         c.tratamiento || '',
                         c.evaluacionPsiquiatrica ? `R.S: ${c.evaluacionPsiquiatrica.riesgoSuicida}\nR.H: ${c.evaluacionPsiquiatrica.riesgoHomicida}` : 'N/A',

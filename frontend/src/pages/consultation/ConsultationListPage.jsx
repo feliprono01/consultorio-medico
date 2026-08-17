@@ -106,7 +106,7 @@ export default function ConsultationListPage() {
         return (
             nombreCompleto.includes(term) ||
             (c.dniPaciente && c.dniPaciente.toString().toLowerCase().includes(term)) ||
-            ((c.motivo || c.motivoConsulta) && (c.motivo || c.motivoConsulta).toLowerCase().includes(term)) ||
+            (c.motivo && c.motivo.toLowerCase().includes(term)) ||
             (c.diagnostico && c.diagnostico.toLowerCase().includes(term))
         );
     });
@@ -158,7 +158,7 @@ export default function ConsultationListPage() {
                 startY: 75,
                 head: [['Concepto', 'Descripción']],
                 body: [
-                    ['Motivo de Consulta', c.motivo || c.motivoConsulta || 'N/A'],
+                    ['Motivo de Consulta', c.motivo || 'N/A'],
                     ['Diagnóstico', c.diagnostico || 'N/A'],
                     ['Tratamiento', c.tratamiento || 'N/A'],
                     ['Notas Adicionales', c.notas || 'N/A']
@@ -336,7 +336,7 @@ export default function ConsultationListPage() {
                                         </div>
                                     </td>
                                     <td style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                                        {c.motivo || c.motivoConsulta || '—'}
+                                        {c.motivo || '—'}
                                     </td>
                                     <td style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                                         {c.diagnostico || '—'}

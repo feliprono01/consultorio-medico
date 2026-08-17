@@ -111,8 +111,6 @@ public class ConsultaService {
         logIfChanged(consulta, "Motivo", consulta.getMotivo(), dto.getMotivo(), currentUser);
         consulta.setMotivo(dto.getMotivo());
 
-        consulta.setMotivoConsulta(dto.getMotivo()); // Legacy field support
-
         logIfChanged(consulta, "Diagnóstico", consulta.getDiagnostico(), dto.getDiagnostico(), currentUser);
         consulta.setDiagnostico(dto.getDiagnostico());
 

@@ -14,7 +14,6 @@ public class ConsultaResponseDTO {
     private String diagnostico;
     private String tratamiento;
     private String notas;
-    private String motivoConsulta; // Adding missing field mapped in ConsultaMapper
     private Integer estadoAnimo;
     private Integer calidadSueno;
     private Integer alimentacion;
@@ -30,7 +29,7 @@ public class ConsultaResponseDTO {
 
     public ConsultaResponseDTO(Long id, Long pacienteId, String nombrePaciente, String apellidoPaciente,
             String dniPaciente, LocalDateTime fechaConsulta, String motivo, String diagnostico, String tratamiento,
-            String notas, String motivoConsulta, Integer estadoAnimo, Integer calidadSueno,
+            String notas, Integer estadoAnimo, Integer calidadSueno,
             Integer alimentacion, Integer sociabilidad, Integer funcionalidadLaboral,
             Integer funcionalidadSocial, Integer funcionalidadFamiliar,
             EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica, Long version) {
@@ -44,7 +43,6 @@ public class ConsultaResponseDTO {
         this.diagnostico = diagnostico;
         this.tratamiento = tratamiento;
         this.notas = notas;
-        this.motivoConsulta = motivoConsulta;
         this.estadoAnimo = estadoAnimo;
         this.calidadSueno = calidadSueno;
         this.alimentacion = alimentacion;
@@ -136,14 +134,6 @@ public class ConsultaResponseDTO {
         this.notas = notas;
     }
 
-    public String getMotivoConsulta() {
-        return motivoConsulta;
-    }
-
-    public void setMotivoConsulta(String motivoConsulta) {
-        this.motivoConsulta = motivoConsulta;
-    }
-
     public Integer getEstadoAnimo() {
         return estadoAnimo;
     }
@@ -223,7 +213,6 @@ public class ConsultaResponseDTO {
         private String diagnostico;
         private String tratamiento;
         private String notas;
-        private String motivoConsulta;
         private Integer estadoAnimo;
         private Integer calidadSueno;
         private Integer alimentacion;
@@ -284,11 +273,6 @@ public class ConsultaResponseDTO {
             return this;
         }
 
-        public ConsultaResponseDTOBuilder motivoConsulta(String motivoConsulta) {
-            this.motivoConsulta = motivoConsulta;
-            return this;
-        }
-
         public ConsultaResponseDTOBuilder estadoAnimo(Integer estadoAnimo) {
             this.estadoAnimo = estadoAnimo;
             return this;
@@ -336,7 +320,7 @@ public class ConsultaResponseDTO {
 
         public ConsultaResponseDTO build() {
             return new ConsultaResponseDTO(id, pacienteId, nombrePaciente, apellidoPaciente, dniPaciente, fechaConsulta,
-                    motivo, diagnostico, tratamiento, notas, motivoConsulta, estadoAnimo, calidadSueno, alimentacion,
+                    motivo, diagnostico, tratamiento, notas, estadoAnimo, calidadSueno, alimentacion,
                     sociabilidad,
                     funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica, version);
         }

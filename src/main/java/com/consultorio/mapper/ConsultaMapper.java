@@ -24,7 +24,6 @@ public interface ConsultaMapper {
     @Mapping(target = "fechaConsulta", ignore = true) // Se asigna en el servicio si es necesario
     @Mapping(target = "paciente", source = "paciente")
     @Mapping(target = "motivo", source = "dto.motivo")
-    @Mapping(target = "motivoConsulta", source = "dto.motivo")
     @Mapping(target = "diagnostico", source = "dto.diagnostico")
     @Mapping(target = "tratamiento", source = "dto.tratamiento")
     @Mapping(target = "notas", source = "dto.notas")
