@@ -342,4 +342,80 @@ class SecurityAndAuditIntegrationTest {
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.message").value("El registro fue modificado por otro usuario. Por favor recarga la página e intenta nuevamente."));
     }
+
+    @Test
+    void testOptimisticLockingOnConsultaUpdate() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        com.consultorio.dto.ConsultaRequestDTO crearDto = new com.consultorio.dto.ConsultaRequestDTO();
+        crearDto.setPacienteId(testPaciente.getId());
+        crearDto.setMotivo("Control de rutina");
+
+        MvcResult creado = mockMvc.perform(post("/api/consultas")
+                        .cookie(jwtCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(crearDto)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        Long consultaId = objectMapper.readTree(creado.getResponse().getContentAsString()).get("id").asLong();
+
+        com.consultorio.dto.ConsultaRequestDTO actualizarDto = new com.consultorio.dto.ConsultaRequestDTO();
+        actualizarDto.setPacienteId(testPaciente.getId());
+        actualizarDto.setMotivo("Motivo actualizado");
+        actualizarDto.setVersion(99L); // Versión desactualizada
+
+        mockMvc.perform(put("/api/consultas/" + consultaId)
+                        .cookie(jwtCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(actualizarDto)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void testOptimisticLockingOnHistoriaPsiquiatricaUpdate() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        com.consultorio.dto.HistoriaPsiquiatricaDTO crearDto = com.consultorio.dto.HistoriaPsiquiatricaDTO.builder()
+                .antecedentesFamiliares("Sin antecedentes")
+                .build();
+
+        // Primera llamada crea la historia (esNueva=true, no exige versión)
+        mockMvc.perform(put("/api/pacientes/" + testPaciente.getId() + "/historia-psiquiatrica")
+                        .cookie(jwtCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(crearDto)))
+                .andExpect(status().isOk());
+
+        com.consultorio.dto.HistoriaPsiquiatricaDTO actualizarDto = com.consultorio.dto.HistoriaPsiquiatricaDTO.builder()
+                .antecedentesFamiliares("Actualización con versión vieja")
+                .version(99L)
+                .build();
+
+        mockMvc.perform(put("/api/pacientes/" + testPaciente.getId() + "/historia-psiquiatrica")
+                        .cookie(jwtCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(actualizarDto)))
+                .andExpect(status().isConflict());
+    }
 }
