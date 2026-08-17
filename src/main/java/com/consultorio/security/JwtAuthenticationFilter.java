@@ -47,20 +47,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String username = jwtService.extractUsername(jwt);
+        try {
+            final String username = jwtService.extractUsername(jwt);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // Verificar firma/expiración Y que el token no fue revocado (logout)
-            if (jwtService.isTokenValid(jwt, userDetails) && !tokenBlacklistService.isRevoked(jwt)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                // Verificar firma/expiración Y que el token no fue revocado (logout)
+                if (jwtService.isTokenValid(jwt, userDetails) && !tokenBlacklistService.isRevoked(jwt)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (io.jsonwebtoken.JwtException e) {
+            // Token vencido, malformado o con firma inválida — no autenticamos y dejamos
+            // que Spring Security responda 401/403 según corresponda al endpoint pedido,
+            // en vez de dejar escapar la excepción como un 500 crudo.
+            logger.warn("JWT inválido en request: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

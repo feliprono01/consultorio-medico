@@ -145,6 +145,15 @@ class SecurityAndAuditIntegrationTest {
     }
 
     @Test
+    void testMalformedJwtCookieReturnsCleanErrorNotServerError() throws Exception {
+        Cookie tokenMalformado = new Cookie("jwt_token", "esto-no-es-un-jwt-valido");
+
+        mockMvc.perform(get("/api/pacientes/" + testPaciente.getId())
+                        .cookie(tokenMalformado))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
     void testOptimisticLockingOnPacienteUpdate() throws Exception {
         AuthRequestDTO loginRequest = new AuthRequestDTO();
         loginRequest.setUsername("doctor.test");

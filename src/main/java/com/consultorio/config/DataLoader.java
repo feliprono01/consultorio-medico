@@ -20,10 +20,14 @@ public class DataLoader implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${admin.username:admin}")
+    // Sin valor por defecto a propósito: si ADMIN_USERNAME/ADMIN_PASSWORD no están
+    // configuradas (ni en application.properties de dev ni por variable de entorno
+    // en prod), el arranque debe fallar en vez de crear un admin con credenciales
+    // predecibles como admin/admin.
+    @Value("${admin.username}")
     private String adminUsername;
 
-    @Value("${admin.password:admin}")
+    @Value("${admin.password}")
     private String adminPassword;
 
     @Override
