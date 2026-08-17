@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { dashboardService } from '../../api/dashboardService';
+import { useToast } from '../../hooks/useToast';
 
 /* ── Animated count-up hook ── */
 function useCountUp(target, duration = 900) {
@@ -102,10 +103,18 @@ export default function DashboardHome() {
     const [stats, setStats] = useState({ totalPacientes: 0, consultasHoy: 0, ultimaConsulta: '-', pacienteUltimaConsulta: '-' });
     const [actividad, setActividad] = useState([]);
     const [today] = useState(new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }));
+    const toast = useToast();
 
     useEffect(() => {
-        dashboardService.getStats().then(r => setStats(r.data)).catch(console.error);
-        dashboardService.getActividadSemana().then(r => setActividad(r.data)).catch(console.error);
+        dashboardService.getStats().then(r => setStats(r.data)).catch((err) => {
+            console.error(err);
+            toast.error('No se pudieron cargar las estadísticas del panel.');
+        });
+        dashboardService.getActividadSemana().then(r => setActividad(r.data)).catch((err) => {
+            console.error(err);
+            toast.error('No se pudo cargar la actividad de la semana.');
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

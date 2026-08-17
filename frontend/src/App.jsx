@@ -15,12 +15,16 @@ const BackupPage = lazy(() => import('./pages/admin/BackupPage'));
 
 import Layout from './components/common/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ToastContainer from './components/common/ToastContainer';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 
 function App() {
   return (
+    <ToastProvider>
     <AuthProvider>
       <BrowserRouter>
+      <ToastContainer />
       <Suspense fallback={<div>Cargando...</div>}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -48,6 +52,7 @@ function App() {
       </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </ToastProvider>
   );
 }
 
