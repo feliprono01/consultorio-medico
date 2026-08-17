@@ -138,6 +138,32 @@ class SoftDeleteAndUserValidationTest {
     }
 
     @Test
+    void noSePuedeLeerNiEditarUnPacienteDadoDeBaja() throws Exception {
+        Paciente pacienteBaja = pacienteRepository.save(Paciente.builder()
+                .nombre("Paciente").apellido("Eliminado")
+                .dni("55566677")
+                .fechaNacimiento(LocalDate.of(1975, 3, 3))
+                .active(false)
+                .build());
+
+        mockMvc.perform(get("/api/pacientes/" + pacienteBaja.getId())
+                        .cookie(doctorCookie))
+                .andExpect(status().isNotFound());
+
+        com.consultorio.dto.PacienteRequestDTO dto = new com.consultorio.dto.PacienteRequestDTO();
+        dto.setNombre("Intento de edición");
+        dto.setApellido("Eliminado");
+        dto.setDni("55566677");
+        dto.setFechaNacimiento(LocalDate.of(1975, 3, 3));
+
+        mockMvc.perform(put("/api/pacientes/" + pacienteBaja.getId())
+                        .cookie(doctorCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void noSePuedeCrearUsuarioConPasswordCorta() throws Exception {
         String body = """
                 {"username":"nuevo.usuario","password":"1234"}
