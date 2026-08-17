@@ -8,6 +8,9 @@ import java.util.List;
 
 @Repository
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
+
+    java.util.Optional<Consulta> findByIdAndActiveTrue(Long id);
+
     List<Consulta> findByPacienteIdAndActiveTrue(Long pacienteId);
 
     List<Consulta> findByActiveTrueOrderByFechaConsultaDesc();

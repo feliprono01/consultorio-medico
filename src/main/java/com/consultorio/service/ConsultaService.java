@@ -30,7 +30,7 @@ public class ConsultaService {
 
     @Transactional
     public ConsultaResponseDTO crearConsulta(ConsultaRequestDTO dto) {
-        Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
+        Paciente paciente = pacienteRepository.findByIdAndActiveTrue(dto.getPacienteId())
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Paciente", "id",
                         dto.getPacienteId()));
 
@@ -93,7 +93,7 @@ public class ConsultaService {
 
     @Transactional
     public void eliminarConsulta(Long id) {
-        Consulta consulta = consultaRepository.findById(id)
+        Consulta consulta = consultaRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
         consulta.softDelete();
         consultaRepository.save(consulta);
@@ -101,7 +101,7 @@ public class ConsultaService {
 
     @Transactional(readOnly = true)
     public ConsultaResponseDTO obtenerPorId(Long id) {
-        Consulta consulta = consultaRepository.findById(id)
+        Consulta consulta = consultaRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
 
         // Auditoría de lectura — quién vio una consulta individual y cuándo
@@ -115,7 +115,7 @@ public class ConsultaService {
 
     @Transactional
     public ConsultaResponseDTO actualizarConsulta(Long id, ConsultaRequestDTO dto) {
-        Consulta consulta = consultaRepository.findById(id)
+        Consulta consulta = consultaRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
 
         // Validar versión para concurrencia optimista

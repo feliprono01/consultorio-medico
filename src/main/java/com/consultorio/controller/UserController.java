@@ -3,6 +3,9 @@ package com.consultorio.controller;
 import com.consultorio.model.Role;
 import com.consultorio.model.Usuario;
 import com.consultorio.repository.UsuarioRepository;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +33,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UsuarioResponseDTO> createUser(@RequestBody CreateUserRequest request) {
+    public ResponseEntity<UsuarioResponseDTO> createUser(@Valid @RequestBody CreateUserRequest request) {
         if (usuarioRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().build();
         }
@@ -55,7 +58,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/password")
-    public ResponseEntity<Void> resetPassword(@PathVariable Long id, @RequestBody UpdatePasswordRequest request) {
+    public ResponseEntity<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody UpdatePasswordRequest request) {
         return usuarioRepository.findById(id).map(user -> {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             usuarioRepository.save(user);
@@ -91,8 +94,13 @@ public class UserController {
 
     @Data
     public static class CreateUserRequest {
+        @NotBlank(message = "El nombre de usuario es obligatorio")
         private String username;
+
+        @NotBlank(message = "La contraseña es obligatoria")
+        @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
         private String password;
+
         private Role role;
         private String nombre;
         private String apellido;
@@ -102,6 +110,8 @@ public class UserController {
 
     @Data
     public static class UpdatePasswordRequest {
+        @NotBlank(message = "La contraseña es obligatoria")
+        @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
         private String password;
     }
 }
