@@ -1,6 +1,7 @@
 package com.consultorio.model;
 
 import jakarta.persistence.*;
+import com.consultorio.security.AttributeEncryptor;
 
 @Entity
 @Table(name = "evaluaciones_psiquiatricas")
@@ -10,65 +11,84 @@ public class EvaluacionPsiquiatrica extends Auditable {
     @JoinColumn(name = "consulta_id", nullable = false, unique = true)
     private Consulta consulta;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String apariencia;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String conducta;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String lenguaje;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String animo;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String afecto;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String pensamiento; // Curso y contenido
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String sensopercepcion;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String juicio;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String memoria;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String atencion;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String riesgoSuicida;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String riesgoHomicida;
 
     // Nuevos campos - Examen Mental
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String conciencia;
 
     // Nuevos campos - Riesgos
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String riesgoPropio;
 
     // Nuevos campos - Diagnóstico Multiaxial
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String eje1;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String eje2;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String eje3;
 
     // Nuevos campos - Tratamiento
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String adherenciaTratamiento;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
     private String efectosAdversos;
 
     public Long getId() {
