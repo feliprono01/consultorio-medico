@@ -26,6 +26,7 @@ public class ConsultaService {
     private final PacienteRepository pacienteRepository;
     private final ConsultaAuditLogRepository consultaAuditLogRepository;
     private final com.consultorio.mapper.ConsultaMapper consultaMapper;
+    private final com.consultorio.mapper.EvaluacionPsiquiatricaMapper evaluacionMapper;
     private final AccessLogService accessLogService;
 
     @Transactional
@@ -42,26 +43,7 @@ public class ConsultaService {
 
         // Manejo de Evaluación Psiquiátrica
         if (dto.getEvaluacionPsiquiatrica() != null) {
-            com.consultorio.model.EvaluacionPsiquiatrica evaluacion = new com.consultorio.model.EvaluacionPsiquiatrica();
-            evaluacion.setApariencia(dto.getEvaluacionPsiquiatrica().getApariencia());
-            evaluacion.setConducta(dto.getEvaluacionPsiquiatrica().getConducta());
-            evaluacion.setLenguaje(dto.getEvaluacionPsiquiatrica().getLenguaje());
-            evaluacion.setAnimo(dto.getEvaluacionPsiquiatrica().getAnimo());
-            evaluacion.setAfecto(dto.getEvaluacionPsiquiatrica().getAfecto());
-            evaluacion.setPensamiento(dto.getEvaluacionPsiquiatrica().getPensamiento());
-            evaluacion.setSensopercepcion(dto.getEvaluacionPsiquiatrica().getSensopercepcion());
-            evaluacion.setJuicio(dto.getEvaluacionPsiquiatrica().getJuicio());
-            evaluacion.setMemoria(dto.getEvaluacionPsiquiatrica().getMemoria());
-            evaluacion.setAtencion(dto.getEvaluacionPsiquiatrica().getAtencion());
-            evaluacion.setConciencia(dto.getEvaluacionPsiquiatrica().getConciencia());
-            evaluacion.setRiesgoSuicida(dto.getEvaluacionPsiquiatrica().getRiesgoSuicida());
-            evaluacion.setRiesgoHomicida(dto.getEvaluacionPsiquiatrica().getRiesgoHomicida());
-            evaluacion.setRiesgoPropio(dto.getEvaluacionPsiquiatrica().getRiesgoPropio());
-            evaluacion.setEje1(dto.getEvaluacionPsiquiatrica().getEje1());
-            evaluacion.setEje2(dto.getEvaluacionPsiquiatrica().getEje2());
-            evaluacion.setEje3(dto.getEvaluacionPsiquiatrica().getEje3());
-            evaluacion.setAdherenciaTratamiento(dto.getEvaluacionPsiquiatrica().getAdherenciaTratamiento());
-            evaluacion.setEfectosAdversos(dto.getEvaluacionPsiquiatrica().getEfectosAdversos());
+            com.consultorio.model.EvaluacionPsiquiatrica evaluacion = evaluacionMapper.toEntity(dto.getEvaluacionPsiquiatrica());
             evaluacion.setConsulta(consulta);
             consulta.setEvaluacionPsiquiatrica(evaluacion);
         }
@@ -163,26 +145,7 @@ public class ConsultaService {
                     dto.getEvaluacionPsiquiatrica().getApariencia(), currentUser);
             // ... Repetir para otros campos si se requiere granularidad extrema
 
-            // Actualizar campos
-            evaluacion.setApariencia(dto.getEvaluacionPsiquiatrica().getApariencia());
-            evaluacion.setConducta(dto.getEvaluacionPsiquiatrica().getConducta());
-            evaluacion.setLenguaje(dto.getEvaluacionPsiquiatrica().getLenguaje());
-            evaluacion.setAnimo(dto.getEvaluacionPsiquiatrica().getAnimo());
-            evaluacion.setAfecto(dto.getEvaluacionPsiquiatrica().getAfecto());
-            evaluacion.setPensamiento(dto.getEvaluacionPsiquiatrica().getPensamiento());
-            evaluacion.setSensopercepcion(dto.getEvaluacionPsiquiatrica().getSensopercepcion());
-            evaluacion.setJuicio(dto.getEvaluacionPsiquiatrica().getJuicio());
-            evaluacion.setMemoria(dto.getEvaluacionPsiquiatrica().getMemoria());
-            evaluacion.setAtencion(dto.getEvaluacionPsiquiatrica().getAtencion());
-            evaluacion.setConciencia(dto.getEvaluacionPsiquiatrica().getConciencia());
-            evaluacion.setRiesgoSuicida(dto.getEvaluacionPsiquiatrica().getRiesgoSuicida());
-            evaluacion.setRiesgoHomicida(dto.getEvaluacionPsiquiatrica().getRiesgoHomicida());
-            evaluacion.setRiesgoPropio(dto.getEvaluacionPsiquiatrica().getRiesgoPropio());
-            evaluacion.setEje1(dto.getEvaluacionPsiquiatrica().getEje1());
-            evaluacion.setEje2(dto.getEvaluacionPsiquiatrica().getEje2());
-            evaluacion.setEje3(dto.getEvaluacionPsiquiatrica().getEje3());
-            evaluacion.setAdherenciaTratamiento(dto.getEvaluacionPsiquiatrica().getAdherenciaTratamiento());
-            evaluacion.setEfectosAdversos(dto.getEvaluacionPsiquiatrica().getEfectosAdversos());
+            evaluacionMapper.updateEntityFromDTO(dto.getEvaluacionPsiquiatrica(), evaluacion);
         }
 
         Consulta actualizada = consultaRepository.save(consulta);
