@@ -145,6 +145,35 @@ class SecurityAndAuditIntegrationTest {
     }
 
     @Test
+    void testExportarPdfQuedaRegistradoEnAuditoria() throws Exception {
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        mockMvc.perform(get("/api/pacientes/" + testPaciente.getId() + "/historia-clinica/exportar")
+                        .cookie(jwtCookie))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF));
+
+        List<AccessLog> logs = accessLogRepository.findAll();
+        boolean quedoRegistrado = logs.stream().anyMatch(log ->
+                log.getPacienteId().equals(testPaciente.getId())
+                        && log.getAccion().equals("VER_HISTORIAL")
+                        && log.getDetalle() != null
+                        && log.getDetalle().contains("Exportación PDF"));
+
+        assertThat(quedoRegistrado).isTrue();
+    }
+
+    @Test
     void testMalformedJwtCookieReturnsCleanErrorNotServerError() throws Exception {
         Cookie tokenMalformado = new Cookie("jwt_token", "esto-no-es-un-jwt-valido");
 

@@ -107,24 +107,19 @@ public class BackupService {
         // --single-transaction: exporta sin bloquear tablas (necesario para usuarios sin LOCK TABLES)
         // -h 127.0.0.1: fuerza conexión TCP en lugar de socket Unix (requerido en Windows)
         logger.info("Iniciando mysqldump: user={}, db={}, output={}", dbUser, dbName, sqlFile.getAbsolutePath());
-        ProcessBuilder pb;
-        if (dbPassword == null || dbPassword.isEmpty()) {
-            pb = new ProcessBuilder(
-                    mysqldumpPath,
-                    "-u" + dbUser,
-                    "-h", "127.0.0.1", "-P", "3306",
-                    "--single-transaction", "--skip-lock-tables",
-                    "--databases", dbName,
-                    "-r", sqlFile.getAbsolutePath());
-        } else {
-            pb = new ProcessBuilder(
-                    mysqldumpPath,
-                    "-u" + dbUser,
-                    "-p" + dbPassword,
-                    "-h", "127.0.0.1", "-P", "3306",
-                    "--single-transaction", "--skip-lock-tables",
-                    "--databases", dbName,
-                    "-r", sqlFile.getAbsolutePath());
+        // La contraseña se pasa por la variable de entorno MYSQL_PWD del proceso hijo,
+        // nunca como argumento — un argumento de línea de comandos queda visible para
+        // cualquier otro proceso local (ps/Task Manager) mientras el proceso corre.
+        ProcessBuilder pb = new ProcessBuilder(
+                mysqldumpPath,
+                "-u" + dbUser,
+                "-h", "127.0.0.1", "-P", "3306",
+                "--single-transaction", "--skip-lock-tables",
+                "--databases", dbName,
+                "-r", sqlFile.getAbsolutePath());
+
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            pb.environment().put("MYSQL_PWD", dbPassword);
         }
 
         pb.redirectErrorStream(true);

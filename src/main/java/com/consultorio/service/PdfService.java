@@ -36,6 +36,7 @@ public class PdfService {
 
     private final PacienteRepository pacienteRepository;
     private final ConsultaRepository consultaRepository;
+    private final AccessLogService accessLogService;
 
     // --- Datos del membrete (configurables por variables de entorno) ---
     @Value("${pdf.medico.nombre:Dr/a. Nombre Apellido}")
@@ -89,6 +90,11 @@ public class PdfService {
                 .findByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(pacienteId);
 
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Auditoría de acceso — exportar la HC completa es la operación más sensible
+        // del sistema, tiene que quedar registrada igual que las lecturas de ficha.
+        accessLogService.registrar(pacienteId, AccessLogService.VER_HISTORIAL,
+                "Exportación PDF de Historia Clínica");
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document doc = new Document(PageSize.A4, 40, 40, 50, 60);
