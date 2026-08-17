@@ -196,6 +196,42 @@ class SecurityAndAuditIntegrationTest {
     }
 
     @Test
+    void testSoloAdminPuedeListarBackups() throws Exception {
+        // Usuario USER (no admin) — debe ser rechazado
+        AuthRequestDTO loginUser = new AuthRequestDTO();
+        loginUser.setUsername("doctor.test");
+        loginUser.setPassword("Password123!");
+
+        MvcResult userResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginUser)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        mockMvc.perform(get("/api/backups").cookie(userResult.getResponse().getCookie("jwt_token")))
+                .andExpect(status().isForbidden());
+
+        // Usuario ADMIN — debe poder acceder
+        usuarioRepository.save(Usuario.builder()
+                .username("admin.backups")
+                .password(passwordEncoder.encode("Password123!"))
+                .nombre("Admin").apellido("Test").role(Role.ADMIN).build());
+
+        AuthRequestDTO loginAdmin = new AuthRequestDTO();
+        loginAdmin.setUsername("admin.backups");
+        loginAdmin.setPassword("Password123!");
+
+        MvcResult adminResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginAdmin)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        mockMvc.perform(get("/api/backups").cookie(adminResult.getResponse().getCookie("jwt_token")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void testMalformedJwtCookieReturnsCleanErrorNotServerError() throws Exception {
         Cookie tokenMalformado = new Cookie("jwt_token", "esto-no-es-un-jwt-valido");
 

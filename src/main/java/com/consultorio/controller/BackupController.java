@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/backups")
-@PreAuthorize("hasRole('ADMIN')") // Solo admins pueden hacer backups
+@PreAuthorize("hasAuthority('ADMIN')") // Solo admins pueden hacer backups
 public class BackupController {
 
     @Autowired
