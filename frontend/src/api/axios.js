@@ -13,12 +13,14 @@ const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            // Cookie expirada o inválida — limpiar estado local y redirigir al login
+        if (error.response && error.response.status === 401) {
+            // Cookie expirada o inválida — la sesión ya no existe, limpiar y redirigir
             localStorage.removeItem('role');
             localStorage.removeItem('isAuthenticated');
             window.location.href = '/login';
         }
+        // 403: la sesión sigue siendo válida, solo falta permiso para esta acción puntual.
+        // No desloguear — dejar que el componente que hizo la llamada maneje el error.
         return Promise.reject(error);
     }
 );

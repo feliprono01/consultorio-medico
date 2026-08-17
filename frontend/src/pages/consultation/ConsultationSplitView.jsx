@@ -23,41 +23,50 @@ export default function ConsultationSplitView() {
     // Vamos a renderizar el ConsultationFormPage tal cual en la derecha.
     // Y el visor a la izquierda.
 
-    const fetchHistory = async (pid) => {
-        if (!pid) return;
-        setLoadingHistory(true);
-        try {
-            const res = await consultaService.getByPaciente(pid);
-            setHistory(res.data);
-            // Seleccionar la última o la anterior a la actual si estamos editando
-            if (res.data.length > 0) {
-                // Si estamos editando (id presente), tratamos de no seleccionar la misma consulta
-                // sino la anterior. Si es nueva, la última.
-                const filtered = id ? res.data.filter(c => c.id !== parseInt(id)) : res.data;
-                if (filtered.length > 0) {
-                    setSelectedHistoryId(filtered[0].id);
-                } else if (res.data.length > 0) {
-                    setSelectedHistoryId(res.data[0].id);
-                }
-            }
-        } catch (err) {
-            console.error("Error loading history", err);
-        } finally {
-            setLoadingHistory(false);
-        }
-    };
-
     useEffect(() => {
+        let cancelled = false;
+
+        const fetchHistory = async (pid) => {
+            if (!pid) return;
+            setLoadingHistory(true);
+            try {
+                const res = await consultaService.getByPaciente(pid);
+                if (cancelled) return;
+                setHistory(res.data);
+                // Seleccionar la última o la anterior a la actual si estamos editando
+                if (res.data.length > 0) {
+                    // Si estamos editando (id presente), tratamos de no seleccionar la misma consulta
+                    // sino la anterior. Si es nueva, la última.
+                    const filtered = id ? res.data.filter(c => c.id !== parseInt(id)) : res.data;
+                    if (filtered.length > 0) {
+                        setSelectedHistoryId(filtered[0].id);
+                    } else if (res.data.length > 0) {
+                        setSelectedHistoryId(res.data[0].id);
+                    }
+                }
+            } catch (err) {
+                if (!cancelled) console.error("Error loading history", err);
+            } finally {
+                if (!cancelled) setLoadingHistory(false);
+            }
+        };
+
         if (pacienteId) {
             fetchHistory(pacienteId);
         } else if (id) {
             // Si es edición, primero obtenemos la consulta para saber el pacienteId
             consultaService.getById(id)
                 .then(res => {
-                    fetchHistory(res.data.pacienteId);
+                    if (!cancelled) fetchHistory(res.data.pacienteId);
                 })
-                .catch(console.error);
+                .catch(err => {
+                    if (!cancelled) console.error(err);
+                });
         }
+
+        return () => {
+            cancelled = true;
+        };
     }, [id, pacienteId]);
 
     const selectedConsultation = history.find(c => c.id === parseInt(selectedHistoryId));
