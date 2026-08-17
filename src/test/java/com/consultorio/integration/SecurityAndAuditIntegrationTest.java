@@ -302,6 +302,33 @@ class SecurityAndAuditIntegrationTest {
     }
 
     @Test
+    void testExportarPdfDePacienteSinHistoriaNiConsultasNoRompe() throws Exception {
+        // testPaciente se crea en setUp() sin historia psiquiátrica ni consultas —
+        // es exactamente el caso límite que PdfService debe soportar sin excepción.
+        AuthRequestDTO loginRequest = new AuthRequestDTO();
+        loginRequest.setUsername("doctor.test");
+        loginRequest.setPassword("Password123!");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt_token");
+
+        MvcResult pdfResult = mockMvc.perform(get("/api/pacientes/" + testPaciente.getId() + "/historia-clinica/exportar")
+                        .cookie(jwtCookie))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn();
+
+        byte[] pdfBytes = pdfResult.getResponse().getContentAsByteArray();
+        assertThat(pdfBytes.length).isGreaterThan(0);
+        assertThat(new String(pdfBytes, 0, 5, java.nio.charset.StandardCharsets.ISO_8859_1)).isEqualTo("%PDF-");
+    }
+
+    @Test
     void testMalformedJwtCookieReturnsCleanErrorNotServerError() throws Exception {
         Cookie tokenMalformado = new Cookie("jwt_token", "esto-no-es-un-jwt-valido");
 
