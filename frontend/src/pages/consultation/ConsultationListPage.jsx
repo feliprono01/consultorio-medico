@@ -1,62 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { consultaService } from '../../api/consultaService';
-import { pacienteService } from '../../api/pacienteService';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import PatientEvolutionChart from '../../components/patient/PatientEvolutionChart';
 import ConsultationTimeline from '../../components/consultation/ConsultationTimeline';
-
-/* ── Avatar with initials ── */
-const Avatar = ({ nombre, apellido }) => {
-    const initials = `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase();
-    const colors = [
-        ['#0891B2', '#CFFAFE'], ['#059669', '#D1FAE5'],
-        ['#7C3AED', '#EDE9FE'], ['#D97706', '#FEF3C7'],
-        ['#DB2777', '#FCE7F3'],
-    ];
-    const idx = (nombre?.charCodeAt(0) ?? 0) % colors.length;
-    const [bg, fg] = colors[idx];
-    return (
-        <div style={{
-            width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
-            background: `linear-gradient(135deg, ${bg} 0%, ${fg} 100%)`,
-            border: `2px solid ${bg}40`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: bg, fontSize: '0.78rem', fontWeight: 800,
-            fontFamily: 'Figtree, sans-serif',
-        }}>
-            {initials}
-        </div>
-    );
-};
-
-/* ── Icon-only Button with tooltip ── */
-const IconBtn = ({ onClick, title, color, bg, border, children }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        title={title}
-        aria-label={title}
-        style={{
-            padding: '0.45rem 0.55rem',
-            borderRadius: '8px',
-            border: `1.5px solid ${border}`,
-            background: bg,
-            color,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.15s',
-            flexShrink: 0,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-        onMouseLeave={e => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
-    >
-        {children}
-    </button>
-);
+import Avatar from '../../components/common/Avatar';
+import IconBtn from '../../components/common/IconBtn';
+import ErrorBanner from '../../components/common/ErrorBanner';
+import { generateConsultaPdf } from '../../utils/consultaPdf';
 
 /* ── Loading skeleton ── */
 const SkeletonRow = () => (
@@ -124,92 +74,10 @@ export default function ConsultationListPage() {
         }
     };
 
-    const generatePDF = async (c) => {
-        const pdfWindow = window.open('', '_blank');
-        if (!pdfWindow) { alert("Habilite las ventanas emergentes para ver el PDF."); return; }
-        pdfWindow.document.write('<html><body><h3>Generando Informe...</h3><p>Por favor espere...</p></body></html>');
-        try {
-            const patientResponse = await pacienteService.getById(c.pacienteId);
-            const paciente = patientResponse.data;
-            const historia = paciente.historiaPsiquiatrica;
-            const doc = new jsPDF();
-            const generateTable = autoTable.default || autoTable;
-
-            doc.setFillColor(8, 145, 178);
-            doc.rect(0, 0, 210, 20, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.text('Consultorio Médico - Informe de Atención', 105, 13, { align: 'center' });
-
-            doc.setFontSize(12); doc.setTextColor(8, 145, 178);
-            doc.text('Información del Paciente', 14, 30);
-            doc.line(14, 32, 100, 32);
-
-            doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            doc.text(`Paciente: ${c.nombrePaciente} ${c.apellidoPaciente}`, 14, 40);
-            doc.text(`DNI: ${c.dniPaciente}`, 14, 46);
-            doc.text(`Fecha de Atención: ${new Date(c.fechaConsulta).toLocaleDateString()} ${new Date(c.fechaConsulta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 14, 52);
-
-            doc.setFontSize(12); doc.setTextColor(8, 145, 178);
-            doc.text('Detalles Clínicos', 14, 65);
-            doc.line(14, 67, 100, 67);
-
-            generateTable(doc, {
-                startY: 75,
-                head: [['Concepto', 'Descripción']],
-                body: [
-                    ['Motivo de Consulta', c.motivo || 'N/A'],
-                    ['Diagnóstico', c.diagnostico || 'N/A'],
-                    ['Tratamiento', c.tratamiento || 'N/A'],
-                    ['Notas Adicionales', c.notas || 'N/A']
-                ],
-                theme: 'striped',
-                headStyles: { fillColor: [8, 145, 178] },
-                styles: { cellPadding: 5 }
-            });
-
-            if (historia) {
-                let finalY = (doc.lastAutoTable?.finalY || 75) + 15;
-                if (finalY > 250) { doc.addPage(); finalY = 20; }
-                doc.setFontSize(12); doc.setTextColor(8, 145, 178);
-                doc.text('Historia Psiquiátrica', 14, finalY);
-                doc.line(14, finalY + 2, 100, finalY + 2);
-
-                generateTable(doc, {
-                    startY: finalY + 10,
-                    head: [['Antecedente', 'Descripción']],
-                    body: [
-                        ['Antecedentes Familiares', historia.antecedentesFamiliares || 'N/A'],
-                        ['Antecedentes Personales', historia.antecedentesPersonales || 'N/A'],
-                        ['Historia de Consumo', historia.historiaConsumo || 'N/A'],
-                        ['Enfermedad Actual', historia.enfermedadActual || 'N/A'],
-                        ['Tratamientos Previos', historia.tratamientosPrevios || 'N/A'],
-                        ['Desarrollo Psicomotor', historia.desarrolloPsicomotor || 'N/A'],
-                        ['Personalidad Previa', historia.personalidadPrevia || 'N/A']
-                    ],
-                    theme: 'striped',
-                    headStyles: { fillColor: [8, 145, 178] },
-                    styles: { cellPadding: 5 }
-                });
-            }
-
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(8); doc.setTextColor(150);
-                doc.text(`Generado automáticamente - Página ${i} de ${pageCount}`, 105, 290, { align: 'center' });
-            }
-            pdfWindow.location.href = URL.createObjectURL(doc.output('blob'));
-        } catch (err) {
-            if (pdfWindow) pdfWindow.document.body.innerHTML = `<h3 style="color:red">Error</h3><p>${err.message}</p>`;
-            else alert("No se pudo generar el PDF.");
-        }
-    };
-
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
-            
+
             <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
                 marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem'
@@ -257,11 +125,7 @@ export default function ConsultationListPage() {
                 </div>
             </div>
 
-            {error && (
-                <div style={{ background: 'var(--destructive-light)', color: 'var(--destructive)', padding: '1rem 1.5rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', border: '1px solid #FECACA' }}>
-                    {error}
-                </div>
-            )}
+            <ErrorBanner message={error} />
 
             {filterPacienteId && !loading && (
                 <PatientEvolutionChart consultations={filteredConsultas} />
@@ -343,7 +207,7 @@ export default function ConsultationListPage() {
                                     </td>
                                     <td style={{ paddingRight: '1.5rem' }}>
                                         <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
-                                            <IconBtn onClick={() => generatePDF(c)} title="Descargar PDF" color="#2563eb" bg="#EFF6FF" border="#BFDBFE">
+                                            <IconBtn onClick={() => generateConsultaPdf(c)} title="Descargar PDF" color="#2563eb" bg="#EFF6FF" border="#BFDBFE">
                                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                                             </IconBtn>
                                             <IconBtn onClick={() => navigate(`/consultas/edit/${c.id}`)} title="Ver / Editar Consulta" color="var(--primary)" bg="var(--primary-light)" border="var(--border)">
