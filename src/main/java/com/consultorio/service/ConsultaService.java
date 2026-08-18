@@ -12,6 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.consultorio.model.ConsultaAuditLog;
 import com.consultorio.repository.ConsultaAuditLogRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
@@ -67,10 +71,49 @@ public class ConsultaService {
         return consultaMapper.toResponseDTOList(consultas);
     }
 
+    /**
+     * Lista consultas activas con paginación real y búsqueda opcional.
+     * Sin término de búsqueda: pagina directamente en la base de datos.
+     * Con término de búsqueda: motivo/diagnóstico están cifrados (AES-GCM
+     * no determinístico), así que no se pueden filtrar por SQL LIKE — se
+     * trae el mismo bloque acotado de siempre, se desencripta al mapear a
+     * DTO, y se filtra/pagina en memoria (mismo alcance de búsqueda que
+     * tenía el filtro del lado del cliente).
+     */
     @Transactional(readOnly = true)
-    public List<ConsultaResponseDTO> obtenerTodas() {
-        List<Consulta> consultas = consultaRepository.findTop500ByActiveTrueOrderByFechaConsultaDesc();
-        return consultaMapper.toResponseDTOList(consultas);
+    public Page<ConsultaResponseDTO> obtenerTodas(int page, int size, String q) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+
+        if (q == null || q.isBlank()) {
+            return consultaRepository.findByActiveTrueOrderByFechaConsultaDesc(pageable)
+                    .map(consultaMapper::toResponseDTO);
+        }
+
+        List<ConsultaResponseDTO> candidatos = consultaRepository
+                .findTop500ByActiveTrueOrderByFechaConsultaDesc()
+                .stream()
+                .map(consultaMapper::toResponseDTO)
+                .filter(dto -> matchesSearch(dto, q))
+                .toList();
+
+        int from = Math.min(safePage * safeSize, candidatos.size());
+        int to = Math.min(from + safeSize, candidatos.size());
+        return new PageImpl<>(candidatos.subList(from, to), pageable, candidatos.size());
+    }
+
+    private boolean matchesSearch(ConsultaResponseDTO dto, String q) {
+        String term = q.toLowerCase();
+        return containsIgnoreCase(dto.getNombrePaciente(), term)
+                || containsIgnoreCase(dto.getApellidoPaciente(), term)
+                || containsIgnoreCase(dto.getDniPaciente(), term)
+                || containsIgnoreCase(dto.getMotivo(), term)
+                || containsIgnoreCase(dto.getDiagnostico(), term);
+    }
+
+    private boolean containsIgnoreCase(String value, String term) {
+        return value != null && value.toLowerCase().contains(term);
     }
 
     @Transactional

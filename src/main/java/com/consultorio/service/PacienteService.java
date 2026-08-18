@@ -13,6 +13,10 @@ import com.consultorio.dto.HistoriaPsiquiatricaDTO;
 import com.consultorio.model.HistoriaPsiquiatrica;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,6 +78,23 @@ public class PacienteService {
         log.info("Listando todos los pacientes activos");
         List<Paciente> pacientes = pacienteRepository.findTop500ByActiveTrueOrderByApellidoAsc();
         return pacienteMapper.toResponseDTOList(pacientes);
+    }
+
+    /**
+     * Lista pacientes activos con paginación real y búsqueda opcional por
+     * nombre, apellido o DNI. Usado por el listado principal de pacientes.
+     */
+    @Transactional(readOnly = true)
+    public Page<PacienteResponseDTO> listarPacientesPaginado(int page, int size, String q) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("apellido").ascending());
+
+        Page<Paciente> resultado = (q == null || q.isBlank())
+                ? pacienteRepository.findByActiveTrue(pageable)
+                : pacienteRepository.searchByNombreApellidoOrDni(q, pageable);
+
+        return resultado.map(pacienteMapper::toResponseDTO);
     }
 
     /**

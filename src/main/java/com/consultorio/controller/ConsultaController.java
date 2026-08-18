@@ -5,6 +5,7 @@ import com.consultorio.dto.ConsultaResponseDTO;
 import com.consultorio.service.ConsultaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,9 +41,11 @@ public class ConsultaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ConsultaResponseDTO>> obtenerTodas() {
-        List<ConsultaResponseDTO> consultas = consultaService.obtenerTodas();
-        return ResponseEntity.ok(consultas);
+    public ResponseEntity<Page<ConsultaResponseDTO>> obtenerTodas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String q) {
+        return ResponseEntity.ok(consultaService.obtenerTodas(page, size, q));
     }
 
     @GetMapping("/{id}")

@@ -3,8 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
 import { useConfirm } from '../../hooks/useConfirm';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import Pagination from '../../components/common/Pagination';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+
+const PAGE_SIZE = 20;
 
 /* ── Avatar with initials ── */
 const Avatar = ({ nombre, apellido }) => {
@@ -73,24 +77,37 @@ export default function PatientListPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading]       = useState(true);
     const [error, setError]           = useState('');
+    const [page, setPage]             = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const navigate = useNavigate();
     const confirm = useConfirm();
+    const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
-    useEffect(() => {
-        pacienteService.getAll()
-            .then(r => setPacientes(r.data))
+    const fetchPage = (pageToLoad) => {
+        setLoading(true);
+        pacienteService.getPage({ page: pageToLoad, size: PAGE_SIZE, q: debouncedSearch || undefined })
+            .then(r => {
+                setPacientes(r.data.content);
+                setTotalPages(r.data.totalPages);
+                setTotalElements(r.data.totalElements);
+            })
             .catch(() => setError('Error al cargar pacientes.'))
             .finally(() => setLoading(false));
-    }, []);
+    };
 
-    const filteredPacientes = pacientes.filter(p => {
-        const term = searchTerm.toLowerCase();
-        return (
-            p.nombre.toLowerCase().includes(term) ||
-            p.apellido.toLowerCase().includes(term) ||
-            p.dni.toLowerCase().includes(term)
-        );
-    });
+    // Al cambiar la búsqueda, siempre se vuelve a la primera página.
+    useEffect(() => {
+        setPage(0);
+        fetchPage(0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSearch]);
+
+    useEffect(() => {
+        if (page === 0) return; // ya se pidió arriba al cambiar la búsqueda
+        fetchPage(page);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
 
     const handleDelete = async (e, id) => {
         e?.preventDefault();
@@ -98,7 +115,12 @@ export default function PatientListPage() {
         if (await confirm('¿Estás seguro de que quieres eliminar este paciente? Esta acción no se puede deshacer.', { title: 'Eliminar paciente' })) {
             try {
                 await pacienteService.delete(id);
-                setPacientes(prev => prev.filter(p => p.id !== id));
+                // Si era el último de la página (y no es la primera), retrocede una página.
+                if (pacientes.length === 1 && page > 0) {
+                    setPage(page - 1);
+                } else {
+                    fetchPage(page);
+                }
             } catch {
                 alert('Hubo un error al eliminar el paciente.');
             }
@@ -214,7 +236,7 @@ export default function PatientListPage() {
                         Gestión de historia clínica
                         {!loading && (
                             <span className="badge badge-primary" style={{ marginLeft: '0.75rem' }}>
-                                {pacientes.length} registros
+                                {totalElements} registros
                             </span>
                         )}
                     </p>
@@ -266,7 +288,7 @@ export default function PatientListPage() {
                     <tbody>
                         {loading && [...Array(4)].map((_, i) => <SkeletonRow key={i} />)}
 
-                        {!loading && filteredPacientes.map(paciente => (
+                        {!loading && pacientes.map(paciente => (
                             <tr key={paciente.id}>
                                 {/* Name + Avatar */}
                                 <td style={{ paddingLeft: '1.5rem', maxWidth: '220px' }}>
@@ -316,7 +338,7 @@ export default function PatientListPage() {
                             </tr>
                         ))}
 
-                        {!loading && filteredPacientes.length === 0 && (
+                        {!loading && pacientes.length === 0 && (
                             <tr>
                                 <td colSpan="5" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
@@ -336,6 +358,13 @@ export default function PatientListPage() {
                     </tbody>
                 </table>
             </div>
+
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                totalElements={totalElements}
+                onPageChange={setPage}
+            />
         </div>
     );
 }

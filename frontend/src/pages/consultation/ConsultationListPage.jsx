@@ -8,6 +8,10 @@ import IconBtn from '../../components/common/IconBtn';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import { generateConsultaPdf } from '../../utils/consultaPdf';
 import { useConfirm } from '../../hooks/useConfirm';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import Pagination from '../../components/common/Pagination';
+
+const PAGE_SIZE = 20;
 
 /* ── Loading skeleton ── */
 const SkeletonRow = () => (
@@ -26,19 +30,23 @@ export default function ConsultationListPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [viewMode, setViewMode] = useState('table'); // 'table' | 'timeline'
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const confirm = useConfirm();
+    const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
     const filterPacienteId = searchParams.get('pacienteId');
 
-    useEffect(() => {
-        fetchConsultas();
-    }, []);
-
-    const fetchConsultas = async () => {
+    // Vista de historial de un paciente puntual (con gráfico de evolución):
+    // trae todo su historial de una — está naturalmente acotado por paciente,
+    // no necesita paginación, y no tiene sentido cortar el gráfico a una página.
+    const fetchHistorialPaciente = async () => {
+        setLoading(true);
         try {
-            const response = await consultaService.getAll();
+            const response = await consultaService.getByPaciente(filterPacienteId);
             setConsultas(response.data);
         } catch (err) {
             console.error(err);
@@ -48,20 +56,56 @@ export default function ConsultationListPage() {
         }
     };
 
-    const filteredConsultas = consultas.filter(c => {
-        if (filterPacienteId && c.pacienteId.toString() !== filterPacienteId) {
-            return false;
+    // Vista general: pagina en el servidor. Con término de búsqueda, el
+    // backend filtra por paciente/motivo/diagnóstico (motivo/diagnóstico
+    // están cifrados, así que ese filtro corre en el backend sobre un bloque
+    // acotado, no en SQL — mismo alcance que tenía el filtro del navegador).
+    const fetchPage = async (pageToLoad) => {
+        setLoading(true);
+        try {
+            const response = await consultaService.getAll({ page: pageToLoad, size: PAGE_SIZE, q: debouncedSearch || undefined });
+            setConsultas(response.data.content);
+            setTotalPages(response.data.totalPages);
+            setTotalElements(response.data.totalElements);
+        } catch (err) {
+            console.error(err);
+            setError('Error al cargar consultas.');
+        } finally {
+            setLoading(false);
         }
-        const term = searchTerm.toLowerCase();
-        if (!term) return true;
-        const nombreCompleto = `${c.nombrePaciente} ${c.apellidoPaciente} `.toLowerCase();
-        return (
-            nombreCompleto.includes(term) ||
-            (c.dniPaciente && c.dniPaciente.toString().toLowerCase().includes(term)) ||
-            (c.motivo && c.motivo.toLowerCase().includes(term)) ||
-            (c.diagnostico && c.diagnostico.toLowerCase().includes(term))
-        );
-    });
+    };
+
+    useEffect(() => {
+        if (filterPacienteId) {
+            fetchHistorialPaciente();
+        } else {
+            setPage(0);
+            fetchPage(0);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterPacienteId, debouncedSearch]);
+
+    useEffect(() => {
+        if (filterPacienteId || page === 0) return; // ya se pidió arriba
+        fetchPage(page);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
+
+    // En la vista de historial de paciente, el término de búsqueda sigue
+    // filtrando en el cliente (dataset chico, ya acotado a ese paciente).
+    const displayedConsultas = filterPacienteId
+        ? consultas.filter(c => {
+            const term = searchTerm.toLowerCase();
+            if (!term) return true;
+            const nombreCompleto = `${c.nombrePaciente} ${c.apellidoPaciente} `.toLowerCase();
+            return (
+                nombreCompleto.includes(term) ||
+                (c.dniPaciente && c.dniPaciente.toString().toLowerCase().includes(term)) ||
+                (c.motivo && c.motivo.toLowerCase().includes(term)) ||
+                (c.diagnostico && c.diagnostico.toLowerCase().includes(term))
+            );
+        })
+        : consultas;
 
     const handleDelete = async (e, id) => {
         e?.preventDefault();
@@ -69,7 +113,13 @@ export default function ConsultationListPage() {
         if (await confirm('¿Seguro que desea eliminar esta consulta? Esta acción no se puede deshacer.', { title: 'Eliminar consulta' })) {
             try {
                 await consultaService.delete(id);
-                setConsultas(prev => prev.filter(c => c.id !== id));
+                if (filterPacienteId) {
+                    setConsultas(prev => prev.filter(c => c.id !== id));
+                } else if (consultas.length === 1 && page > 0) {
+                    setPage(page - 1);
+                } else {
+                    fetchPage(page);
+                }
             } catch (err) {
                 alert('Error al eliminar: ' + (err.response?.data?.message || err.message));
             }
@@ -88,7 +138,7 @@ export default function ConsultationListPage() {
                     <h1 style={{ marginBottom: '0.25rem' }}>Consultas Médicas</h1>
                     <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {filterPacienteId ? 'Historial de paciente específico' : 'Historial general de atenciones'}
-                        {!loading && <span className="badge badge-primary">{filteredConsultas.length} registros</span>}
+                        {!loading && <span className="badge badge-primary">{filterPacienteId ? displayedConsultas.length : totalElements} registros</span>}
                     </p>
                     {filterPacienteId && (
                         <button
@@ -130,7 +180,7 @@ export default function ConsultationListPage() {
             <ErrorBanner message={error} />
 
             {filterPacienteId && !loading && (
-                <PatientEvolutionChart consultations={filteredConsultas} />
+                <PatientEvolutionChart consultations={displayedConsultas} />
             )}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', gap: '0.5rem', alignItems: 'center' }}>
@@ -160,7 +210,7 @@ export default function ConsultationListPage() {
             </div>
 
             {viewMode === 'timeline' ? (
-                <ConsultationTimeline consultations={filteredConsultas} />
+                <ConsultationTimeline consultations={displayedConsultas} />
             ) : (
                 <div className="glass-panel" style={{ overflow: 'hidden' }}>
                     <table>
@@ -176,7 +226,7 @@ export default function ConsultationListPage() {
                         <tbody>
                             {loading && [...Array(4)].map((_, i) => <SkeletonRow key={i} />)}
 
-                            {!loading && filteredConsultas.map(c => (
+                            {!loading && displayedConsultas.map(c => (
                                 <tr key={c.id}>
                                     <td style={{ paddingLeft: '1.5rem' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -222,7 +272,7 @@ export default function ConsultationListPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {!loading && filteredConsultas.length === 0 && (
+                            {!loading && displayedConsultas.length === 0 && (
                                 <tr>
                                     <td colSpan="5" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
@@ -242,6 +292,15 @@ export default function ConsultationListPage() {
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {!filterPacienteId && (
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    totalElements={totalElements}
+                    onPageChange={setPage}
+                />
             )}
         </div>
     );

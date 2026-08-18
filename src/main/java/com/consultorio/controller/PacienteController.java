@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,6 +52,19 @@ public class PacienteController {
         log.info("GET /api/pacientes - Listar pacientes activos");
         List<PacienteResponseDTO> pacientes = pacienteService.listarPacientesActivos();
         return ResponseEntity.ok(pacientes);
+    }
+
+    /**
+     * Lista pacientes activos con paginación real y búsqueda opcional.
+     * GET /api/pacientes/pagina?page=&size=&q=
+     */
+    @GetMapping("/pagina")
+    public ResponseEntity<Page<PacienteResponseDTO>> listarPacientesPaginado(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String q) {
+        log.info("GET /api/pacientes/pagina?page={}&size={}&q={} - Listar pacientes paginado", page, size, q);
+        return ResponseEntity.ok(pacienteService.listarPacientesPaginado(page, size, q));
     }
 
     /**

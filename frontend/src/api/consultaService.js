@@ -1,8 +1,8 @@
 import api from './axios';
 
 export const consultaService = {
-    getAll: () =>
-        api.get('/consultas'),
+    getAll: (params = {}) =>
+        api.get('/consultas', { params }),
 
     getById: (id) =>
         api.get(`/consultas/${id}`),

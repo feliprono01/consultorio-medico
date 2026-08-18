@@ -4,6 +4,9 @@ export const pacienteService = {
     getAll: () =>
         api.get('/pacientes'),
 
+    getPage: ({ page = 0, size = 20, q } = {}) =>
+        api.get('/pacientes/pagina', { params: { page, size, q } }),
+
     getById: (id) =>
         api.get(`/pacientes/${id}`),
 
