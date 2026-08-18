@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 
 export default function EvolutionFormPage() {
     const navigate = useNavigate();
     const toast = useToast();
+    const confirm = useConfirm();
 
     // State for Patients
     const [pacientes, setPacientes] = useState([]);
@@ -86,23 +88,21 @@ export default function EvolutionFormPage() {
                     }
                 }));
             } else {
-                // If no history found, strictly redirect to New Consultation
-                const confirmNew = window.confirm(
-                    `El paciente ${patient.nombre} ${patient.apellido} NO tiene consultas previas.\n\nDebe realizar una "Consulta Inicial" completa primero.`
+                // Aviso informativo: no hay historia previa, se redirige siempre a Consulta Inicial.
+                await confirm(
+                    `El paciente ${patient.nombre} ${patient.apellido} NO tiene consultas previas.\n\nDebe realizar una "Consulta Inicial" completa primero.`,
+                    { title: 'Sin consultas previas' }
                 );
-                if (confirmNew || true) {
-                    navigate('/consultas/new?pacienteId=' + patient.id);
-                }
+                navigate('/consultas/new?pacienteId=' + patient.id);
             }
         } catch (err) {
             console.log("No previous consultation", err);
             // Treat error as no history for safety in this flow
-            const confirmNew = window.confirm(
-                `No se encontró historial para ${patient.nombre} ${patient.apellido}.\n\nSe redirigirá a "Consulta Inicial".`
+            await confirm(
+                `No se encontró historial para ${patient.nombre} ${patient.apellido}.\n\nSe redirigirá a "Consulta Inicial".`,
+                { title: 'Sin historial' }
             );
-            if (confirmNew || true) {
-                navigate('/consultas/new?pacienteId=' + patient.id);
-            }
+            navigate('/consultas/new?pacienteId=' + patient.id);
         } finally {
             setLoading(false);
         }

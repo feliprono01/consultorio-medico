@@ -7,6 +7,7 @@ import Avatar from '../../components/common/Avatar';
 import IconBtn from '../../components/common/IconBtn';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import { generateConsultaPdf } from '../../utils/consultaPdf';
+import { useConfirm } from '../../hooks/useConfirm';
 
 /* ── Loading skeleton ── */
 const SkeletonRow = () => (
@@ -27,6 +28,7 @@ export default function ConsultationListPage() {
     const [viewMode, setViewMode] = useState('table'); // 'table' | 'timeline'
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const confirm = useConfirm();
 
     const filterPacienteId = searchParams.get('pacienteId');
 
@@ -64,7 +66,7 @@ export default function ConsultationListPage() {
     const handleDelete = async (e, id) => {
         e?.preventDefault();
         e?.stopPropagation();
-        if (window.confirm('¿Seguro que desea eliminar esta consulta? Esta acción no se puede deshacer.')) {
+        if (await confirm('¿Seguro que desea eliminar esta consulta? Esta acción no se puede deshacer.', { title: 'Eliminar consulta' })) {
             try {
                 await consultaService.delete(id);
                 setConsultas(prev => prev.filter(c => c.id !== id));

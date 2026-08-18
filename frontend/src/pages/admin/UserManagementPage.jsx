@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { userService } from '../../api/userService';
 import { useFormValidation, rules } from '../../hooks/useFormValidation';
+import { useConfirm } from '../../hooks/useConfirm';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import SuccessBanner from '../../components/common/SuccessBanner';
 import UserCreateForm from '../../components/admin/UserCreateForm';
@@ -27,6 +28,7 @@ export default function UserManagementPage() {
         confirmPassword:  rules.passwordMatch(),
     };
     const { errors: fieldErrors, validate, clearError } = useFormValidation(userRules);
+    const confirm = useConfirm();
 
     useEffect(() => {
         loadUsers();
@@ -72,7 +74,7 @@ export default function UserManagementPage() {
     };
 
     const handleDelete = async (id, username) => {
-        if (window.confirm(`¿Seguro que desea eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
+        if (await confirm(`¿Seguro que desea eliminar al usuario ${username}? Esta acción no se puede deshacer.`, { title: 'Eliminar usuario' })) {
             try {
                 await userService.delete(id);
                 setSuccessMsg('Usuario eliminado correctamente.');

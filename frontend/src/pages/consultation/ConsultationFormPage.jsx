@@ -5,6 +5,7 @@ import { consultaService } from '../../api/consultaService';
 import ConsultationHistoryModal from '../../components/consultation/ConsultationHistoryModal';
 import { useFormValidation, rules } from '../../hooks/useFormValidation';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 import FieldError from '../../components/common/FieldError';
 import SectionHeader from '../../components/common/SectionHeader';
 import TabButton from '../../components/common/TabButton';
@@ -27,6 +28,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
     const initialPacienteId = pacienteIdProp ?? searchParams.get('pacienteId');
     const isEdit = !!id;
     const toast = useToast();
+    const confirm = useConfirm();
 
     const [pacientes, setPacientes] = useState([]);
     const [activeTab, setActiveTab] = useState('general');
@@ -133,7 +135,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
             try {
                 const historyRes = await consultaService.getByPaciente(patient.id);
                 if (historyRes.data && historyRes.data.length > 0) {
-                    if (window.confirm(`El paciente ${patient.nombre} ${patient.apellido} ya tiene una consulta inicial registrada.\n\nEl sistema derivará automáticamente a "Agregar Evolución" para continuar el tratamiento.`)) {
+                    if (await confirm(`El paciente ${patient.nombre} ${patient.apellido} ya tiene una consulta inicial registrada.\n\nEl sistema derivará automáticamente a "Agregar Evolución" para continuar el tratamiento.`, { title: 'Consulta inicial ya registrada' })) {
                         navigate('/consultas/evolucion');
                     }
                     return;

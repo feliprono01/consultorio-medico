@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
+import { useConfirm } from '../../hooks/useConfirm';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -73,6 +74,7 @@ export default function PatientListPage() {
     const [loading, setLoading]       = useState(true);
     const [error, setError]           = useState('');
     const navigate = useNavigate();
+    const confirm = useConfirm();
 
     useEffect(() => {
         pacienteService.getAll()
@@ -93,7 +95,7 @@ export default function PatientListPage() {
     const handleDelete = async (e, id) => {
         e?.preventDefault();
         e?.stopPropagation();
-        if (window.confirm('¿Estás seguro de que quieres eliminar este paciente? Esta acción no se puede deshacer.')) {
+        if (await confirm('¿Estás seguro de que quieres eliminar este paciente? Esta acción no se puede deshacer.', { title: 'Eliminar paciente' })) {
             try {
                 await pacienteService.delete(id);
                 setPacientes(prev => prev.filter(p => p.id !== id));

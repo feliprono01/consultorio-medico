@@ -16,15 +16,19 @@ const BackupPage = lazy(() => import('./pages/admin/BackupPage'));
 import Layout from './components/common/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ToastContainer from './components/common/ToastContainer';
+import ConfirmDialog from './components/common/ConfirmDialog';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 
 function App() {
   return (
     <ToastProvider>
+    <ConfirmProvider>
     <AuthProvider>
       <BrowserRouter>
       <ToastContainer />
+      <ConfirmDialog />
       <Suspense fallback={<div>Cargando...</div>}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -52,6 +56,7 @@ function App() {
       </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </ConfirmProvider>
     </ToastProvider>
   );
 }
