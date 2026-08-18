@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
+import { useToast } from '../../hooks/useToast';
 
 export default function EvolutionFormPage() {
     const navigate = useNavigate();
+    const toast = useToast();
 
     // State for Patients
     const [pacientes, setPacientes] = useState([]);
@@ -48,6 +50,7 @@ export default function EvolutionFormPage() {
             setPacientes(res.data);
         } catch (err) {
             console.error("Error loading patients", err);
+            toast.error('No se pudo cargar la lista de pacientes.');
         }
     };
 
