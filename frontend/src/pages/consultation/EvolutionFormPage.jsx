@@ -4,6 +4,7 @@ import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
 import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
+import PatientSearchSelect from '../../components/common/PatientSearchSelect';
 
 export default function EvolutionFormPage() {
     const navigate = useNavigate();
@@ -13,7 +14,6 @@ export default function EvolutionFormPage() {
     // State for Patients
     const [pacientes, setPacientes] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isSearching, setIsSearching] = useState(false);
 
     // Core Form State (Evolution focused)
     const [form, setForm] = useState({
@@ -59,7 +59,6 @@ export default function EvolutionFormPage() {
     const handleSelectPatient = async (patient) => {
         setForm(prev => ({ ...prev, pacienteId: patient.id }));
         setSearchTerm('');
-        setIsSearching(false);
         setLoading(true);
         setError('');
         setLastConsult(null);
@@ -164,31 +163,12 @@ export default function EvolutionFormPage() {
                             </button>
                         </div>
                     ) : (
-                        <div style={{ position: 'relative' }}>
-                            <input
-                                className="form-input"
-                                placeholder="Buscar por nombre, apellido o DNI..."
-                                value={searchTerm}
-                                onChange={(e) => { setSearchTerm(e.target.value); setIsSearching(true); }}
-                                onFocus={() => setIsSearching(true)}
-                            />
-                            {isSearching && searchTerm && (
-                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', marginTop: '4px', maxHeight: '250px', overflowY: 'auto', zIndex: 10, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
-                                    {filteredPacientes.map(p => (
-                                        <div
-                                            key={p.id}
-                                            onClick={() => handleSelectPatient(p)}
-                                            style={{ padding: '0.8rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                        >
-                                            <div style={{ fontWeight: 600 }}>{p.nombre} {p.apellido}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>DNI: {p.dni}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <PatientSearchSelect
+                            patients={filteredPacientes}
+                            searchTerm={searchTerm}
+                            onSearchTermChange={setSearchTerm}
+                            onSelect={handleSelectPatient}
+                        />
                     )}
                 </div>
 

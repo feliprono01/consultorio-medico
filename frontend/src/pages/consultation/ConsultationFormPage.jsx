@@ -10,6 +10,7 @@ import FieldError from '../../components/common/FieldError';
 import SectionHeader from '../../components/common/SectionHeader';
 import TabButton from '../../components/common/TabButton';
 import ErrorBanner from '../../components/common/ErrorBanner';
+import PatientSearchSelect from '../../components/common/PatientSearchSelect';
 import { MentalExamFields, RiskAssessmentFields } from '../../components/consultation/PsychiatricEvaluationFields';
 
 /**
@@ -49,7 +50,6 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [isSearching, setIsSearching] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
 
     const consultaRules = {
@@ -129,7 +129,6 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
     const handleSelectPatient = async (patient) => {
         setForm(prev => ({ ...prev, pacienteId: patient.id }));
         setSearchTerm('');
-        setIsSearching(false);
 
         if (!isEdit) {
             try {
@@ -265,45 +264,13 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                                         )}
                                     </div>
                                 ) : (
-                                    <div style={{ position: 'relative' }}>
-                                        <div style={{ position: 'relative' }}>
-                                            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-                                            <input
-                                                className="form-input"
-                                                style={{ paddingLeft: '2.8rem' }}
-                                                placeholder="Buscar por nombre, apellido o DNI..."
-                                                value={searchTerm}
-                                                onChange={(e) => { setSearchTerm(e.target.value); setIsSearching(true); }}
-                                                onFocus={() => setIsSearching(true)}
-                                                disabled={isEdit}
-                                            />
-                                        </div>
-                                        {isSearching && searchTerm && (
-                                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid var(--border-subtle)', borderRadius: '12px', marginTop: '4px', maxHeight: '250px', overflowY: 'auto', zIndex: 10, boxShadow: 'var(--shadow-lg)' }}>
-                                                {filteredPacientes.length > 0 ? (
-                                                    filteredPacientes.map(p => (
-                                                        <div
-                                                            key={p.id}
-                                                            onClick={() => handleSelectPatient(p)}
-                                                            style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '0.8rem' }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                                        >
-                                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>
-                                                                {p.nombre.charAt(0)}{p.apellido.charAt(0)}
-                                                            </div>
-                                                            <div>
-                                                                <div style={{ fontWeight: 600, color: 'var(--text-header)', fontSize: '0.95rem' }}>{p.nombre} {p.apellido}</div>
-                                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>DNI: {p.dni}</div>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center' }}>No se encontraron pacientes.</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <PatientSearchSelect
+                                        patients={filteredPacientes}
+                                        searchTerm={searchTerm}
+                                        onSearchTermChange={setSearchTerm}
+                                        onSelect={handleSelectPatient}
+                                        disabled={isEdit}
+                                    />
                                 )}
                                 <FieldError message={fieldErrors.pacienteId} />
                             </div>
