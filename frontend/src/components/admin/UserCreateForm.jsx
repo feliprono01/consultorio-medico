@@ -13,8 +13,9 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
             <form onSubmit={onSubmit}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                     <div className="form-group">
-                        <label>Nombre *</label>
+                        <label htmlFor="new-user-nombre">Nombre *</label>
                         <input
+                            id="new-user-nombre"
                             className={`form-input${fieldErrors.nombre ? ' input-error' : ''}`}
                             value={newUser.nombre || ''}
                             onChange={e => { setNewUser({ ...newUser, nombre: e.target.value }); clearError('nombre'); }}
@@ -23,8 +24,9 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
                         <FieldError message={fieldErrors.nombre} />
                     </div>
                     <div className="form-group">
-                        <label>Apellido *</label>
+                        <label htmlFor="new-user-apellido">Apellido *</label>
                         <input
+                            id="new-user-apellido"
                             className={`form-input${fieldErrors.apellido ? ' input-error' : ''}`}
                             value={newUser.apellido || ''}
                             onChange={e => { setNewUser({ ...newUser, apellido: e.target.value }); clearError('apellido'); }}
@@ -33,8 +35,9 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
                         <FieldError message={fieldErrors.apellido} />
                     </div>
                     <div className="form-group">
-                        <label>DNI</label>
+                        <label htmlFor="new-user-dni">DNI</label>
                         <input
+                            id="new-user-dni"
                             className="form-input"
                             value={newUser.dni || ''}
                             onChange={e => setNewUser({ ...newUser, dni: e.target.value })}
@@ -42,8 +45,9 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
                         />
                     </div>
                     <div className="form-group">
-                        <label>Matrícula</label>
+                        <label htmlFor="new-user-matricula">Matrícula</label>
                         <input
+                            id="new-user-matricula"
                             className="form-input"
                             value={newUser.matricula || ''}
                             onChange={e => setNewUser({ ...newUser, matricula: e.target.value })}
@@ -54,10 +58,11 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                     <div className="form-group">
-                        <label>Usuario (Email) *</label>
+                        <label htmlFor="new-user-username">Usuario (Email) *</label>
                         <div style={{ position: 'relative' }}>
                             <svg style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                             <input
+                                id="new-user-username"
                                 className={`form-input${fieldErrors.username ? ' input-error' : ''}`}
                                 style={{ paddingLeft: '2.5rem' }}
                                 value={newUser.username}
@@ -68,8 +73,9 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
                         <FieldError message={fieldErrors.username} />
                     </div>
                     <div className="form-group">
-                        <label>Rol del Sistema</label>
+                        <label htmlFor="new-user-role">Rol del Sistema</label>
                         <select
+                            id="new-user-role"
                             className="form-input"
                             value={newUser.role}
                             onChange={e => setNewUser({ ...newUser, role: e.target.value })}
@@ -82,11 +88,13 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                     <div className="form-group">
-                        <label>Contraseña *</label>
+                        <label htmlFor="new-user-password">Contraseña *</label>
                         <div style={{ position: 'relative' }}>
                             <svg style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             <input
+                                id="new-user-password"
                                 type="password"
+                                autoComplete="new-password"
                                 className={`form-input${fieldErrors.password ? ' input-error' : ''}`}
                                 style={{ paddingLeft: '2.5rem' }}
                                 value={newUser.password}
@@ -97,11 +105,13 @@ export default function UserCreateForm({ newUser, setNewUser, fieldErrors, clear
                         <FieldError message={fieldErrors.password} />
                     </div>
                     <div className="form-group">
-                        <label>Confirmar Contraseña *</label>
+                        <label htmlFor="new-user-confirm-password">Confirmar Contraseña *</label>
                         <div style={{ position: 'relative' }}>
                             <svg style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             <input
+                                id="new-user-confirm-password"
                                 type="password"
+                                autoComplete="new-password"
                                 className={`form-input${fieldErrors.confirmPassword ? ' input-error' : ''}`}
                                 style={{ paddingLeft: '2.5rem' }}
                                 value={newUser.confirmPassword}

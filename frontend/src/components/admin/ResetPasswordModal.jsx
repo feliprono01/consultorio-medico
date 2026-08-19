@@ -1,7 +1,7 @@
 import Modal from '../common/Modal';
 import ErrorBanner from '../common/ErrorBanner';
 
-export default function ResetPasswordModal({ isOpen, username, newPassword, onPasswordChange, onSubmit, onClose, error }) {
+export default function ResetPasswordModal({ isOpen, username, newPassword, onPasswordChange, onSubmit, onClose, error, isSubmitting = false }) {
     const header = (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -23,11 +23,13 @@ export default function ResetPasswordModal({ isOpen, username, newPassword, onPa
 
             <form onSubmit={onSubmit}>
                 <div className="form-group" style={{ marginBottom: '2rem' }}>
-                    <label>Nueva Contraseña</label>
+                    <label htmlFor="reset-password-input">Nueva Contraseña</label>
                     <div style={{ position: 'relative' }}>
                         <svg style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                         <input
+                            id="reset-password-input"
                             type="password"
+                            autoComplete="new-password"
                             className="form-input"
                             style={{ paddingLeft: '2.5rem' }}
                             value={newPassword}
@@ -39,11 +41,11 @@ export default function ResetPasswordModal({ isOpen, username, newPassword, onPa
                     </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                    <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSubmitting}>
                         Cancelar
                     </button>
-                    <button type="submit" className="btn" disabled={!newPassword}>
-                        Actualizar Clave
+                    <button type="submit" className="btn" disabled={!newPassword || isSubmitting}>
+                        {isSubmitting ? 'Actualizando...' : 'Actualizar Clave'}
                     </button>
                 </div>
             </form>

@@ -92,6 +92,7 @@ export default function LoginPage() {
                             <input
                                 type="text"
                                 id="username"
+                                autoComplete="username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder=" "
@@ -110,6 +111,7 @@ export default function LoginPage() {
                             <input
                                 type="password"
                                 id="password"
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder=" "
@@ -123,7 +125,7 @@ export default function LoginPage() {
                             <label htmlFor="password">Contraseña</label>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
                             <label className="custom-checkbox-container">
                                 <input
                                     type="checkbox"
@@ -133,10 +135,6 @@ export default function LoginPage() {
                                 />
                                 <span>Recordarme</span>
                             </label>
-                            {/* Opcional: enlace de recuperar contraseña si hubiera */}
-                            <a href="#" style={{ fontSize: '0.9rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
-                                ¿Olvidaste tu contraseña?
-                            </a>
                         </div>
 
                         <button

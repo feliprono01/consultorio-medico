@@ -19,6 +19,7 @@ export default function UserManagementPage() {
     // Reset Password Modal State
     const [resetModal, setResetModal] = useState({ isOpen: false, userId: null, username: '', newPassword: '' });
     const [resetError, setResetError] = useState('');
+    const [isResetting, setIsResetting] = useState(false);
 
     const userRules = {
         nombre:           rules.requerido('El nombre'),
@@ -98,8 +99,9 @@ export default function UserManagementPage() {
 
     const handleResetSubmit = async (e) => {
         e.preventDefault();
-        if (!resetModal.newPassword) return;
+        if (!resetModal.newPassword || isResetting) return;
 
+        setIsResetting(true);
         try {
             await userService.resetPassword(resetModal.userId, resetModal.newPassword);
             setSuccessMsg(`Contraseña actualizada para ${resetModal.username}.`);
@@ -107,6 +109,8 @@ export default function UserManagementPage() {
             closeResetModal();
         } catch (err) {
             setResetError('Error al cambiar la contraseña.');
+        } finally {
+            setIsResetting(false);
         }
     };
 
@@ -159,6 +163,7 @@ export default function UserManagementPage() {
                 onSubmit={handleResetSubmit}
                 onClose={closeResetModal}
                 error={resetError}
+                isSubmitting={isResetting}
             />
         </div>
     );

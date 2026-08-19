@@ -6,6 +6,7 @@ export default function BackupPage() {
     const [loading, setLoading] = useState(false);
     const [creating, setCreating] = useState(false);
     const [message, setMessage] = useState(null);
+    const [downloading, setDownloading] = useState(null);
 
     useEffect(() => {
         fetchBackups();
@@ -40,6 +41,8 @@ export default function BackupPage() {
     };
 
     const handleDownload = async (filename) => {
+        if (downloading) return; // evita descargas duplicadas por doble-click
+        setDownloading(filename);
         try {
             const response = await backupService.download(filename);
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -52,6 +55,8 @@ export default function BackupPage() {
         } catch (error) {
             console.error('Error downloading backup:', error);
             setMessage({ type: 'error', text: 'Error al descargar el archivo de backup.' });
+        } finally {
+            setDownloading(null);
         }
     };
 
@@ -189,11 +194,12 @@ export default function BackupPage() {
                                         <button
                                             onClick={() => handleDownload(backup)}
                                             className="btn btn-secondary"
+                                            disabled={downloading === backup}
                                             style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', gap: '0.4rem', display: 'inline-flex' }}
                                             title="Descargar archivo"
                                         >
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                            Descargar
+                                            {downloading === backup ? 'Descargando...' : 'Descargar'}
                                         </button>
                                     </td>
                                 </tr>
