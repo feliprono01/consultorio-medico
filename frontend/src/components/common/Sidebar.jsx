@@ -68,6 +68,7 @@ const NavItem = ({ to, icon, label, active }) => (
         to={to}
         className={`nav-link ${active ? 'active' : ''}`}
         style={{ paddingLeft: '0.875rem' }}
+        aria-current={active ? 'page' : undefined}
     >
         {icon}
         <span>{label}</span>
