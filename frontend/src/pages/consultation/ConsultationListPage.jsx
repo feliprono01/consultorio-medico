@@ -8,6 +8,7 @@ import IconBtn from '../../components/common/IconBtn';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import { generateConsultaPdf } from '../../utils/consultaPdf';
 import { useConfirm } from '../../hooks/useConfirm';
+import { useToast } from '../../hooks/useToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import Pagination from '../../components/common/Pagination';
 
@@ -36,6 +37,7 @@ export default function ConsultationListPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const confirm = useConfirm();
+    const toast = useToast();
     const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
     const filterPacienteId = searchParams.get('pacienteId');
@@ -121,7 +123,7 @@ export default function ConsultationListPage() {
                     fetchPage(page);
                 }
             } catch (err) {
-                alert('Error al eliminar: ' + (err.response?.data?.message || err.message));
+                toast.error('Error al eliminar: ' + (err.response?.data?.message || err.message));
             }
         }
     };

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { pacienteService } from '../../api/pacienteService';
 import { consultaService } from '../../api/consultaService';
 import { useConfirm } from '../../hooks/useConfirm';
+import { useToast } from '../../hooks/useToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import Pagination from '../../components/common/Pagination';
 import jsPDF from 'jspdf';
@@ -82,6 +83,7 @@ export default function PatientListPage() {
     const [totalElements, setTotalElements] = useState(0);
     const navigate = useNavigate();
     const confirm = useConfirm();
+    const toast = useToast();
     const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
     const fetchPage = (pageToLoad) => {
@@ -122,7 +124,7 @@ export default function PatientListPage() {
                     fetchPage(page);
                 }
             } catch {
-                alert('Hubo un error al eliminar el paciente.');
+                toast.error('Hubo un error al eliminar el paciente.');
             }
         }
     };

@@ -94,9 +94,8 @@ export default function EvolutionFormPage() {
                 );
                 navigate('/consultas/new?pacienteId=' + patient.id);
             }
-        } catch (err) {
-            console.log("No previous consultation", err);
-            // Treat error as no history for safety in this flow
+        } catch {
+            // Sin historial previo es un resultado esperado de esta búsqueda, no un error real.
             await confirm(
                 `No se encontró historial para ${patient.nombre} ${patient.apellido}.\n\nSe redirigirá a "Consulta Inicial".`,
                 { title: 'Sin historial' }

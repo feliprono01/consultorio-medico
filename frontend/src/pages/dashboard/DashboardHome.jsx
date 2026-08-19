@@ -91,6 +91,19 @@ const QuickAction = ({ to, icon, title, description, color }) => (
     </Link>
 );
 
+/* ── Stat Card skeleton (mientras cargan las estadísticas) ── */
+const StatCardSkeleton = () => (
+    <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', flexShrink: 0, background: 'linear-gradient(90deg, #E0F7FA 25%, #B2EBF2 50%, #E0F7FA 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ width: '70%', height: '10px', borderRadius: '4px', marginBottom: '0.6rem', background: 'linear-gradient(90deg, #E0F7FA 25%, #B2EBF2 50%, #E0F7FA 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+                <div style={{ width: '45%', height: '22px', borderRadius: '4px', background: 'linear-gradient(90deg, #E0F7FA 25%, #B2EBF2 50%, #E0F7FA 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+            </div>
+        </div>
+    </div>
+);
+
 /* ── Greeting ── */
 function getGreeting() {
     const h = new Date().getHours();
@@ -101,6 +114,7 @@ function getGreeting() {
 
 export default function DashboardHome() {
     const [stats, setStats] = useState({ totalPacientes: 0, consultasHoy: 0, ultimaConsulta: '-', pacienteUltimaConsulta: '-' });
+    const [statsLoading, setStatsLoading] = useState(true);
     const [actividad, setActividad] = useState([]);
     const [today] = useState(new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }));
     const toast = useToast();
@@ -109,7 +123,7 @@ export default function DashboardHome() {
         dashboardService.getStats().then(r => setStats(r.data)).catch((err) => {
             console.error(err);
             toast.error('No se pudieron cargar las estadísticas del panel.');
-        });
+        }).finally(() => setStatsLoading(false));
         dashboardService.getActividadSemana().then(r => setActividad(r.data)).catch((err) => {
             console.error(err);
             toast.error('No se pudo cargar la actividad de la semana.');
@@ -119,6 +133,7 @@ export default function DashboardHome() {
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
             {/* ── Page Header ── */}
             <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
@@ -143,31 +158,41 @@ export default function DashboardHome() {
 
             {/* ── Stat Cards ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                <StatCard
-                    delay={0}
-                    label="Pacientes Totales"
-                    value={stats.totalPacientes}
-                    gradient="linear-gradient(135deg, rgba(8,145,178,0.12) 0%, rgba(34,211,238,0.12) 100%)"
-                    iconColor="var(--primary)"
-                    icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
-                />
-                <StatCard
-                    delay={80}
-                    label="Consultas Hoy"
-                    value={stats.consultasHoy}
-                    gradient="linear-gradient(135deg, rgba(5,150,105,0.12) 0%, rgba(16,185,129,0.12) 100%)"
-                    iconColor="var(--accent)"
-                    icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>}
-                />
-                <StatCard
-                    delay={160}
-                    label="Última Consulta"
-                    value={0}
-                    displayValue={stats.ultimaConsulta !== '-' ? stats.ultimaConsulta.substring(0, 10) : '—'}
-                    gradient="linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(251,191,36,0.12) 100%)"
-                    iconColor="#f59e0b"
-                    icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
-                />
+                {statsLoading ? (
+                    <>
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                    </>
+                ) : (
+                    <>
+                        <StatCard
+                            delay={0}
+                            label="Pacientes Totales"
+                            value={stats.totalPacientes}
+                            gradient="linear-gradient(135deg, rgba(8,145,178,0.12) 0%, rgba(34,211,238,0.12) 100%)"
+                            iconColor="var(--primary)"
+                            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+                        />
+                        <StatCard
+                            delay={80}
+                            label="Consultas Hoy"
+                            value={stats.consultasHoy}
+                            gradient="linear-gradient(135deg, rgba(5,150,105,0.12) 0%, rgba(16,185,129,0.12) 100%)"
+                            iconColor="var(--accent)"
+                            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>}
+                        />
+                        <StatCard
+                            delay={160}
+                            label="Última Consulta"
+                            value={0}
+                            displayValue={stats.ultimaConsulta !== '-' ? stats.ultimaConsulta.substring(0, 10) : '—'}
+                            gradient="linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(251,191,36,0.12) 100%)"
+                            iconColor="#f59e0b"
+                            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
+                        />
+                    </>
+                )}
             </div>
 
             {/* ── Chart + Quick Actions ── */}

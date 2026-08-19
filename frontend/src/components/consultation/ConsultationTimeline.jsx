@@ -48,35 +48,56 @@ export default function ConsultationTimeline({ consultations }) {
                         }}></div>
 
                         {group.items.map((c, index) => {
-                            // Determine Risk Color
+                            // Determine Risk Level — el color nunca es la única señal: el punto
+                            // también lleva un ícono de advertencia y la tarjeta un badge de
+                            // texto cuando el riesgo es medio/alto.
                             let riskColor = '#10b981'; // Green
+                            let riskLevel = 'bajo';
                             const psych = c.evaluacionPsiquiatrica;
                             if (psych) {
                                 if (['Alto', 'Inminente'].includes(psych.riesgoSuicida) || ['Alto'].includes(psych.riesgoHomicida)) {
                                     riskColor = '#ef4444'; // Red
+                                    riskLevel = 'alto';
                                 } else if (['Medio'].includes(psych.riesgoSuicida) || ['Medio'].includes(psych.riesgoHomicida)) {
                                     riskColor = '#f59e0b'; // Amber
+                                    riskLevel = 'medio';
                                 }
                             }
+                            const riskLabel = riskLevel === 'alto' ? 'Riesgo alto' : riskLevel === 'medio' ? 'Riesgo medio' : 'Riesgo bajo';
 
                             return (
                                 <div key={c.id} style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', position: 'relative', zIndex: 1 }}>
                                     {/* Timeline Dot */}
-                                    <div style={{
-                                        minWidth: '40px',
-                                        height: '40px',
-                                        borderRadius: '50%',
-                                        background: riskColor,
-                                        color: 'white',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: 'bold',
-                                        border: '4px solid white',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                        fontSize: '0.9rem'
-                                    }}>
+                                    <div
+                                        title={riskLabel}
+                                        aria-label={`Consulta #${group.items.length - index} — ${riskLabel}`}
+                                        style={{
+                                            minWidth: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            background: riskColor,
+                                            color: 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 'bold',
+                                            border: '4px solid white',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                            fontSize: '0.9rem',
+                                            position: 'relative',
+                                        }}>
                                         {group.items.length - index}
+                                        {riskLevel !== 'bajo' && (
+                                            <span style={{
+                                                position: 'absolute', top: '-4px', right: '-4px',
+                                                width: '16px', height: '16px', borderRadius: '50%',
+                                                background: 'white', color: riskColor,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                border: `1.5px solid ${riskColor}`,
+                                            }}>
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Content Card */}
@@ -87,6 +108,18 @@ export default function ConsultationTimeline({ consultations }) {
                                                      {new Date(c.fechaConsulta).toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                                 </span>
                                                 <h4 style={{ margin: '0.2rem 0', fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{c.motivo}</h4>
+                                                {riskLevel !== 'bajo' && (
+                                                    <span style={{
+                                                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                                                        fontSize: '0.75rem', fontWeight: 700, padding: '0.15rem 0.55rem',
+                                                        borderRadius: '999px', color: riskColor,
+                                                        background: riskLevel === 'alto' ? '#fee2e2' : '#fef3c7',
+                                                        border: `1px solid ${riskColor}40`,
+                                                    }}>
+                                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+                                                        {riskLabel}
+                                                    </span>
+                                                )}
                                             </div>
                                             <Link
                                                 to={`/consultas/edit/${c.id}`}
