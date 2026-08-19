@@ -171,7 +171,7 @@ export default function DashboardHome() {
             </div>
 
             {/* ── Chart + Quick Actions ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1rem', marginBottom: '1.5rem', alignItems: 'start' }}>
+            <div className="dashboard-chart-grid" style={{ marginBottom: '1.5rem' }}>
 
                 {/* Activity Chart */}
                 <div className="glass-panel" style={{ padding: '1.5rem' }}>

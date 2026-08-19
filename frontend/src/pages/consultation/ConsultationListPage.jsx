@@ -213,6 +213,7 @@ export default function ConsultationListPage() {
                 <ConsultationTimeline consultations={displayedConsultas} />
             ) : (
                 <div className="glass-panel" style={{ overflow: 'hidden' }}>
+                  <div className="table-scroll">
                     <table>
                         <thead>
                             <tr>
@@ -291,6 +292,7 @@ export default function ConsultationListPage() {
                             )}
                         </tbody>
                     </table>
+                  </div>
                 </div>
             )}
 

@@ -84,7 +84,7 @@ const NavItem = ({ to, icon, label, active }) => (
     </Link>
 );
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { role, logout } = useAuth();
@@ -98,9 +98,9 @@ export default function Sidebar() {
         location.pathname === path || location.pathname.startsWith(path + '/');
 
     return (
-        <aside className="sidebar-glass">
+        <aside className={`sidebar-glass${open ? ' sidebar-open' : ''}`}>
             {/* ── Brand ── */}
-            <div className="sidebar-header">
+            <div className="sidebar-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     {/* Logo icon */}
                     <div style={{
@@ -128,6 +128,15 @@ export default function Sidebar() {
                         </p>
                     </div>
                 </div>
+                <button
+                    type="button"
+                    className="sidebar-close-btn"
+                    onClick={onClose}
+                    aria-label="Cerrar menú de navegación"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.25rem' }}
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
 
             {/* ── Navigation ── */}

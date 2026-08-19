@@ -275,6 +275,7 @@ export default function PatientListPage() {
 
             {/* ── Table ── */}
             <div className="glass-panel" style={{ overflow: 'hidden' }}>
+              <div className="table-scroll">
                 <table>
                     <thead>
                         <tr>
@@ -357,6 +358,7 @@ export default function PatientListPage() {
                         )}
                     </tbody>
                 </table>
+              </div>
             </div>
 
             <Pagination

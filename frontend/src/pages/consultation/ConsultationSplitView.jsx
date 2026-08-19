@@ -90,17 +90,10 @@ export default function ConsultationSplitView() {
     const selectedConsultation = history.find(c => c.id === parseInt(selectedHistoryId));
 
     return (
-        <div style={{
-            display: 'grid',
-            gridTemplateColumns: '320px 1fr',
-            height: '100%',
-            gap: '1px',
-            background: '#e2e8f0',
-            overflow: 'hidden'
-        }}>
+        <div className="split-view-grid">
 
             {/* Left Panel: Historical View */}
-            <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+            <div className="split-view-left" style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
                 {/* Header with Back Button */}
                 <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', background: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Link to="/consultas" style={{ color: 'white', textDecoration: 'none', fontSize: '1.5rem', lineHeight: 1 }}>←</Link>
@@ -137,7 +130,7 @@ export default function ConsultationSplitView() {
             </div>
 
             {/* Right Panel: Active Form */}
-            <div style={{ background: 'white', height: '100%', overflowY: 'auto', position: 'relative' }}>
+            <div className="split-view-right" style={{ background: 'white', position: 'relative' }}>
                 <div style={{ padding: '1rem', maxWidth: '100%' }}>
                     <ConsultationFormPage
                         pacienteId={resolvedPacienteId}
