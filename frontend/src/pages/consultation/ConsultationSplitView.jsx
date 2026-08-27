@@ -88,6 +88,35 @@ export default function ConsultationSplitView() {
     };
 
     const selectedConsultation = history.find(c => c.id === parseInt(selectedHistoryId));
+    // La consulta que se está editando no cuenta como "referencia" de sí misma.
+    const otherHistory = id ? history.filter(c => c.id !== parseInt(id)) : history;
+
+    // El panel de historial de referencia solo tiene sentido al EDITAR una
+    // consulta existente: un paciente que llega a "Nueva Consulta Inicial"
+    // nunca puede tener consultas previas (si las tuviera, se lo redirige a
+    // "Evolución" antes de llegar acá — ver handleSelectPatient en
+    // ConsultationFormPage). Mostrarlo ahí solo confundía con un panel que
+    // jamás se llena.
+    if (!id) {
+        return (
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
+                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', background: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Link to="/consultas" style={{ color: 'white', textDecoration: 'none', fontSize: '1.5rem', lineHeight: 1 }}>←</Link>
+                    <span style={{ color: 'white', fontWeight: 600, fontSize: '0.95rem' }}>Consultorio</span>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <div style={{ padding: '1rem', maxWidth: '100%' }}>
+                        <ConsultationFormPage
+                            pacienteId={resolvedPacienteId}
+                            consultaId={id}
+                            onSaved={handleSaved}
+                            hideHistoryButton
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="split-view-grid">
@@ -109,9 +138,12 @@ export default function ConsultationSplitView() {
                         value={selectedHistoryId}
                         onChange={(e) => setSelectedHistoryId(e.target.value)}
                         style={{ fontSize: '0.9rem' }}
+                        disabled={!loadingHistory && otherHistory.length === 0}
                     >
-                        <option value="">Seleccione consulta...</option>
-                        {history.map(c => (
+                        <option value="">
+                            {!loadingHistory && otherHistory.length === 0 ? 'Sin otras consultas' : 'Seleccione consulta...'}
+                        </option>
+                        {otherHistory.map(c => (
                             <option key={c.id} value={c.id}>
                                 {new Date(c.fechaConsulta).toLocaleDateString('es-AR')} - {c.motivo || 'Sin motivo'}
                             </option>
@@ -123,6 +155,10 @@ export default function ConsultationSplitView() {
                 <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
                     {loadingHistory ? (
                         <p>Cargando historial...</p>
+                    ) : otherHistory.length === 0 ? (
+                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '0 1rem' }}>
+                            Este paciente no tiene otras consultas registradas para comparar.
+                        </div>
                     ) : (
                         <ConsultationHistoryViewer consultation={selectedConsultation} />
                     )}
