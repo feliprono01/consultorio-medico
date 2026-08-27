@@ -177,16 +177,16 @@ function PatientFormPageBody({ routeId: id }) {
 
             {/* Navigation Tabs */}
             <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', padding: '0.35rem', background: 'var(--muted)', borderRadius: '99px', width: 'fit-content', border: '1px solid var(--border-subtle)' }}>
-                <TabButton active={activeTab === 'datos'} onClick={() => goToTab('datos')} label={`Datos Personales${isDatosDirty ? ' •' : ''}`} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
-                <TabButton active={activeTab === 'familia'} onClick={() => goToTab('familia')} label={`Familiares${isDatosDirty ? ' •' : ''}`} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} />
-                <TabButton active={activeTab === 'psiquiatria'} onClick={() => goToTab('psiquiatria')} label={`Antecedentes Médicos${isHistoriaDirty ? ' •' : ''}`} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
+                <TabButton active={activeTab === 'datos'} onClick={() => goToTab('datos')} label="Datos Personales" dirty={isDatosDirty} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
+                <TabButton active={activeTab === 'familia'} onClick={() => goToTab('familia')} label="Familiares" dirty={isDatosDirty} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} />
+                <TabButton active={activeTab === 'psiquiatria'} onClick={() => goToTab('psiquiatria')} label="Antecedentes Médicos" dirty={isHistoriaDirty} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>} />
             </div>
 
             {hasUnsavedChanges && (
-                <p style={{ margin: '-0.75rem 0 1rem', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-                    Hay cambios sin guardar (marcados con • en las pestañas).
-                </p>
+                <div className="animate-fadeInUp" style={{ background: '#FEF3C7', color: '#92400E', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', border: '1px solid #FDE68A', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 500, fontSize: '0.85rem' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Hay cambios sin guardar en esta ficha, marcados con un punto (•) en las pestañas.
+                </div>
             )}
 
             <ErrorBanner message={error} />

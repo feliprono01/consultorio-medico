@@ -1,4 +1,4 @@
-export default function TabButton({ label, icon, active, onClick }) {
+export default function TabButton({ label, icon, active, onClick, dirty = false }) {
     return (
         <button
             type="button"
@@ -20,6 +20,16 @@ export default function TabButton({ label, icon, active, onClick }) {
         >
             {icon}
             {label}
+            {dirty && (
+                <span
+                    title="Cambios sin guardar"
+                    style={{
+                        width: '8px', height: '8px', borderRadius: '50%',
+                        background: '#f59e0b', flexShrink: 0,
+                        boxShadow: '0 0 0 3px rgba(245, 158, 11, 0.25)',
+                    }}
+                />
+            )}
         </button>
     );
 }
