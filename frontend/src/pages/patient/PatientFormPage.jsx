@@ -22,9 +22,21 @@ const EMPTY_HISTORY = {
     personalidadPrevia: '', antecedentesPsicologicos: ''
 };
 
+/**
+ * Wrapper delgado: "/pacientes/new" y "/pacientes/edit/:id" renderizan el
+ * mismo componente en la misma posición del árbol de rutas, así que React
+ * Router no lo remonta solo por cambiar de uno a otro (o de un paciente a
+ * otro) — quedaban pisados datos y errores de la pantalla anterior. La
+ * `key` fuerza un remonte limpio cada vez que cambia a quién se está
+ * editando (o se pasa a "nuevo").
+ */
 export default function PatientFormPage() {
-    const navigate = useNavigate();
     const { id } = useParams();
+    return <PatientFormPageBody key={id ?? 'new'} routeId={id} />;
+}
+
+function PatientFormPageBody({ routeId: id }) {
+    const navigate = useNavigate();
     const isEdit = !!id;
     const confirm = useConfirm();
 

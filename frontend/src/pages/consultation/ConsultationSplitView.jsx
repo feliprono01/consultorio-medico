@@ -5,10 +5,21 @@ import ConsultationFormPage from './ConsultationFormPage';
 import ConsultationHistoryViewer from '../../components/consultation/ConsultationHistoryViewer';
 import { useToast } from '../../hooks/useToast';
 
+/**
+ * Wrapper delgado: "/consultas/new" y "/consultas/edit/:id" renderizan el
+ * mismo componente en la misma posición del árbol de rutas, así que React
+ * Router no lo remonta solo por navegar de uno a otro — quedaba pisado el
+ * paciente/historial de la consulta anterior. La `key` fuerza un remonte
+ * limpio cada vez que cambia qué se está editando (o se pasa a "nueva").
+ */
 export default function ConsultationSplitView() {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
     const pacienteIdFromQuery = searchParams.get('pacienteId');
+    return <ConsultationSplitViewBody key={id ?? pacienteIdFromQuery ?? 'new'} routeId={id} pacienteIdFromQuery={pacienteIdFromQuery} />;
+}
+
+function ConsultationSplitViewBody({ routeId: id, pacienteIdFromQuery }) {
     const navigate = useNavigate();
     const toast = useToast();
 
