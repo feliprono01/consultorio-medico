@@ -82,16 +82,20 @@ export default function ConsultationListPage() {
             fetchHistorialPaciente();
         } else {
             setPage(0);
-            fetchPage(0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterPacienteId, debouncedSearch]);
 
+    // Se pide la página actual cada vez que cambia la página o el término de
+    // búsqueda. Antes había un guard "if (page === 0) return" pensado para no
+    // duplicar el pedido al resetear la búsqueda, pero eso también rompía
+    // volver a la página 1 con "Anterior": el estado pasaba a 0 pero nunca se
+    // volvían a pedir esos datos.
     useEffect(() => {
-        if (filterPacienteId || page === 0) return; // ya se pidió arriba
+        if (filterPacienteId) return;
         fetchPage(page);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page]);
+    }, [page, debouncedSearch]);
 
     // En la vista de historial de paciente, el término de búsqueda sigue
     // filtrando en el cliente (dataset chico, ya acotado a ese paciente).

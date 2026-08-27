@@ -101,15 +101,18 @@ export default function PatientListPage() {
     // Al cambiar la búsqueda, siempre se vuelve a la primera página.
     useEffect(() => {
         setPage(0);
-        fetchPage(0);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedSearch]);
 
+    // Se pide la página actual cada vez que cambia la página o el término de
+    // búsqueda (ya "debounced"). Antes había un guard "if (page === 0) return"
+    // pensado para no duplicar el pedido al resetear la búsqueda, pero eso
+    // también rompía volver a la página 1 con "Anterior": el estado pasaba a
+    // 0 pero nunca se volvían a pedir esos datos.
     useEffect(() => {
-        if (page === 0) return; // ya se pidió arriba al cambiar la búsqueda
         fetchPage(page);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page]);
+    }, [page, debouncedSearch]);
 
     const handleDelete = async (e, id) => {
         e?.preventDefault();
