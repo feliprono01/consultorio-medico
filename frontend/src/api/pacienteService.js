@@ -16,6 +16,9 @@ export const pacienteService = {
     update: (id, data) =>
         api.put(`/pacientes/${id}`, data),
 
+    updateFamilia: (id, data) =>
+        api.put(`/pacientes/${id}/familia`, data),
+
     delete: (id) =>
         api.delete(`/pacientes/${id}`),
 

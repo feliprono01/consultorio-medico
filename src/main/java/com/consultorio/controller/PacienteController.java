@@ -1,5 +1,6 @@
 package com.consultorio.controller;
 
+import com.consultorio.dto.PacienteFamiliaDTO;
 import com.consultorio.dto.PacienteRequestDTO;
 import com.consultorio.dto.PacienteResponseDTO;
 import com.consultorio.service.PacienteService;
@@ -122,6 +123,20 @@ public class PacienteController {
         log.info("DELETE /api/pacientes/{} - Eliminar paciente (soft delete)", id);
         pacienteService.eliminarPaciente(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Actualiza solo la composición familiar de un paciente, de forma
+     * independiente al resto de la ficha.
+     * PUT /api/pacientes/{id}/familia
+     */
+    @PutMapping("/{id}/familia")
+    public ResponseEntity<PacienteResponseDTO> actualizarDatosFamiliares(
+            @PathVariable Long id,
+            @RequestBody PacienteFamiliaDTO dto) {
+        log.info("PUT /api/pacientes/{}/familia - Actualizar datos familiares", id);
+        PacienteResponseDTO response = pacienteService.actualizarDatosFamiliares(id, dto);
+        return ResponseEntity.ok(response);
     }
 
     /**

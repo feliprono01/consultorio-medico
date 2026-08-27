@@ -1,5 +1,6 @@
 package com.consultorio.service;
 
+import com.consultorio.dto.PacienteFamiliaDTO;
 import com.consultorio.dto.PacienteRequestDTO;
 import com.consultorio.dto.PacienteResponseDTO;
 import com.consultorio.exception.ResourceNotFoundException;
@@ -168,6 +169,33 @@ public class PacienteService {
         Paciente pacienteActualizado = pacienteRepository.save(pacienteExistente);
 
         log.info("Paciente actualizado exitosamente con ID: {}", id);
+        return pacienteMapper.toResponseDTO(pacienteActualizado);
+    }
+
+    /**
+     * Actualiza solo la composición familiar de un paciente (datosPadres/
+     * datosHijos/datosHermanos), de forma independiente al resto de la
+     * ficha — así guardar "Familiares" no pisa cambios sin guardar que
+     * pueda haber en "Datos Personales", y viceversa.
+     */
+    @Transactional
+    public PacienteResponseDTO actualizarDatosFamiliares(Long id, PacienteFamiliaDTO dto) {
+        log.info("Actualizando datos familiares del paciente ID: {}", id);
+
+        Paciente paciente = pacienteRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", id));
+
+        if (dto.getVersion() != null && !dto.getVersion().equals(paciente.getVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Paciente.class, id);
+        }
+
+        paciente.setDatosPadres(dto.getDatosPadres());
+        paciente.setDatosHijos(dto.getDatosHijos());
+        paciente.setDatosHermanos(dto.getDatosHermanos());
+
+        Paciente pacienteActualizado = pacienteRepository.save(paciente);
+
+        log.info("Datos familiares actualizados para paciente ID: {}", id);
         return pacienteMapper.toResponseDTO(pacienteActualizado);
     }
 
