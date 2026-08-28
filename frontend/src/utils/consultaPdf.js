@@ -22,7 +22,7 @@ export async function generateConsultaPdf(c) {
         doc.rect(0, 0, 210, 20, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(14);
-        doc.text('Consultorio Médico - Informe de Atención', 105, 13, { align: 'center' });
+        doc.text('PsiClínica - Informe de Atención', 105, 13, { align: 'center' });
 
         doc.setFontSize(12); doc.setTextColor(8, 145, 178);
         doc.text('Información del Paciente', 14, 30);

@@ -117,7 +117,7 @@ export default function Sidebar({ open = false, onClose }) {
                     </div>
                     {/* Brand text */}
                     <div>
-                        <h3 style={{ margin: 0, fontSize: '1.05rem' }}>Consultorio</h3>
+                        <h3 style={{ margin: 0, fontSize: '1.05rem' }}>PsiClínica</h3>
                         <p style={{
                             margin: 0, fontSize: '0.7rem',
                             color: 'var(--primary)', fontWeight: 600,
