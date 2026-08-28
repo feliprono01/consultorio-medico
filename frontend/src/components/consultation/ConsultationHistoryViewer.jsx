@@ -16,16 +16,20 @@ const ConsultationHistoryViewer = ({ consultation }) => {
         );
     }
 
+    // Título de sección: la "etiqueta grande" que agrupa varios campos.
+    // Deliberadamente más chico y liviano que el valor de un campo (abajo)
+    // para que nunca compita con el dato real — solo ayuda a ubicarse.
     const Section = ({ title, children, color = 'var(--text-primary)' }) => (
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '1.75rem' }}>
             <h4 style={{
-                fontSize: '0.9rem',
+                fontSize: '0.72rem',
+                fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: 'var(--text-muted)',
-                marginBottom: '0.5rem',
-                borderBottom: '1px solid #e2e8f0',
-                paddingBottom: '0.25rem'
+                letterSpacing: '0.08em',
+                color: 'var(--primary)',
+                margin: '0 0 0.65rem',
+                paddingBottom: '0.35rem',
+                borderBottom: '2px solid var(--primary-light, #dbeafe)'
             }}>
                 {title}
             </h4>
@@ -35,12 +39,18 @@ const ConsultationHistoryViewer = ({ consultation }) => {
         </div>
     );
 
+    // Campo individual: la etiqueta va chica/tenue arriba, el VALOR es lo
+    // que realmente importa leer, así que va más grande y con más contraste.
     const Field = ({ label, value }) => {
         if (!value) return null;
         return (
-            <div style={{ marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)' }}>{label}: </span>
-                <span>{value}</span>
+            <div style={{ marginBottom: '0.7rem' }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.12rem' }}>
+                    {label}
+                </div>
+                <div style={{ fontSize: '0.93rem', fontWeight: 500, color: '#1e293b' }}>
+                    {value}
+                </div>
             </div>
         );
     };
@@ -118,7 +128,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
             </div>
 
             <Section title="Motivo de Consulta">
-                <p>{consultation.motivo}</p>
+                <p style={{ margin: 0, fontSize: '0.93rem', fontWeight: 500, color: '#1e293b' }}>{consultation.motivo}</p>
             </Section>
 
             {(consultation.estadoAnimo || consultation.calidadSueno) && (
@@ -169,11 +179,15 @@ const ConsultationHistoryViewer = ({ consultation }) => {
                 <Field label="Eje I" value={consultation.evaluacionPsiquiatrica?.eje1} />
                 <Field label="Eje II" value={consultation.evaluacionPsiquiatrica?.eje2} />
                 <Field label="Eje III" value={consultation.evaluacionPsiquiatrica?.eje3} />
-                <p style={{ marginTop: '0.5rem' }}>{consultation.diagnostico}</p>
+                {consultation.diagnostico && (
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.93rem', fontWeight: 500, color: '#1e293b' }}>{consultation.diagnostico}</p>
+                )}
             </Section>
 
             <Section title="Tratamiento">
-                <p style={{ whiteSpace: 'pre-line' }}>{consultation.tratamiento}</p>
+                {consultation.tratamiento && (
+                    <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '0.93rem', fontWeight: 500, color: '#1e293b' }}>{consultation.tratamiento}</p>
+                )}
                 <div style={{ marginTop: '0.5rem' }}>
                     <Field label="Adherencia" value={consultation.evaluacionPsiquiatrica?.adherenciaTratamiento} />
                     <Field label="Efectos Adversos" value={consultation.evaluacionPsiquiatrica?.efectosAdversos} />
@@ -182,7 +196,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
 
             {consultation.notas && (
                 <Section title="Notas Adicionales">
-                    <p style={{ whiteSpace: 'pre-line' }}>{consultation.notas}</p>
+                    <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '0.93rem', fontWeight: 500, color: '#1e293b' }}>{consultation.notas}</p>
                 </Section>
             )}
         </div>
