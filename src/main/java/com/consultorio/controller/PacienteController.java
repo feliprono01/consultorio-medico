@@ -177,6 +177,18 @@ public class PacienteController {
     }
 
     /**
+     * Recalcula desde cero el encadenado de hash de toda la tabla de
+     * auditoría de historia psiquiátrica. Mismo propósito que el backfill
+     * de ConsultaController — uso único, idempotente. Solo ADMIN.
+     * POST /api/pacientes/auditoria/backfill-cadena-hp
+     */
+    @PostMapping("/auditoria/backfill-cadena-hp")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<com.consultorio.dto.VerificacionCadenaDTO> backfillCadenaAuditoriaHp() {
+        return ResponseEntity.ok(pacienteService.backfillCadenaAuditoriaHp());
+    }
+
+    /**
      * Genera y descarga la Historia Clínica completa de un paciente en formato PDF.
      * Cumple con el Art. 19 y 20 de la Ley 26.529 (Derecho de acceso a la Historia Clínica).
      * GET /api/pacientes/{id}/historia-clinica/exportar

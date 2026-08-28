@@ -348,4 +348,28 @@ public class PacienteService {
 
         return new com.consultorio.dto.VerificacionCadenaDTO(true, registros.size(), null);
     }
+
+    /**
+     * Recalcula desde cero el hash y hash_anterior de TODOS los registros de
+     * la tabla, en orden de inserción. Mismo propósito y misma garantía de
+     * idempotencia que ConsultaService.backfillCadenaAuditoria() — ver ahí
+     * para el detalle. Solo ADMIN, ver PacienteController.
+     */
+    @Transactional
+    public com.consultorio.dto.VerificacionCadenaDTO backfillCadenaAuditoriaHp() {
+        List<HistoriaPsiquiatricaAuditLog> registros = hpAuditLogRepository.findAllByOrderByIdAsc();
+
+        String hashAnterior = com.consultorio.security.HashChainUtil.GENESIS;
+        for (HistoriaPsiquiatricaAuditLog registro : registros) {
+            String hash = com.consultorio.security.HashChainUtil.siguienteHash(hashAnterior,
+                    registro.getCampo(), registro.getValorAnterior(), registro.getValorNuevo(),
+                    registro.getFechaCambio().toString(), registro.getModificadoPor());
+            registro.setHashAnterior(hashAnterior);
+            registro.setHash(hash);
+            hashAnterior = hash;
+        }
+        hpAuditLogRepository.saveAll(registros);
+
+        return verificarCadenaAuditoriaHp();
+    }
 }

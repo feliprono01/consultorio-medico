@@ -295,6 +295,35 @@ public class ConsultaService {
         return new com.consultorio.dto.VerificacionCadenaDTO(true, registros.size(), null);
     }
 
+    /**
+     * Recalcula desde cero el hash y hash_anterior de TODOS los registros de
+     * la tabla, en orden de inserción — uso único, pensado para activar el
+     * encadenado sobre una tabla que ya tenía registros de auditoría antes
+     * de que existiera esta funcionalidad (su hash queda en null y por eso
+     * la verificación siempre los reporta como "rotos"). Es idempotente: se
+     * puede correr más de una vez sin cambiar el resultado, porque siempre
+     * recalcula la cadena completa a partir de los datos reales ya
+     * guardados — no inventa contenido, solo le aplica la fórmula de hash
+     * retroactivamente. Solo ADMIN, ver ConsultaController.
+     */
+    @Transactional
+    public com.consultorio.dto.VerificacionCadenaDTO backfillCadenaAuditoria() {
+        List<ConsultaAuditLog> registros = consultaAuditLogRepository.findAllByOrderByIdAsc();
+
+        String hashAnterior = com.consultorio.security.HashChainUtil.GENESIS;
+        for (ConsultaAuditLog registro : registros) {
+            String hash = com.consultorio.security.HashChainUtil.siguienteHash(hashAnterior,
+                    registro.getCampo(), registro.getValorAnterior(), registro.getValorNuevo(),
+                    registro.getFechaCambio().toString(), registro.getModificadoPor());
+            registro.setHashAnterior(hashAnterior);
+            registro.setHash(hash);
+            hashAnterior = hash;
+        }
+        consultaAuditLogRepository.saveAll(registros);
+
+        return verificarCadenaAuditoria();
+    }
+
     @Transactional(readOnly = true)
     public ConsultaResponseDTO obtenerUltimaConsulta(Long pacienteId) {
         var resultado = consultaRepository.findFirstByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(pacienteId)

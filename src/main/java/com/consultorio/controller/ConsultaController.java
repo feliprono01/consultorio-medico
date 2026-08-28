@@ -91,6 +91,21 @@ public class ConsultaController {
     }
 
     /**
+     * Recalcula desde cero el encadenado de hash de toda la tabla de
+     * auditoría de consultas. Uso único al activar esta funcionalidad sobre
+     * una base que ya tenía registros de auditoría previos (que quedan sin
+     * hash y por eso la verificación siempre los reporta rotos) — es
+     * idempotente, no inventa contenido. Devuelve el resultado de la
+     * verificación después de recalcular. Solo ADMIN.
+     * POST /api/consultas/auditoria/backfill-cadena
+     */
+    @PostMapping("/auditoria/backfill-cadena")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<com.consultorio.dto.VerificacionCadenaDTO> backfillCadenaAuditoria() {
+        return ResponseEntity.ok(consultaService.backfillCadenaAuditoria());
+    }
+
+    /**
      * Genera y descarga el reporte en PDF del historial de auditoría de
      * cambios de una consulta puntual, listo para entregar a la justicia o
      * a un perito si hace falta demostrar la trazabilidad. Solo ADMIN.
