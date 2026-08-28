@@ -3,10 +3,13 @@ package com.consultorio.controller;
 import com.consultorio.dto.ConsultaRequestDTO;
 import com.consultorio.dto.ConsultaResponseDTO;
 import com.consultorio.service.ConsultaService;
+import com.consultorio.service.PdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,7 @@ import java.util.List;
 public class ConsultaController {
 
     private final ConsultaService consultaService;
+    private final PdfService pdfService;
 
     @PostMapping
     public ResponseEntity<ConsultaResponseDTO> crearConsulta(@Valid @RequestBody ConsultaRequestDTO dto) {
@@ -84,5 +88,24 @@ public class ConsultaController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<com.consultorio.dto.VerificacionCadenaDTO> verificarCadenaAuditoria() {
         return ResponseEntity.ok(consultaService.verificarCadenaAuditoria());
+    }
+
+    /**
+     * Genera y descarga el reporte en PDF del historial de auditoría de
+     * cambios de una consulta puntual, listo para entregar a la justicia o
+     * a un perito si hace falta demostrar la trazabilidad. Solo ADMIN.
+     * GET /api/consultas/{id}/auditoria/exportar
+     */
+    @GetMapping("/{id}/auditoria/exportar")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<byte[]> exportarAuditoria(@PathVariable Long id) {
+        byte[] pdfBytes = pdfService.generarReporteAuditoriaConsulta(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "auditoria-consulta-" + id + ".pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }

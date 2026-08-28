@@ -33,6 +33,7 @@ public class AccessLogService {
     public static final String VER_FICHA                = "VER_FICHA";
     public static final String VER_HISTORIA_PSIQ        = "VER_HISTORIA_PSIQUIATRICA";
     public static final String VER_CONSULTA             = "VER_CONSULTA";
+    public static final String EXPORTAR_AUDITORIA       = "EXPORTAR_AUDITORIA";
 
     private final AccessLogRepository accessLogRepository;
 

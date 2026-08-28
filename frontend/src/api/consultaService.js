@@ -24,4 +24,7 @@ export const consultaService = {
 
     getHistorial: (id) =>
         api.get(`/consultas/${id}/historial`),
+
+    exportarAuditoria: (id) =>
+        api.get(`/consultas/${id}/auditoria/exportar`, { responseType: 'blob' }),
 };

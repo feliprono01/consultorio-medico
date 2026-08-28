@@ -2,9 +2,11 @@ package com.consultorio.service;
 
 import com.consultorio.exception.ResourceNotFoundException;
 import com.consultorio.model.Consulta;
+import com.consultorio.model.ConsultaAuditLog;
 import com.consultorio.model.EvaluacionPsiquiatrica;
 import com.consultorio.model.HistoriaPsiquiatrica;
 import com.consultorio.model.Paciente;
+import com.consultorio.repository.ConsultaAuditLogRepository;
 import com.consultorio.repository.ConsultaRepository;
 import com.consultorio.repository.PacienteRepository;
 import com.lowagie.text.*;
@@ -36,6 +38,7 @@ public class PdfService {
 
     private final PacienteRepository pacienteRepository;
     private final ConsultaRepository consultaRepository;
+    private final ConsultaAuditLogRepository consultaAuditLogRepository;
     private final AccessLogService accessLogService;
 
     // --- Datos del membrete (configurables por variables de entorno) ---
@@ -121,6 +124,52 @@ public class PdfService {
         } catch (Exception e) {
             log.error("Error al generar PDF para paciente ID: {}", pacienteId, e);
             throw new RuntimeException("Error al generar el PDF de la Historia Clínica", e);
+        }
+    }
+
+    /**
+     * Genera el reporte en PDF del historial de auditoría de cambios de una
+     * consulta puntual: cada edición registrada, con quién la hizo, cuándo,
+     * el valor anterior y el nuevo, y el hash de integridad de la cadena.
+     * Pensado para poder entregarse a la justicia o a un perito cuando haga
+     * falta demostrar que el registro de cambios no fue alterado.
+     *
+     * @param consultaId ID de la consulta
+     * @return bytes del PDF generado
+     */
+    @Transactional(readOnly = true)
+    public byte[] generarReporteAuditoriaConsulta(Long consultaId) {
+        log.info("Generando PDF de auditoría para consulta ID: {}", consultaId);
+
+        Consulta consulta = consultaRepository.findByIdAndActiveTrue(consultaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", consultaId));
+        Paciente paciente = consulta.getPaciente();
+
+        List<ConsultaAuditLog> logs = consultaAuditLogRepository.findByConsultaIdOrderByIdAsc(consultaId);
+
+        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        accessLogService.registrar(paciente.getId(), AccessLogService.EXPORTAR_AUDITORIA,
+                "Exportación PDF de auditoría de la consulta #" + consultaId);
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document doc = new Document(PageSize.A4, 40, 40, 50, 60);
+            PdfWriter writer = PdfWriter.getInstance(doc, baos);
+            writer.setPageEvent(new PiePaginaHandler(usuarioActual));
+
+            doc.open();
+
+            agregarEncabezadoAuditoria(doc, consulta, paciente);
+            agregarTablaAuditoria(doc, logs);
+            agregarNotaIntegridad(doc);
+
+            doc.close();
+            log.info("PDF de auditoría generado exitosamente para consulta ID: {}", consultaId);
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Error al generar PDF de auditoría para consulta ID: {}", consultaId, e);
+            throw new RuntimeException("Error al generar el PDF de auditoría de la consulta", e);
         }
     }
 
@@ -321,6 +370,92 @@ public class PdfService {
 
         body.addCell(bodyCell);
         doc.add(body);
+    }
+
+    private void agregarEncabezadoAuditoria(Document doc, Consulta c, Paciente p) throws DocumentException {
+        PdfPTable banner = new PdfPTable(1);
+        banner.setWidthPercentage(100);
+
+        PdfPCell celda = new PdfPCell();
+        celda.setBackgroundColor(COLOR_PRIMARIO);
+        celda.setBorder(Rectangle.NO_BORDER);
+        celda.setPadding(14);
+
+        Paragraph titulo = new Paragraph("REPORTE DE AUDITORÍA DE CAMBIOS",
+                new Font(Font.HELVETICA, 16, Font.BOLD, new Color(255, 255, 255)));
+        celda.addElement(titulo);
+
+        Font fDetalle = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(186, 230, 253));
+        String fechaStr = c.getFechaConsulta() != null ? c.getFechaConsulta().format(FMT_FECHA_HORA) : "-";
+        celda.addElement(new Paragraph("Consulta #" + c.getId() + "   |   " + fechaStr, fDetalle));
+        celda.addElement(new Paragraph("Paciente: " + p.getNombreCompleto() + "   |   DNI: " + nvl(p.getDni()), fDetalle));
+
+        banner.addCell(celda);
+        doc.add(banner);
+        doc.add(Chunk.NEWLINE);
+    }
+
+    private void agregarTablaAuditoria(Document doc, List<ConsultaAuditLog> logs) throws DocumentException {
+        agregarTituloSeccion(doc, "CAMBIOS REGISTRADOS (" + logs.size() + ")");
+
+        if (logs.isEmpty()) {
+            doc.add(new Paragraph("Esta consulta no tiene cambios posteriores a su creación.", FUENTE_VALOR));
+            return;
+        }
+
+        Font fCampo = new Font(Font.HELVETICA, 8, Font.BOLD, COLOR_TEXTO);
+        Font fMeta  = new Font(Font.HELVETICA, 7, Font.NORMAL, COLOR_SUBTITULO);
+        Font fValor = new Font(Font.HELVETICA, 7, Font.NORMAL, COLOR_TEXTO);
+        Font fHash  = new Font(Font.COURIER,   6, Font.NORMAL, COLOR_SUBTITULO);
+
+        for (ConsultaAuditLog registro : logs) {
+            PdfPTable tabla = new PdfPTable(1);
+            tabla.setWidthPercentage(100);
+            tabla.setSpacingBefore(8);
+
+            PdfPCell cell = new PdfPCell();
+            cell.setBackgroundColor(COLOR_SECUNDARIO);
+            cell.setBorderColor(COLOR_SEPARADOR);
+            cell.setBorderWidth(0.5f);
+            cell.setPadding(8);
+
+            String fecha = registro.getFechaCambio() != null ? registro.getFechaCambio().format(FMT_FECHA_HORA) : "-";
+            cell.addElement(new Paragraph(registro.getCampo(), fCampo));
+            cell.addElement(new Paragraph("Modificado por " + registro.getModificadoPor() + "  —  " + fecha, fMeta));
+
+            Paragraph anterior = new Paragraph();
+            anterior.add(new Chunk("Valor anterior: ", fCampo));
+            anterior.add(new Chunk(nvl(registro.getValorAnterior()), fValor));
+            anterior.setSpacingBefore(4);
+            cell.addElement(anterior);
+
+            Paragraph nuevo = new Paragraph();
+            nuevo.add(new Chunk("Valor nuevo: ", fCampo));
+            nuevo.add(new Chunk(nvl(registro.getValorNuevo()), fValor));
+            cell.addElement(nuevo);
+
+            Paragraph hash = new Paragraph("hash: " + nvl(registro.getHash())
+                    + "   |   anterior: " + nvl(registro.getHashAnterior()), fHash);
+            hash.setSpacingBefore(4);
+            cell.addElement(hash);
+
+            tabla.addCell(cell);
+            doc.add(tabla);
+        }
+    }
+
+    private void agregarNotaIntegridad(Document doc) throws DocumentException {
+        doc.add(Chunk.NEWLINE);
+        Paragraph nota = new Paragraph(
+                "Nota sobre integridad: cada registro de este listado guarda el hash SHA-256 de su propio "
+                        + "contenido y el hash del registro anterior de la tabla, formando una cadena de "
+                        + "integridad (similar a un libro contable inalterable). Si un registro fuera editado "
+                        + "o borrado por fuera de la aplicación —incluso con acceso directo a la base de "
+                        + "datos—, la cadena se rompe a partir de ese punto. La validez de este reporte no se "
+                        + "determina mirando un registro aislado, sino verificando la cadena completa contra el "
+                        + "sistema en el momento de la pericia.",
+                FUENTE_PIE);
+        doc.add(nota);
     }
 
     // =========================================================================

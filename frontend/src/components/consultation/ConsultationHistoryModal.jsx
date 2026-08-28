@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { consultaService } from '../../api/consultaService';
 import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function ConsultationHistoryModal({ consultaId, onClose }) {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [exportando, setExportando] = useState(false);
     const toast = useToast();
+    const { role } = useAuth();
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -22,6 +25,26 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
         fetchHistory();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [consultaId]);
+
+    const handleExportarPdf = async () => {
+        setExportando(true);
+        try {
+            const res = await consultaService.exportarAuditoria(consultaId);
+            const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `auditoria-consulta-${consultaId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error exporting audit PDF', err);
+            toast.error('No se pudo generar el PDF de auditoría.');
+        } finally {
+            setExportando(false);
+        }
+    };
 
     return (
         <div style={{
@@ -66,7 +89,17 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
                     </table>
                 )}
 
-                <div style={{ marginTop: '2rem', textAlign: 'right' }}>
+                <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                    {role === 'ADMIN' && history.length > 0 && (
+                        <button
+                            className="btn btn-secondary"
+                            onClick={handleExportarPdf}
+                            disabled={exportando}
+                            title="Descargar el historial de auditoría de esta consulta en PDF"
+                        >
+                            {exportando ? 'Generando…' : 'Descargar PDF'}
+                        </button>
+                    )}
                     <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
                 </div>
             </div>
