@@ -48,7 +48,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
                 <div style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '0.18rem' }}>
                     {label}
                 </div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>
                     {value}
                 </div>
             </div>
@@ -128,7 +128,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
             </div>
 
             <Section title="Motivo de Consulta">
-                <p style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{consultation.motivo}</p>
+                <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{consultation.motivo}</p>
             </Section>
 
             {(consultation.estadoAnimo || consultation.calidadSueno) && (
@@ -180,13 +180,13 @@ const ConsultationHistoryViewer = ({ consultation }) => {
                 <Field label="Eje II" value={consultation.evaluacionPsiquiatrica?.eje2} />
                 <Field label="Eje III" value={consultation.evaluacionPsiquiatrica?.eje3} />
                 {consultation.diagnostico && (
-                    <p style={{ marginTop: '0.5rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{consultation.diagnostico}</p>
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{consultation.diagnostico}</p>
                 )}
             </Section>
 
             <Section title="Tratamiento">
                 {consultation.tratamiento && (
-                    <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{consultation.tratamiento}</p>
+                    <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{consultation.tratamiento}</p>
                 )}
                 <div style={{ marginTop: '0.5rem' }}>
                     <Field label="Adherencia" value={consultation.evaluacionPsiquiatrica?.adherenciaTratamiento} />
@@ -196,7 +196,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
 
             {consultation.notas && (
                 <Section title="Notas Adicionales">
-                    <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{consultation.notas}</p>
+                    <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{consultation.notas}</p>
                 </Section>
             )}
         </div>
