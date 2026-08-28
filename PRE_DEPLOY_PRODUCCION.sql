@@ -125,3 +125,34 @@ FLUSH PRIVILEGES;
 -- Verificación posterior (debe fallar con "command denied"):
 --   mysql -u NOMBRE_USUARIO_APP -p NOMBRE_BASE_PRODUCCION \
 --     -e "UPDATE consulta_audit_logs SET modificado_por='test' WHERE id=1;"
+
+-- ============================================================================
+-- Backfill del hash chain sobre auditoría preexistente
+--
+-- Si la base de producción ya tenía registros en consulta_audit_logs y/o
+-- historia_psiquiatrica_audit_logs ANTES de este despliegue, esos registros
+-- quedan con hash NULL y la verificación (/auditoria/verificar-cadena) los
+-- va a reportar como "rotos" para siempre — no porque estén alterados, sino
+-- porque nunca se encadenaron. Hace falta correr el backfill una sola vez.
+--
+-- El backfill lo hace la propia app (necesita desencriptar los valores
+-- guardados, que están cifrados en la base) a través de dos endpoints
+-- ADMIN-only. Como acaban de sacarle a NOMBRE_USUARIO_APP el permiso de
+-- UPDATE sobre esas tablas, hay que dárselo de vuelta un momento, correr el
+-- backfill, y sacárselo de nuevo:
+--
+--   GRANT UPDATE ON NOMBRE_BASE_PRODUCCION.consulta_audit_logs TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+--   GRANT UPDATE ON NOMBRE_BASE_PRODUCCION.historia_psiquiatrica_audit_logs TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+--   FLUSH PRIVILEGES;
+--
+--   -- (fuera de mysql, ya logueado como ADMIN en la app):
+--   -- POST /api/consultas/auditoria/backfill-cadena
+--   -- POST /api/pacientes/auditoria/backfill-cadena-hp
+--   -- Confirmar que ambos devuelven "intacta": true
+--
+--   REVOKE UPDATE ON NOMBRE_BASE_PRODUCCION.consulta_audit_logs FROM 'NOMBRE_USUARIO_APP'@'HOST_APP';
+--   REVOKE UPDATE ON NOMBRE_BASE_PRODUCCION.historia_psiquiatrica_audit_logs FROM 'NOMBRE_USUARIO_APP'@'HOST_APP';
+--   FLUSH PRIVILEGES;
+--
+-- Si la tabla estaba vacía o el despliegue es de una base nueva, este paso
+-- no hace falta (no hay nada que backfillear).
