@@ -225,7 +225,13 @@ public class ConsultaService {
         return consultaMapper.toResponseDTO(actualizada);
     }
 
-    private void logIfChanged(Consulta consulta, String campo, Object oldValue, Object newValue, String user) {
+    /**
+     * `synchronized`: arma la cadena de integridad (lee el último hash de la
+     * tabla, calcula el siguiente, guarda) — con una sola instancia de la
+     * app, esto alcanza para que dos cambios simultáneos no lean el mismo
+     * "último hash" y rompan el encadenado. Ver security.HashChainUtil.
+     */
+    private synchronized void logIfChanged(Consulta consulta, String campo, Object oldValue, Object newValue, String user) {
         String oldStr = oldValue != null ? String.valueOf(oldValue) : null;
         String newStr = newValue != null ? String.valueOf(newValue) : null;
 
@@ -235,6 +241,14 @@ public class ConsultaService {
                 return;
             }
             ConsultaAuditLog log = new ConsultaAuditLog(consulta, campo, oldStr, newStr, user);
+
+            String hashAnterior = consultaAuditLogRepository.findFirstByOrderByIdDesc()
+                    .map(ConsultaAuditLog::getHash)
+                    .orElse(com.consultorio.security.HashChainUtil.GENESIS);
+            log.setHashAnterior(hashAnterior);
+            log.setHash(com.consultorio.security.HashChainUtil.siguienteHash(hashAnterior,
+                    campo, oldStr, newStr, log.getFechaCambio().toString(), user));
+
             consultaAuditLogRepository.save(log);
         }
     }
@@ -251,6 +265,34 @@ public class ConsultaService {
                         log.getFechaCambio(),
                         log.getModificadoPor()))
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Recorre toda la tabla de auditoría de consultas en orden de inserción
+     * y recalcula cada hash a partir de sus datos y el hash guardado en la
+     * fila anterior, comparando contra el hash que quedó guardado. Si algo
+     * fue editado o borrado directamente en la base (por fuera de la app),
+     * la cadena se rompe a partir de esa fila y queda detectado acá.
+     */
+    @Transactional(readOnly = true)
+    public com.consultorio.dto.VerificacionCadenaDTO verificarCadenaAuditoria() {
+        List<ConsultaAuditLog> registros = consultaAuditLogRepository.findAllByOrderByIdAsc();
+
+        String hashEsperado = com.consultorio.security.HashChainUtil.GENESIS;
+        for (ConsultaAuditLog registro : registros) {
+            if (!Objects.equals(registro.getHashAnterior(), hashEsperado)) {
+                return new com.consultorio.dto.VerificacionCadenaDTO(false, registros.size(), registro.getId());
+            }
+            String hashRecalculado = com.consultorio.security.HashChainUtil.siguienteHash(hashEsperado,
+                    registro.getCampo(), registro.getValorAnterior(), registro.getValorNuevo(),
+                    registro.getFechaCambio().toString(), registro.getModificadoPor());
+            if (!Objects.equals(registro.getHash(), hashRecalculado)) {
+                return new com.consultorio.dto.VerificacionCadenaDTO(false, registros.size(), registro.getId());
+            }
+            hashEsperado = registro.getHash();
+        }
+
+        return new com.consultorio.dto.VerificacionCadenaDTO(true, registros.size(), null);
     }
 
     @Transactional(readOnly = true)

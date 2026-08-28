@@ -35,6 +35,21 @@ public class ConsultaAuditLog {
     @Column(nullable = false)
     private String modificadoPor;
 
+    /**
+     * Encadenado de integridad (tamper-evidence): cada fila guarda el hash
+     * SHA-256 de sí misma y el hash de la fila anterior de esta tabla (no
+     * de esta consulta puntual — es una sola cadena para toda la tabla).
+     * Si alguien edita o borra un registro en el medio, aunque tenga
+     * acceso directo a la base, la cadena se rompe a partir de ahí y se
+     * puede detectar recalculando. No van encriptados: son hashes, no
+     * revelan contenido clínico. Ver security.HashChainUtil.
+     */
+    @Column(length = 64)
+    private String hash;
+
+    @Column(name = "hash_anterior", length = 64)
+    private String hashAnterior;
+
     public ConsultaAuditLog() {
     }
 
@@ -45,7 +60,11 @@ public class ConsultaAuditLog {
         this.valorAnterior = valorAnterior;
         this.valorNuevo = valorNuevo;
         this.modificadoPor = modificadoPor;
-        this.fechaCambio = LocalDateTime.now();
+        // Truncado a segundos: MySQL DATETIME por defecto no guarda fracción
+        // de segundo, así que sin esto el valor en memoria (con nanosegundos)
+        // no coincidiría con el releído de la base al verificar la cadena de
+        // integridad — rompería la verificación con datos totalmente legítimos.
+        this.fechaCambio = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
     }
 
     public Long getId() {
@@ -102,5 +121,21 @@ public class ConsultaAuditLog {
 
     public void setModificadoPor(String modificadoPor) {
         this.modificadoPor = modificadoPor;
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
+
+    public String getHashAnterior() {
+        return hashAnterior;
+    }
+
+    public void setHashAnterior(String hashAnterior) {
+        this.hashAnterior = hashAnterior;
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -161,6 +162,18 @@ public class PacienteController {
             @PathVariable Long id) {
         log.info("GET /api/pacientes/{}/historia-psiquiatrica/historial-cambios", id);
         return ResponseEntity.ok(pacienteService.getHistorialCambiosHp(id));
+    }
+
+    /**
+     * Recorre toda la cadena de auditoría de cambios de historia
+     * psiquiátrica y confirma que nadie la haya alterado por fuera de la
+     * aplicación (ver PacienteService.verificarCadenaAuditoriaHp). Solo ADMIN.
+     * GET /api/pacientes/auditoria/verificar-cadena-hp
+     */
+    @GetMapping("/auditoria/verificar-cadena-hp")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<com.consultorio.dto.VerificacionCadenaDTO> verificarCadenaAuditoriaHp() {
+        return ResponseEntity.ok(pacienteService.verificarCadenaAuditoriaHp());
     }
 
     /**

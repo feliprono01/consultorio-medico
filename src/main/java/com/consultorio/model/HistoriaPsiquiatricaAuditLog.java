@@ -55,6 +55,17 @@ public class HistoriaPsiquiatricaAuditLog {
     @Column(name = "fecha_cambio", nullable = false)
     private LocalDateTime fechaCambio;
 
+    /**
+     * Encadenado de integridad (tamper-evidence) — mismo mecanismo que
+     * ConsultaAuditLog, una sola cadena para toda la tabla. Ver
+     * security.HashChainUtil.
+     */
+    @Column(length = 64)
+    private String hash;
+
+    @Column(name = "hash_anterior", length = 64)
+    private String hashAnterior;
+
     public HistoriaPsiquiatricaAuditLog() {}
 
     public HistoriaPsiquiatricaAuditLog(Long pacienteId, String campo,
@@ -64,7 +75,10 @@ public class HistoriaPsiquiatricaAuditLog {
         this.valorAnterior = valorAnterior;
         this.valorNuevo    = valorNuevo;
         this.modificadoPor = modificadoPor;
-        this.fechaCambio   = LocalDateTime.now();
+        // Truncado a segundos — mismo motivo que en ConsultaAuditLog: evita
+        // que la cadena de integridad se rompa por precisión de timestamp
+        // perdida al guardar/releer de MySQL.
+        this.fechaCambio   = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
     }
 
     public Long getId()                   { return id; }
@@ -74,6 +88,8 @@ public class HistoriaPsiquiatricaAuditLog {
     public String getValorNuevo()         { return valorNuevo; }
     public String getModificadoPor()      { return modificadoPor; }
     public LocalDateTime getFechaCambio() { return fechaCambio; }
+    public String getHash()               { return hash; }
+    public String getHashAnterior()       { return hashAnterior; }
 
     public void setId(Long id)                       { this.id = id; }
     public void setPacienteId(Long pacienteId)       { this.pacienteId = pacienteId; }
@@ -82,4 +98,6 @@ public class HistoriaPsiquiatricaAuditLog {
     public void setValorNuevo(String v)              { this.valorNuevo = v; }
     public void setModificadoPor(String m)           { this.modificadoPor = m; }
     public void setFechaCambio(LocalDateTime fecha)  { this.fechaCambio = fecha; }
+    public void setHash(String hash)                 { this.hash = hash; }
+    public void setHashAnterior(String hashAnterior) { this.hashAnterior = hashAnterior; }
 }

@@ -297,15 +297,55 @@ public class PacienteService {
     /**
      * Guarda un entrada de audit log si el valor del campo cambió.
      * Ignora cambios de null/vacío a null/vacío.
+     *
+     * `synchronized`: arma la cadena de integridad (lee el último hash de la
+     * tabla, calcula el siguiente, guarda) — con una sola instancia de la
+     * app, esto alcanza para que dos cambios simultáneos no lean el mismo
+     * "último hash" y rompan el encadenado. Ver security.HashChainUtil.
      */
-    private void logHpIfChanged(Long pacienteId, String campo,
+    private synchronized void logHpIfChanged(Long pacienteId, String campo,
             String valorAnterior, String valorNuevo, String usuario) {
         if (Objects.equals(valorAnterior, valorNuevo)) return;
         // No loguear si ambos son null o vacíos
         if ((valorAnterior == null || valorAnterior.isBlank())
                 && (valorNuevo == null || valorNuevo.isBlank())) return;
 
-        hpAuditLogRepository.save(
-                new HistoriaPsiquiatricaAuditLog(pacienteId, campo, valorAnterior, valorNuevo, usuario));
+        HistoriaPsiquiatricaAuditLog log =
+                new HistoriaPsiquiatricaAuditLog(pacienteId, campo, valorAnterior, valorNuevo, usuario);
+
+        String hashAnterior = hpAuditLogRepository.findFirstByOrderByIdDesc()
+                .map(HistoriaPsiquiatricaAuditLog::getHash)
+                .orElse(com.consultorio.security.HashChainUtil.GENESIS);
+        log.setHashAnterior(hashAnterior);
+        log.setHash(com.consultorio.security.HashChainUtil.siguienteHash(hashAnterior,
+                campo, valorAnterior, valorNuevo, log.getFechaCambio().toString(), usuario));
+
+        hpAuditLogRepository.save(log);
+    }
+
+    /**
+     * Recorre toda la tabla de auditoría de historia psiquiátrica en orden
+     * de inserción y recalcula cada hash, comparando contra el guardado —
+     * mismo mecanismo que verificarCadenaAuditoria() en ConsultaService.
+     */
+    @Transactional(readOnly = true)
+    public com.consultorio.dto.VerificacionCadenaDTO verificarCadenaAuditoriaHp() {
+        List<HistoriaPsiquiatricaAuditLog> registros = hpAuditLogRepository.findAllByOrderByIdAsc();
+
+        String hashEsperado = com.consultorio.security.HashChainUtil.GENESIS;
+        for (HistoriaPsiquiatricaAuditLog registro : registros) {
+            if (!Objects.equals(registro.getHashAnterior(), hashEsperado)) {
+                return new com.consultorio.dto.VerificacionCadenaDTO(false, registros.size(), registro.getId());
+            }
+            String hashRecalculado = com.consultorio.security.HashChainUtil.siguienteHash(hashEsperado,
+                    registro.getCampo(), registro.getValorAnterior(), registro.getValorNuevo(),
+                    registro.getFechaCambio().toString(), registro.getModificadoPor());
+            if (!Objects.equals(registro.getHash(), hashRecalculado)) {
+                return new com.consultorio.dto.VerificacionCadenaDTO(false, registros.size(), registro.getId());
+            }
+            hashEsperado = registro.getHash();
+        }
+
+        return new com.consultorio.dto.VerificacionCadenaDTO(true, registros.size(), null);
     }
 }

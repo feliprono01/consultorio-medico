@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -71,5 +72,17 @@ public class ConsultaController {
     public ResponseEntity<List<com.consultorio.dto.ConsultaAuditLogDTO>> obtenerHistorialCambios(
             @PathVariable Long id) {
         return ResponseEntity.ok(consultaService.obtenerHistorialCambios(id));
+    }
+
+    /**
+     * Recorre toda la cadena de auditoría de consultas y confirma que nadie
+     * la haya alterado por fuera de la aplicación (ver
+     * ConsultaService.verificarCadenaAuditoria). Solo ADMIN.
+     * GET /api/consultas/auditoria/verificar-cadena
+     */
+    @GetMapping("/auditoria/verificar-cadena")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<com.consultorio.dto.VerificacionCadenaDTO> verificarCadenaAuditoria() {
+        return ResponseEntity.ok(consultaService.verificarCadenaAuditoria());
     }
 }
