@@ -169,7 +169,26 @@ public class ConsultaService {
         logIfChanged(consulta, "Calidad Sueño", consulta.getCalidadSueno(), dto.getCalidadSueno(), currentUser);
         consulta.setCalidadSueno(dto.getCalidadSueno());
 
-        // Actualizar o crear Evaluación Psiquiátrica
+        logIfChanged(consulta, "Alimentación", consulta.getAlimentacion(), dto.getAlimentacion(), currentUser);
+        consulta.setAlimentacion(dto.getAlimentacion());
+
+        logIfChanged(consulta, "Sociabilidad", consulta.getSociabilidad(), dto.getSociabilidad(), currentUser);
+        consulta.setSociabilidad(dto.getSociabilidad());
+
+        logIfChanged(consulta, "Funcionalidad Laboral", consulta.getFuncionalidadLaboral(), dto.getFuncionalidadLaboral(), currentUser);
+        consulta.setFuncionalidadLaboral(dto.getFuncionalidadLaboral());
+
+        logIfChanged(consulta, "Funcionalidad Social", consulta.getFuncionalidadSocial(), dto.getFuncionalidadSocial(), currentUser);
+        consulta.setFuncionalidadSocial(dto.getFuncionalidadSocial());
+
+        logIfChanged(consulta, "Funcionalidad Familiar", consulta.getFuncionalidadFamiliar(), dto.getFuncionalidadFamiliar(), currentUser);
+        consulta.setFuncionalidadFamiliar(dto.getFuncionalidadFamiliar());
+
+        // Actualizar o crear Evaluación Psiquiátrica — se audita cada campo por
+        // separado, en particular los de riesgo (suicida/homicida/propio), que son
+        // los de mayor peso legal ante cualquier revisión de responsabilidad
+        // profesional: no puede quedar un cambio ahí sin quién, cuándo y con qué
+        // valor anterior.
         if (dto.getEvaluacionPsiquiatrica() != null) {
             com.consultorio.model.EvaluacionPsiquiatrica evaluacion = consulta.getEvaluacionPsiquiatrica();
             if (evaluacion == null) {
@@ -178,15 +197,28 @@ public class ConsultaService {
                 consulta.setEvaluacionPsiquiatrica(evaluacion);
             }
 
-            // Auditoría básica de evaluación (podríamos detallar campo por campo si fuera
-            // necesario)
-            // Por simplicidad en MVP, auditamos cambios significativos o campos clave
-            // Aquí un ejemplo de cómo auditar campos de la evaluación:
-            logIfChanged(consulta, "Evaluación: Apariencia", evaluacion.getApariencia(),
-                    dto.getEvaluacionPsiquiatrica().getApariencia(), currentUser);
-            // ... Repetir para otros campos si se requiere granularidad extrema
+            var evalDto = dto.getEvaluacionPsiquiatrica();
+            logIfChanged(consulta, "Evaluación: Apariencia", evaluacion.getApariencia(), evalDto.getApariencia(), currentUser);
+            logIfChanged(consulta, "Evaluación: Conducta", evaluacion.getConducta(), evalDto.getConducta(), currentUser);
+            logIfChanged(consulta, "Evaluación: Lenguaje", evaluacion.getLenguaje(), evalDto.getLenguaje(), currentUser);
+            logIfChanged(consulta, "Evaluación: Ánimo", evaluacion.getAnimo(), evalDto.getAnimo(), currentUser);
+            logIfChanged(consulta, "Evaluación: Afecto", evaluacion.getAfecto(), evalDto.getAfecto(), currentUser);
+            logIfChanged(consulta, "Evaluación: Pensamiento", evaluacion.getPensamiento(), evalDto.getPensamiento(), currentUser);
+            logIfChanged(consulta, "Evaluación: Sensopercepción", evaluacion.getSensopercepcion(), evalDto.getSensopercepcion(), currentUser);
+            logIfChanged(consulta, "Evaluación: Juicio", evaluacion.getJuicio(), evalDto.getJuicio(), currentUser);
+            logIfChanged(consulta, "Evaluación: Memoria", evaluacion.getMemoria(), evalDto.getMemoria(), currentUser);
+            logIfChanged(consulta, "Evaluación: Atención", evaluacion.getAtencion(), evalDto.getAtencion(), currentUser);
+            logIfChanged(consulta, "Evaluación: Conciencia", evaluacion.getConciencia(), evalDto.getConciencia(), currentUser);
+            logIfChanged(consulta, "Evaluación: Riesgo Suicida", evaluacion.getRiesgoSuicida(), evalDto.getRiesgoSuicida(), currentUser);
+            logIfChanged(consulta, "Evaluación: Riesgo Homicida", evaluacion.getRiesgoHomicida(), evalDto.getRiesgoHomicida(), currentUser);
+            logIfChanged(consulta, "Evaluación: Riesgo Propio", evaluacion.getRiesgoPropio(), evalDto.getRiesgoPropio(), currentUser);
+            logIfChanged(consulta, "Evaluación: Eje I", evaluacion.getEje1(), evalDto.getEje1(), currentUser);
+            logIfChanged(consulta, "Evaluación: Eje II", evaluacion.getEje2(), evalDto.getEje2(), currentUser);
+            logIfChanged(consulta, "Evaluación: Eje III", evaluacion.getEje3(), evalDto.getEje3(), currentUser);
+            logIfChanged(consulta, "Evaluación: Adherencia al Tratamiento", evaluacion.getAdherenciaTratamiento(), evalDto.getAdherenciaTratamiento(), currentUser);
+            logIfChanged(consulta, "Evaluación: Efectos Adversos", evaluacion.getEfectosAdversos(), evalDto.getEfectosAdversos(), currentUser);
 
-            evaluacionMapper.updateEntityFromDTO(dto.getEvaluacionPsiquiatrica(), evaluacion);
+            evaluacionMapper.updateEntityFromDTO(evalDto, evaluacion);
         }
 
         Consulta actualizada = consultaRepository.save(consulta);
