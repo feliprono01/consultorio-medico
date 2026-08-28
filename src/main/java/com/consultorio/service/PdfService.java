@@ -39,6 +39,7 @@ public class PdfService {
     private final PacienteRepository pacienteRepository;
     private final ConsultaRepository consultaRepository;
     private final ConsultaAuditLogRepository consultaAuditLogRepository;
+    private final com.consultorio.repository.MedicacionRepository medicacionRepository;
     private final AccessLogService accessLogService;
 
     // --- Datos del membrete (configurables por variables de entorno) ---
@@ -94,17 +95,31 @@ public class PdfService {
 
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
 
+        // Código de verificación: referencia corta y no secreta para que, ante
+        // una duda sobre la autenticidad de esta copia puntual, se pueda
+        // rastrear en /api/access-logs/paciente/{id} el registro exacto de
+        // cuándo se generó y quién lo hizo. No reemplaza una firma digital
+        // legal (Ley 25.506) — ver docs/ROADMAP_CUMPLIMIENTO_LEGAL.md.
+        java.time.LocalDateTime momentoGeneracion = java.time.LocalDateTime.now();
+        String codigoVerificacion = com.consultorio.security.HashChainUtil
+                .siguienteHash(com.consultorio.security.HashChainUtil.GENESIS,
+                        String.valueOf(pacienteId), momentoGeneracion.toString(), usuarioActual)
+                .substring(0, 12)
+                .toUpperCase();
+
         // Auditoría de acceso — exportar la HC completa es la operación más sensible
         // del sistema, tiene que quedar registrada igual que las lecturas de ficha.
+        // Se guarda el mismo código de verificación que lleva el PDF, para poder
+        // buscar este registro puntual si alguna vez se cuestiona el documento.
         accessLogService.registrar(pacienteId, AccessLogService.VER_HISTORIAL,
-                "Exportación PDF de Historia Clínica");
+                "Exportación PDF de Historia Clínica — código: " + codigoVerificacion);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document doc = new Document(PageSize.A4, 40, 40, 50, 60);
             PdfWriter writer = PdfWriter.getInstance(doc, baos);
 
-            // Pie de página con número y metadatos
-            writer.setPageEvent(new PiePaginaHandler(usuarioActual));
+            // Pie de página con número, metadatos y código de verificación
+            writer.setPageEvent(new PiePaginaHandler(usuarioActual, codigoVerificacion));
 
             doc.open();
 
@@ -272,6 +287,9 @@ public class PdfService {
         agregarCampoTextoLargo(doc, "Desarrollo Psicomotor",      hp.getDesarrolloPsicomotor());
         agregarCampoTextoLargo(doc, "Personalidad Previa",        hp.getPersonalidadPrevia());
         agregarCampoTextoLargo(doc, "Antecedentes Psicológicos",  hp.getAntecedentesPsicologicos());
+        agregarCampoTextoLargo(doc, "Historia Sexual",            hp.getHistoriaSexual());
+        agregarCampoTextoLargo(doc, "Historia Marital",           hp.getHistoriaMarital());
+        agregarCampoTextoLargo(doc, "Hábitos Generales",          hp.getHabitos());
 
         doc.add(Chunk.NEWLINE);
     }
@@ -321,6 +339,22 @@ public class PdfService {
         agregarParrafoCampo(bodyCell, "Motivo de Consulta", c.getMotivo());
         agregarParrafoCampo(bodyCell, "Diagnóstico",        c.getDiagnostico());
         agregarParrafoCampo(bodyCell, "Tratamiento",        c.getTratamiento());
+
+        List<com.consultorio.model.Medicacion> medicaciones = medicacionRepository.findByConsultaIdOrderByIdAsc(c.getId());
+        if (!medicaciones.isEmpty()) {
+            bodyCell.addElement(new Paragraph("Medicación:", FUENTE_LABEL));
+            for (com.consultorio.model.Medicacion m : medicaciones) {
+                String linea = String.join(" — ", java.util.stream.Stream
+                        .of(m.getFarmaco(), m.getDosis(), m.getFrecuencia())
+                        .filter(s -> s != null && !s.isBlank())
+                        .toList());
+                Paragraph p = new Paragraph("• " + linea, FUENTE_VALOR);
+                p.setIndentationLeft(8);
+                bodyCell.addElement(p);
+            }
+            bodyCell.addElement(Chunk.NEWLINE);
+        }
+
         agregarParrafoCampo(bodyCell, "Notas",              c.getNotas());
 
         // Escalas funcionales (si existen)
@@ -356,6 +390,7 @@ public class PdfService {
             agregarFilaTablaInterno(evTable, "Memoria",         nvl(ev.getMemoria()));
             agregarFilaTablaInterno(evTable, "Atención",        nvl(ev.getAtencion()));
             agregarFilaTablaInterno(evTable, "Conciencia",      nvl(ev.getConciencia()));
+            agregarFilaTablaInterno(evTable, "Orientación",     nvl(ev.getOrientacion()));
             agregarFilaTablaInterno(evTable, "Riesgo Suicida",  nvl(ev.getRiesgoSuicida()));
             agregarFilaTablaInterno(evTable, "Riesgo Homicida", nvl(ev.getRiesgoHomicida()));
             agregarFilaTablaInterno(evTable, "Riesgo Propio",   nvl(ev.getRiesgoPropio()));
@@ -553,9 +588,24 @@ public class PdfService {
     private static class PiePaginaHandler extends com.lowagie.text.pdf.PdfPageEventHelper {
         private final String usuarioGenerador;
         private final String fechaGeneracion;
+        private final String codigoVerificacion;
 
         PiePaginaHandler(String usuario) {
+            this(usuario, null);
+        }
+
+        /**
+         * @param codigoVerificacion referencia corta para poder rastrear esta
+         *                           exportación puntual en /api/access-logs si
+         *                           alguna vez se cuestiona la autenticidad del
+         *                           documento — no es una firma digital legal
+         *                           (Ley 25.506), es una ayuda práctica. Null
+         *                           para no imprimir nada (ej. en el PDF de
+         *                           auditoría, que ya lleva hash por fila).
+         */
+        PiePaginaHandler(String usuario, String codigoVerificacion) {
             this.usuarioGenerador = usuario;
+            this.codigoVerificacion = codigoVerificacion;
             this.fechaGeneracion = java.time.LocalDateTime.now()
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
         }
@@ -573,10 +623,12 @@ public class PdfService {
                 cb.lineTo(document.right(), document.bottom() - 10);
                 cb.stroke();
 
-                // Texto izquierdo: metadatos
-                Phrase pieIzq = new Phrase(
-                        "Documento confidencial | Generado: " + fechaGeneracion + " | Usuario: " + usuarioGenerador,
-                        fuentePie);
+                // Texto izquierdo: metadatos (+ código de verificación si corresponde)
+                String textoPie = "Documento confidencial | Generado: " + fechaGeneracion + " | Usuario: " + usuarioGenerador;
+                if (codigoVerificacion != null) {
+                    textoPie += " | Código de verificación: " + codigoVerificacion;
+                }
+                Phrase pieIzq = new Phrase(textoPie, fuentePie);
                 com.lowagie.text.pdf.ColumnText.showTextAligned(cb,
                         com.lowagie.text.Element.ALIGN_LEFT, pieIzq,
                         document.left(), document.bottom() - 22, 0);

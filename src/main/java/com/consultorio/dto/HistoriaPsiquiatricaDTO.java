@@ -10,6 +10,9 @@ public class HistoriaPsiquiatricaDTO {
     private String desarrolloPsicomotor;
     private String personalidadPrevia;
     private String antecedentesPsicologicos;
+    private String historiaSexual;
+    private String historiaMarital;
+    private String habitos;
     private Long version;
 
     public HistoriaPsiquiatricaDTO() {
@@ -17,7 +20,8 @@ public class HistoriaPsiquiatricaDTO {
 
     public HistoriaPsiquiatricaDTO(Long id, String antecedentesFamiliares, String antecedentesPersonales,
             String historiaConsumo, String enfermedadActual, String tratamientosPrevios, String desarrolloPsicomotor,
-            String personalidadPrevia, String antecedentesPsicologicos, Long version) {
+            String personalidadPrevia, String antecedentesPsicologicos, String historiaSexual,
+            String historiaMarital, String habitos, Long version) {
         this.id = id;
         this.antecedentesFamiliares = antecedentesFamiliares;
         this.antecedentesPersonales = antecedentesPersonales;
@@ -27,6 +31,9 @@ public class HistoriaPsiquiatricaDTO {
         this.desarrolloPsicomotor = desarrolloPsicomotor;
         this.personalidadPrevia = personalidadPrevia;
         this.antecedentesPsicologicos = antecedentesPsicologicos;
+        this.historiaSexual = historiaSexual;
+        this.historiaMarital = historiaMarital;
+        this.habitos = habitos;
         this.version = version;
     }
 
@@ -44,6 +51,9 @@ public class HistoriaPsiquiatricaDTO {
         private String desarrolloPsicomotor;
         private String personalidadPrevia;
         private String antecedentesPsicologicos;
+        private String historiaSexual;
+        private String historiaMarital;
+        private String habitos;
         private Long version;
 
         public HistoriaPsiquiatricaDTOBuilder id(Long id) {
@@ -91,6 +101,21 @@ public class HistoriaPsiquiatricaDTO {
             return this;
         }
 
+        public HistoriaPsiquiatricaDTOBuilder historiaSexual(String historiaSexual) {
+            this.historiaSexual = historiaSexual;
+            return this;
+        }
+
+        public HistoriaPsiquiatricaDTOBuilder historiaMarital(String historiaMarital) {
+            this.historiaMarital = historiaMarital;
+            return this;
+        }
+
+        public HistoriaPsiquiatricaDTOBuilder habitos(String habitos) {
+            this.habitos = habitos;
+            return this;
+        }
+
         public HistoriaPsiquiatricaDTOBuilder version(Long version) {
             this.version = version;
             return this;
@@ -99,7 +124,7 @@ public class HistoriaPsiquiatricaDTO {
         public HistoriaPsiquiatricaDTO build() {
             return new HistoriaPsiquiatricaDTO(id, antecedentesFamiliares, antecedentesPersonales, historiaConsumo,
                     enfermedadActual, tratamientosPrevios, desarrolloPsicomotor, personalidadPrevia,
-                    antecedentesPsicologicos, version);
+                    antecedentesPsicologicos, historiaSexual, historiaMarital, habitos, version);
         }
     }
 
@@ -173,6 +198,30 @@ public class HistoriaPsiquiatricaDTO {
 
     public void setAntecedentesPsicologicos(String antecedentesPsicologicos) {
         this.antecedentesPsicologicos = antecedentesPsicologicos;
+    }
+
+    public String getHistoriaSexual() {
+        return historiaSexual;
+    }
+
+    public void setHistoriaSexual(String historiaSexual) {
+        this.historiaSexual = historiaSexual;
+    }
+
+    public String getHistoriaMarital() {
+        return historiaMarital;
+    }
+
+    public void setHistoriaMarital(String historiaMarital) {
+        this.historiaMarital = historiaMarital;
+    }
+
+    public String getHabitos() {
+        return habitos;
+    }
+
+    public void setHabitos(String habitos) {
+        this.habitos = habitos;
     }
 
     public Long getVersion() {

@@ -164,6 +164,7 @@ const ConsultationHistoryViewer = ({ consultation }) => {
             <Section title="Examen Mental">
                 <div style={{ display: 'grid', gap: '0.5rem' }}>
                     <Field label="Conciencia" value={consultation.evaluacionPsiquiatrica?.conciencia} />
+                    <Field label="Orientación" value={consultation.evaluacionPsiquiatrica?.orientacion} />
                     <Field label="Apariencia" value={consultation.evaluacionPsiquiatrica?.apariencia} />
                     <Field label="Conducta" value={consultation.evaluacionPsiquiatrica?.conducta} />
                     <Field label="Ánimo" value={consultation.evaluacionPsiquiatrica?.animo} />
@@ -185,6 +186,13 @@ const ConsultationHistoryViewer = ({ consultation }) => {
             <Section title="Tratamiento">
                 {consultation.tratamiento && (
                     <p style={{ whiteSpace: 'pre-line', margin: 0, fontSize: '0.75rem', fontWeight: 500, color: '#475569' }}>{consultation.tratamiento}</p>
+                )}
+                {consultation.medicaciones && consultation.medicaciones.length > 0 && (
+                    <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.1rem', fontSize: '0.75rem', fontWeight: 500, color: '#475569' }}>
+                        {consultation.medicaciones.map((m, i) => (
+                            <li key={m.id ?? i}>{[m.farmaco, m.dosis, m.frecuencia].filter(Boolean).join(' — ')}</li>
+                        ))}
+                    </ul>
                 )}
                 <div style={{ marginTop: '0.5rem' }}>
                     <Field label="Adherencia" value={consultation.evaluacionPsiquiatrica?.adherenciaTratamiento} />

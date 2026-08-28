@@ -13,6 +13,7 @@ export function MentalExamFields({ values, onChange }) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
                 <div className="form-group" style={{ margin: 0 }}><label>Conciencia/Atención</label><input className="form-input" name="conciencia" value={values?.conciencia || ''} onChange={onChange} placeholder="Lúcido, distraído..." /></div>
+                <div className="form-group" style={{ margin: 0 }}><label>Orientación</label><input className="form-input" name="orientacion" value={values?.orientacion || ''} onChange={onChange} placeholder="Orientado en tiempo, espacio y persona..." /></div>
                 <div className="form-group" style={{ margin: 0 }}><label>Apariencia/Porte</label><input className="form-input" name="apariencia" value={values?.apariencia || ''} onChange={onChange} placeholder="Aseado, descuidado..." /></div>
                 <div className="form-group" style={{ margin: 0 }}><label>Conducta/Actitud</label><input className="form-input" name="conducta" value={values?.conducta || ''} onChange={onChange} placeholder="Colaborador, hostil..." /></div>
                 <div className="form-group" style={{ margin: 0 }}><label>Ánimo/Humor</label><input className="form-input" name="animo" value={values?.animo || ''} onChange={onChange} placeholder="Eutímico, deprimido..." /></div>

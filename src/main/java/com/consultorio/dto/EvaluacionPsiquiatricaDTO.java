@@ -16,6 +16,7 @@ public class EvaluacionPsiquiatricaDTO {
     private String riesgoHomicida;
     private String riesgoPropio;
     private String conciencia;
+    private String orientacion;
     private String eje1;
     private String eje2;
     private String eje3;
@@ -27,8 +28,8 @@ public class EvaluacionPsiquiatricaDTO {
 
     public EvaluacionPsiquiatricaDTO(Long id, String apariencia, String conducta, String lenguaje, String animo,
             String afecto, String pensamiento, String sensopercepcion, String juicio, String memoria, String atencion,
-            String riesgoSuicida, String riesgoHomicida, String riesgoPropio, String conciencia, String eje1,
-            String eje2, String eje3, String adherenciaTratamiento, String efectosAdversos) {
+            String riesgoSuicida, String riesgoHomicida, String riesgoPropio, String conciencia, String orientacion,
+            String eje1, String eje2, String eje3, String adherenciaTratamiento, String efectosAdversos) {
         this.id = id;
         this.apariencia = apariencia;
         this.conducta = conducta;
@@ -44,6 +45,7 @@ public class EvaluacionPsiquiatricaDTO {
         this.riesgoHomicida = riesgoHomicida;
         this.riesgoPropio = riesgoPropio;
         this.conciencia = conciencia;
+        this.orientacion = orientacion;
         this.eje1 = eje1;
         this.eje2 = eje2;
         this.eje3 = eje3;
@@ -71,6 +73,7 @@ public class EvaluacionPsiquiatricaDTO {
         private String riesgoHomicida;
         private String riesgoPropio;
         private String conciencia;
+        private String orientacion;
         private String eje1;
         private String eje2;
         private String eje3;
@@ -152,6 +155,11 @@ public class EvaluacionPsiquiatricaDTO {
             return this;
         }
 
+        public EvaluacionPsiquiatricaDTOBuilder orientacion(String orientacion) {
+            this.orientacion = orientacion;
+            return this;
+        }
+
         public EvaluacionPsiquiatricaDTOBuilder eje1(String eje1) {
             this.eje1 = eje1;
             return this;
@@ -180,7 +188,7 @@ public class EvaluacionPsiquiatricaDTO {
         public EvaluacionPsiquiatricaDTO build() {
             return new EvaluacionPsiquiatricaDTO(id, apariencia, conducta, lenguaje, animo, afecto, pensamiento,
                     sensopercepcion, juicio, memoria, atencion, riesgoSuicida, riesgoHomicida, riesgoPropio, conciencia,
-                    eje1, eje2, eje3, adherenciaTratamiento, efectosAdversos);
+                    orientacion, eje1, eje2, eje3, adherenciaTratamiento, efectosAdversos);
         }
     }
 
@@ -302,6 +310,14 @@ public class EvaluacionPsiquiatricaDTO {
 
     public void setConciencia(String conciencia) {
         this.conciencia = conciencia;
+    }
+
+    public String getOrientacion() {
+        return orientacion;
+    }
+
+    public void setOrientacion(String orientacion) {
+        this.orientacion = orientacion;
     }
 
     public String getEje1() {

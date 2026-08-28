@@ -269,6 +269,12 @@ public class PacienteService {
                 historia.getPersonalidadPrevia(), dto.getPersonalidadPrevia(), currentUser);
         logHpIfChanged(pacienteId, "Antecedentes Psicológicos",
                 historia.getAntecedentesPsicologicos(), dto.getAntecedentesPsicologicos(), currentUser);
+        logHpIfChanged(pacienteId, "Historia Sexual",
+                historia.getHistoriaSexual(), dto.getHistoriaSexual(), currentUser);
+        logHpIfChanged(pacienteId, "Historia Marital",
+                historia.getHistoriaMarital(), dto.getHistoriaMarital(), currentUser);
+        logHpIfChanged(pacienteId, "Hábitos",
+                historia.getHabitos(), dto.getHabitos(), currentUser);
 
         // Actualizar campos
         historia.setAntecedentesFamiliares(dto.getAntecedentesFamiliares());
@@ -279,6 +285,9 @@ public class PacienteService {
         historia.setDesarrolloPsicomotor(dto.getDesarrolloPsicomotor());
         historia.setPersonalidadPrevia(dto.getPersonalidadPrevia());
         historia.setAntecedentesPsicologicos(dto.getAntecedentesPsicologicos());
+        historia.setHistoriaSexual(dto.getHistoriaSexual());
+        historia.setHistoriaMarital(dto.getHistoriaMarital());
+        historia.setHabitos(dto.getHabitos());
 
         paciente.setHistoriaPsiquiatrica(historia);
         Paciente pacienteGuardado = pacienteRepository.save(paciente);

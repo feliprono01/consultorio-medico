@@ -64,6 +64,11 @@ public class EvaluacionPsiquiatrica extends Auditable {
     @Convert(converter = AttributeEncryptor.class)
     private String conciencia;
 
+    /** Orientación temporo-espacial y personal — distinto de "conciencia" (nivel de alerta). */
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
+    private String orientacion;
+
     // Nuevos campos - Riesgos
     @Column(columnDefinition = "TEXT")
     @Convert(converter = AttributeEncryptor.class)
@@ -209,6 +214,14 @@ public class EvaluacionPsiquiatrica extends Auditable {
 
     public void setConciencia(String conciencia) {
         this.conciencia = conciencia;
+    }
+
+    public String getOrientacion() {
+        return orientacion;
+    }
+
+    public void setOrientacion(String orientacion) {
+        this.orientacion = orientacion;
     }
 
     public String getRiesgoPropio() {

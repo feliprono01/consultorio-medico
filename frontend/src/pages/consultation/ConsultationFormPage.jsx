@@ -38,10 +38,11 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
         pacienteId: '', motivo: '', diagnostico: '', tratamiento: '', notas: '',
         estadoAnimo: 5, calidadSueno: 5, alimentacion: 5, sociabilidad: 5,
         funcionalidadLaboral: 5, funcionalidadSocial: 5, funcionalidadFamiliar: 5,
+        medicaciones: [],
         evaluacionPsiquiatrica: {
             apariencia: '', conducta: '', lenguaje: '', animo: '', afecto: '',
             pensamiento: '', sensopercepcion: '', juicio: '', memoria: '',
-            atencion: '', conciencia: '', riesgoSuicida: '', riesgoHomicida: '',
+            atencion: '', conciencia: '', orientacion: '', riesgoSuicida: '', riesgoHomicida: '',
             riesgoPropio: '', eje1: '', eje2: '', eje3: '',
             adherenciaTratamiento: '', efectosAdversos: ''
         }
@@ -80,10 +81,11 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                         funcionalidadLaboral: data.funcionalidadLaboral || 5,
                         funcionalidadSocial: data.funcionalidadSocial || 5,
                         funcionalidadFamiliar: data.funcionalidadFamiliar || 5,
+                        medicaciones: data.medicaciones || [],
                         evaluacionPsiquiatrica: {
                             apariencia: '', conducta: '', lenguaje: '', animo: '', afecto: '',
                             pensamiento: '', sensopercepcion: '', juicio: '', memoria: '',
-                            atencion: '', conciencia: '', riesgoSuicida: '', riesgoHomicida: '',
+                            atencion: '', conciencia: '', orientacion: '', riesgoSuicida: '', riesgoHomicida: '',
                             riesgoPropio: '', eje1: '', eje2: '', eje3: '',
                             adherenciaTratamiento: '', efectosAdversos: '',
                             ...(data.evaluacionPsiquiatrica || {})
@@ -173,6 +175,20 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                 [e.target.name]: e.target.value
             }
         });
+    };
+
+    const handleAddMedicacion = () => {
+        setForm({ ...form, medicaciones: [...(form.medicaciones || []), { farmaco: '', dosis: '', frecuencia: '' }] });
+    };
+
+    const handleMedicacionChange = (index, field, value) => {
+        const nuevas = [...(form.medicaciones || [])];
+        nuevas[index] = { ...nuevas[index], [field]: value };
+        setForm({ ...form, medicaciones: nuevas });
+    };
+
+    const handleRemoveMedicacion = (index) => {
+        setForm({ ...form, medicaciones: (form.medicaciones || []).filter((_, i) => i !== index) });
     };
 
     const handleSubmit = async (e) => {
@@ -405,6 +421,25 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                         <div className="form-group" style={{ margin: 0 }}>
                             <SectionHeader title="Plan Terapéutico" subtitle="Indicaciones médicas y farmacológicas" />
                             <textarea className="form-input" name="tratamiento" value={form.tratamiento} onChange={handleChange} rows="5" placeholder="Detalle de medicación, posología, indicaciones psicoterapéuticas..." />
+                        </div>
+
+                        <div>
+                            <SectionHeader title="Medicación" subtitle="Fármaco, dosis y frecuencia por separado — complementa el texto de arriba" />
+                            <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                {(form.medicaciones || []).map((med, i) => (
+                                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr auto', gap: '0.6rem', alignItems: 'center' }}>
+                                        <input className="form-input" value={med.farmaco || ''} onChange={e => handleMedicacionChange(i, 'farmaco', e.target.value)} placeholder="Fármaco (ej. Sertralina)" aria-label={`Fármaco ${i + 1}`} />
+                                        <input className="form-input" value={med.dosis || ''} onChange={e => handleMedicacionChange(i, 'dosis', e.target.value)} placeholder="Dosis (ej. 50mg)" aria-label={`Dosis ${i + 1}`} />
+                                        <input className="form-input" value={med.frecuencia || ''} onChange={e => handleMedicacionChange(i, 'frecuencia', e.target.value)} placeholder="Frecuencia (ej. 1x/día)" aria-label={`Frecuencia ${i + 1}`} />
+                                        <button type="button" onClick={() => handleRemoveMedicacion(i)} aria-label={`Quitar medicación ${i + 1}`} title="Quitar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--destructive)', padding: '0.4rem' }}>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                ))}
+                                <button type="button" className="btn btn-secondary" onClick={handleAddMedicacion} style={{ justifySelf: 'start' }}>
+                                    + Agregar medicación
+                                </button>
+                            </div>
                         </div>
 
                         {!isEdit && (

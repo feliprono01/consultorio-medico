@@ -1,6 +1,7 @@
 package com.consultorio.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ConsultaResponseDTO {
 
@@ -23,6 +24,17 @@ public class ConsultaResponseDTO {
     private Integer funcionalidadFamiliar;
     private EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica;
     private Long version;
+
+    /** Se completa aparte en el service (no viene del mapper de Consulta, es una tabla propia). */
+    private List<MedicacionDTO> medicaciones;
+
+    public List<MedicacionDTO> getMedicaciones() {
+        return medicaciones;
+    }
+
+    public void setMedicaciones(List<MedicacionDTO> medicaciones) {
+        this.medicaciones = medicaciones;
+    }
 
     public ConsultaResponseDTO() {
     }

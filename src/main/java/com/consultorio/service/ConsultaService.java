@@ -29,6 +29,7 @@ public class ConsultaService {
     private final ConsultaRepository consultaRepository;
     private final PacienteRepository pacienteRepository;
     private final ConsultaAuditLogRepository consultaAuditLogRepository;
+    private final com.consultorio.repository.MedicacionRepository medicacionRepository;
     private final com.consultorio.mapper.ConsultaMapper consultaMapper;
     private final com.consultorio.mapper.EvaluacionPsiquiatricaMapper evaluacionMapper;
     private final AccessLogService accessLogService;
@@ -53,7 +54,46 @@ public class ConsultaService {
         }
 
         Consulta guardada = consultaRepository.save(consulta);
-        return consultaMapper.toResponseDTO(guardada);
+        guardarMedicaciones(guardada, dto.getMedicaciones());
+
+        ConsultaResponseDTO response = consultaMapper.toResponseDTO(guardada);
+        response.setMedicaciones(dto.getMedicaciones());
+        return response;
+    }
+
+    /** Reemplaza toda la lista de medicaciones de una consulta — se borran las
+     *  viejas y se insertan las nuevas, no hace falta un diff más fino porque
+     *  es una lista chica y el cambio ya queda registrado como un solo campo
+     *  de auditoría (ver actualizarConsulta). */
+    private void guardarMedicaciones(Consulta consulta, List<com.consultorio.dto.MedicacionDTO> medicaciones) {
+        medicacionRepository.deleteByConsultaId(consulta.getId());
+        if (medicaciones == null) return;
+        for (com.consultorio.dto.MedicacionDTO m : medicaciones) {
+            if (m.getFarmaco() == null || m.getFarmaco().isBlank()) continue;
+            medicacionRepository.save(new com.consultorio.model.Medicacion(consulta, m.getFarmaco(), m.getDosis(), m.getFrecuencia()));
+        }
+    }
+
+    /** Texto legible de una lista de medicaciones, para poder auditar el
+     *  cambio con el mismo mecanismo de hash-chain que el resto de los
+     *  campos (que compara strings, no listas). */
+    private String describirMedicaciones(List<com.consultorio.dto.MedicacionDTO> medicaciones) {
+        if (medicaciones == null || medicaciones.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (com.consultorio.dto.MedicacionDTO m : medicaciones) {
+            if (m.getFarmaco() == null || m.getFarmaco().isBlank()) continue;
+            if (sb.length() > 0) sb.append("; ");
+            sb.append(m.getFarmaco());
+            if (m.getDosis() != null && !m.getDosis().isBlank()) sb.append(" ").append(m.getDosis());
+            if (m.getFrecuencia() != null && !m.getFrecuencia().isBlank()) sb.append(" ").append(m.getFrecuencia());
+        }
+        return sb.length() > 0 ? sb.toString() : null;
+    }
+
+    private List<com.consultorio.dto.MedicacionDTO> obtenerMedicaciones(Long consultaId) {
+        return medicacionRepository.findByConsultaIdOrderByIdAsc(consultaId).stream()
+                .map(m -> new com.consultorio.dto.MedicacionDTO(m.getId(), m.getFarmaco(), m.getDosis(), m.getFrecuencia()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +108,9 @@ public class ConsultaService {
         accessLogService.registrar(pacienteId, AccessLogService.VER_HISTORIAL,
                 "Historial completo (%d consultas)".formatted(consultas.size()));
 
-        return consultaMapper.toResponseDTOList(consultas);
+        List<ConsultaResponseDTO> resultado = consultaMapper.toResponseDTOList(consultas);
+        resultado.forEach(dto -> dto.setMedicaciones(obtenerMedicaciones(dto.getId())));
+        return resultado;
     }
 
     /**
@@ -135,7 +177,9 @@ public class ConsultaService {
                     "Consulta #%d del %s".formatted(id, consulta.getFechaConsulta()));
         }
 
-        return consultaMapper.toResponseDTO(consulta);
+        ConsultaResponseDTO response = consultaMapper.toResponseDTO(consulta);
+        response.setMedicaciones(obtenerMedicaciones(id));
+        return response;
     }
 
     @Transactional
@@ -209,6 +253,7 @@ public class ConsultaService {
             logIfChanged(consulta, "Evaluación: Memoria", evaluacion.getMemoria(), evalDto.getMemoria(), currentUser);
             logIfChanged(consulta, "Evaluación: Atención", evaluacion.getAtencion(), evalDto.getAtencion(), currentUser);
             logIfChanged(consulta, "Evaluación: Conciencia", evaluacion.getConciencia(), evalDto.getConciencia(), currentUser);
+            logIfChanged(consulta, "Evaluación: Orientación", evaluacion.getOrientacion(), evalDto.getOrientacion(), currentUser);
             logIfChanged(consulta, "Evaluación: Riesgo Suicida", evaluacion.getRiesgoSuicida(), evalDto.getRiesgoSuicida(), currentUser);
             logIfChanged(consulta, "Evaluación: Riesgo Homicida", evaluacion.getRiesgoHomicida(), evalDto.getRiesgoHomicida(), currentUser);
             logIfChanged(consulta, "Evaluación: Riesgo Propio", evaluacion.getRiesgoPropio(), evalDto.getRiesgoPropio(), currentUser);
@@ -221,8 +266,19 @@ public class ConsultaService {
             evaluacionMapper.updateEntityFromDTO(evalDto, evaluacion);
         }
 
+        // Medicación estructurada: se audita como un solo campo (texto legible
+        // antes/después), aunque internamente sea una lista — reutiliza el
+        // mismo hash-chain que el resto de los campos, sin duplicar lógica.
+        String medicacionAnterior = describirMedicaciones(obtenerMedicaciones(id));
+        String medicacionNueva = describirMedicaciones(dto.getMedicaciones());
+        logIfChanged(consulta, "Medicación (estructurada)", medicacionAnterior, medicacionNueva, currentUser);
+
         Consulta actualizada = consultaRepository.save(consulta);
-        return consultaMapper.toResponseDTO(actualizada);
+        guardarMedicaciones(actualizada, dto.getMedicaciones());
+
+        ConsultaResponseDTO response = consultaMapper.toResponseDTO(actualizada);
+        response.setMedicaciones(obtenerMedicaciones(id));
+        return response;
     }
 
     /**

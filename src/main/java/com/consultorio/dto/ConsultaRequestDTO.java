@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public class ConsultaRequestDTO {
 
     @NotNull(message = "El ID del paciente es obligatorio")
@@ -30,6 +32,9 @@ public class ConsultaRequestDTO {
     private Long version;
 
     private EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica;
+
+    /** Lista estructurada de fármacos indicados en esta consulta (fármaco/dosis/frecuencia). */
+    private List<MedicacionDTO> medicaciones;
 
     public Long getPacienteId() {
         return pacienteId;
@@ -141,5 +146,13 @@ public class ConsultaRequestDTO {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public List<MedicacionDTO> getMedicaciones() {
+        return medicaciones;
+    }
+
+    public void setMedicaciones(List<MedicacionDTO> medicaciones) {
+        this.medicaciones = medicaciones;
     }
 }

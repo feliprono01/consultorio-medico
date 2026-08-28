@@ -19,7 +19,8 @@ const EMPTY_FORM = {
 const EMPTY_HISTORY = {
     antecedentesFamiliares: '', antecedentesPersonales: '', historiaConsumo: '',
     enfermedadActual: '', tratamientosPrevios: '', desarrolloPsicomotor: '',
-    personalidadPrevia: '', antecedentesPsicologicos: ''
+    personalidadPrevia: '', antecedentesPsicologicos: '',
+    historiaSexual: '', historiaMarital: '', habitos: ''
 };
 
 // "Datos Personales" y "Familiares" viven en el mismo objeto `form` (son
@@ -374,6 +375,18 @@ function PatientFormPageBody({ routeId: id }) {
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label htmlFor="historia-personalidadPrevia">Personalidad Previa</label>
                                     <input id="historia-personalidadPrevia" className="form-input" name="personalidadPrevia" value={historyForm.personalidadPrevia || ''} onChange={handleHistoryChange} placeholder="Rasgos de personalidad antes del inicio de la enfermedad actual..." />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="historia-historiaMarital">Historia Marital / Vínculo de Pareja</label>
+                                    <textarea id="historia-historiaMarital" className="form-input" name="historiaMarital" value={historyForm.historiaMarital || ''} onChange={handleHistoryChange} rows="2" placeholder="Estado civil, relación de pareja actual, historial de vínculos..." />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="historia-historiaSexual">Historia Sexual</label>
+                                    <textarea id="historia-historiaSexual" className="form-input" name="historiaSexual" value={historyForm.historiaSexual || ''} onChange={handleHistoryChange} rows="2" placeholder="Antecedentes relevantes de la esfera sexual, si aplica..." />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="historia-habitos">Hábitos Generales</label>
+                                    <textarea id="historia-habitos" className="form-input" name="habitos" value={historyForm.habitos || ''} onChange={handleHistoryChange} rows="2" placeholder="Sueño, alimentación, actividad física, rutina diaria (distinto de consumo de sustancias)..." />
                                 </div>
                             </div>
                         </div>
