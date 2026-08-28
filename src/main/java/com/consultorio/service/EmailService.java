@@ -22,6 +22,31 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    /**
+     * Envía un email de texto simple, sin adjunto — usado para alertas
+     * (ej. si la verificación automática de la cadena de auditoría detecta
+     * una ruptura).
+     */
+    public void sendEmail(String to, String subject, String text) {
+        if (emailSender == null) {
+            log.warn("EmailService: MailSender no configurado. No se enviará el email '{}'.", subject);
+            return;
+        }
+
+        MimeMessage message = emailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, false);
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text);
+            emailSender.send(message);
+            log.info("EmailService: Email '{}' enviado exitosamente a {}", subject, to);
+        } catch (MessagingException e) {
+            log.error("EmailService: Error al enviar el email '{}' a {}: {}", subject, to, e.getMessage(), e);
+        }
+    }
+
     public void sendEmailWithAttachment(String to, String subject, String text, String pathToAttachment) {
         if (emailSender == null) {
             log.warn("EmailService: MailSender no configurado. El backup no se enviará por email.");
