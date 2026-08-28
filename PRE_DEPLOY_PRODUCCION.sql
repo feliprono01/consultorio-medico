@@ -80,3 +80,48 @@ ALTER TABLE pacientes
 --   AND TABLE_NAME IN ('evaluaciones_psiquiatricas', 'consultas', 'historias_psiquiatricas', 'pacientes')
 --   AND DATA_TYPE = 'varchar'
 --   AND COLUMN_NAME NOT IN ('nombre','apellido','dni','email','telefono','ciudad','direccion','sexo','ocupacion','estado_civil','escolaridad');
+
+
+-- ============================================================================
+-- Auditoría con encadenado de integridad (hash chain) — blindaje legal/judicial
+--
+-- Agrega las columnas hash/hash_anterior a las dos tablas de auditoría de
+-- cambios, y bloquea a nivel de permisos que el usuario de la aplicación
+-- pueda modificar o borrar filas ya escritas en esas tablas (ni siquiera con
+-- acceso directo a la base). Sin esto, cualquier perito de la contraparte
+-- podría cuestionar la validez del historial de auditoría.
+--
+-- IMPORTANTE: reemplazar 'NOMBRE_USUARIO_APP' y 'HOST_APP' por el usuario y
+-- host reales que usa el backend en producción (ver el equivalente a
+-- consultorio_user en la base de desarrollo). Correr esto DESPUÉS de que
+-- Hibernate (ddl-auto=update) haya creado las columnas nuevas — si todavía
+-- no se desplegó el código nuevo, los ALTER TABLE de abajo la crean a mano.
+-- ============================================================================
+
+ALTER TABLE consulta_audit_logs
+    ADD COLUMN IF NOT EXISTS hash VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS hash_anterior VARCHAR(64);
+
+ALTER TABLE historia_psiquiatrica_audit_logs
+    ADD COLUMN IF NOT EXISTS hash VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS hash_anterior VARCHAR(64);
+
+-- Reemplazar el GRANT amplio por uno sin UPDATE/DELETE a nivel de schema, y
+-- otorgar UPDATE/DELETE explícitamente solo en las tablas operativas — NO en
+-- consulta_audit_logs, historia_psiquiatrica_audit_logs ni access_logs.
+-- (No usar REVOKE UPDATE, DELETE ON <tabla> directo: si el usuario solo tiene
+-- un GRANT ALL a nivel de todo el schema, ese REVOKE puntual falla con
+-- "no such grant defined" porque no existe una fila de privilegio por tabla.)
+REVOKE ALL PRIVILEGES ON NOMBRE_BASE_PRODUCCION.* FROM 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT SELECT, INSERT, CREATE, DROP, REFERENCES, INDEX, ALTER ON NOMBRE_BASE_PRODUCCION.* TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.consultas TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.evaluaciones_psiquiatricas TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.historias_psiquiatricas TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.pacientes TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.usuarios TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.revoked_tokens TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+FLUSH PRIVILEGES;
+
+-- Verificación posterior (debe fallar con "command denied"):
+--   mysql -u NOMBRE_USUARIO_APP -p NOMBRE_BASE_PRODUCCION \
+--     -e "UPDATE consulta_audit_logs SET modificado_por='test' WHERE id=1;"
