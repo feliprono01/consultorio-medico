@@ -183,7 +183,6 @@ function ConsultationSplitViewBody({ routeId: id, pacienteIdFromQuery }) {
                         pacienteId={resolvedPacienteId}
                         consultaId={id}
                         onSaved={handleSaved}
-                        hideHistoryButton
                     />
                 </div>
             </div>
