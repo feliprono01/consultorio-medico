@@ -407,6 +407,11 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                             <textarea className="form-input" name="tratamiento" value={form.tratamiento} onChange={handleChange} rows="5" placeholder="Detalle de medicación, posología, indicaciones psicoterapéuticas..." />
                         </div>
 
+                        {!isEdit && (
+                            <p style={{ margin: '-1rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                Campos opcionales — completalos solo si el paciente ya venía con un tratamiento indicado por otro profesional antes de esta primera consulta.
+                            </p>
+                        )}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                             <div className="form-group" style={{ margin: 0 }}>
                                 <label>Adherencia al Tratamiento</label>
