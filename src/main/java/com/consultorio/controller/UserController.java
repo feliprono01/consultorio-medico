@@ -37,7 +37,11 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UsuarioResponseDTO> createUser(@Valid @RequestBody CreateUserRequest request) {
         if (usuarioRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().build();
+            throw new IllegalArgumentException("Ya existe un usuario con ese email.");
+        }
+        if (request.getDni() != null && !request.getDni().isBlank()
+                && usuarioRepository.existsByDni(request.getDni())) {
+            throw new IllegalArgumentException("Ya existe un usuario con ese DNI.");
         }
 
         Usuario user = Usuario.builder()

@@ -68,7 +68,7 @@ export default function UserManagementPage() {
             setSuccessMsg('Usuario creado exitosamente.');
             loadUsers();
         } catch (err) {
-            setError('Error al crear usuario. El correo podría estar en uso.');
+            setError(err.response?.data?.details?.[0] || err.response?.data?.message || 'Error al crear usuario. Intentá de nuevo.');
         } finally {
             setIsCreating(false);
         }
