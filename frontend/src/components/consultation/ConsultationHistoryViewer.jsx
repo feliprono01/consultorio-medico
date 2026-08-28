@@ -56,6 +56,42 @@ const ConsultationHistoryViewer = ({ consultation }) => {
         });
     };
 
+    // "hace 3 días" — ayuda a ubicar rápido qué tan vieja es la visita que se está mirando.
+    const formatRelative = (dateString) => {
+        const diffMs = Date.now() - new Date(dateString).getTime();
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (days <= 0) return 'hoy';
+        if (days === 1) return 'ayer';
+        if (days < 30) return `hace ${days} días`;
+        const months = Math.floor(days / 30);
+        if (months < 12) return `hace ${months} mes${months > 1 ? 'es' : ''}`;
+        const years = Math.floor(months / 12);
+        return `hace ${years} año${years > 1 ? 's' : ''}`;
+    };
+
+    // Mismos umbrales que usa la vista de línea de tiempo, para que el color
+    // de un riesgo signifique siempre lo mismo en toda la app.
+    const riskColor = (value) => {
+        if (['Alto', 'Inminente'].includes(value)) return { bg: '#FEE2E2', border: '#FCA5A5', text: '#991B1B' };
+        if (value === 'Medio') return { bg: '#FEF3C7', border: '#FDE68A', text: '#92400E' };
+        if (value === 'Bajo' || value === 'Nulo') return { bg: '#F0FDF4', border: '#BBF7D0', text: '#166534' };
+        return null;
+    };
+
+    const RiskField = ({ label, value }) => {
+        if (!value) return null;
+        const c = riskColor(value);
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)' }}>{label}</span>
+                <span style={{
+                    fontSize: '0.8rem', fontWeight: 700, padding: '0.15rem 0.6rem', borderRadius: '999px',
+                    background: c?.bg || '#f1f5f9', border: `1px solid ${c?.border || '#e2e8f0'}`, color: c?.text || 'var(--text-muted)'
+                }}>{value}</span>
+            </div>
+        );
+    };
+
     return (
         <div style={{ height: '100%', overflowY: 'auto', paddingRight: '0.5rem' }}>
             <div style={{
@@ -65,8 +101,16 @@ const ConsultationHistoryViewer = ({ consultation }) => {
                 marginBottom: '1.5rem',
                 borderLeft: '4px solid var(--primary)'
             }}>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-                    {formatDate(consultation.fechaConsulta)}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+                        {formatDate(consultation.fechaConsulta)}
+                    </div>
+                    <span style={{
+                        fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)',
+                        background: '#fff', border: '1px solid var(--primary)', borderRadius: '999px', padding: '0.05rem 0.55rem'
+                    }}>
+                        {formatRelative(consultation.fechaConsulta)}
+                    </span>
                 </div>
                 <div style={{ color: 'var(--text-muted)' }}>
                     {consultation.nombrePaciente} {consultation.apellidoPaciente}
@@ -100,6 +144,13 @@ const ConsultationHistoryViewer = ({ consultation }) => {
                 </Section>
             )}
 
+            {(consultation.evaluacionPsiquiatrica?.riesgoSuicida || consultation.evaluacionPsiquiatrica?.riesgoHomicida) && (
+                <Section title="Riesgo">
+                    <RiskField label="Riesgo Suicida" value={consultation.evaluacionPsiquiatrica?.riesgoSuicida} />
+                    <RiskField label="Riesgo Homicida" value={consultation.evaluacionPsiquiatrica?.riesgoHomicida} />
+                </Section>
+            )}
+
             <Section title="Examen Mental">
                 <div style={{ display: 'grid', gap: '0.5rem' }}>
                     <Field label="Conciencia" value={consultation.evaluacionPsiquiatrica?.conciencia} />
@@ -111,8 +162,6 @@ const ConsultationHistoryViewer = ({ consultation }) => {
                     <Field label="Sensopercepción" value={consultation.evaluacionPsiquiatrica?.sensopercepcion} />
                     <Field label="Juicio" value={consultation.evaluacionPsiquiatrica?.juicio} />
                     <Field label="Memoria" value={consultation.evaluacionPsiquiatrica?.memoria} />
-                    <Field label="Riesgo Suicida" value={consultation.evaluacionPsiquiatrica?.riesgoSuicida} />
-                    <Field label="Riesgo Homicida" value={consultation.evaluacionPsiquiatrica?.riesgoHomicida} />
                 </div>
             </Section>
 

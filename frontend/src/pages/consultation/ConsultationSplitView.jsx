@@ -140,19 +140,23 @@ function ConsultationSplitViewBody({ routeId: id, pacienteIdFromQuery }) {
                     <span style={{ color: 'white', fontWeight: 600, fontSize: '0.95rem' }}>Consultorio</span>
                 </div>
                 {/* History Selector */}
-                <div style={{ padding: '1rem', borderBottom: '1px solid #e2e8f0', background: 'white', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                        Historial (Referencia)
+                <div style={{ padding: '1rem', borderBottom: '1px solid #e2e8f0', background: 'white', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink: 0 }}><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 13h6M9 17h4"/></svg>
+                        Consulta Anterior
                     </label>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        Elegí una visita pasada de este paciente para tenerla a la vista mientras completás la de hoy.
+                    </p>
                     <select
                         className="form-input"
                         value={selectedHistoryId}
                         onChange={(e) => setSelectedHistoryId(e.target.value)}
-                        style={{ fontSize: '0.9rem' }}
+                        style={{ fontSize: '0.9rem', marginTop: '0.3rem' }}
                         disabled={!loadingHistory && otherHistory.length === 0}
                     >
                         <option value="">
-                            {!loadingHistory && otherHistory.length === 0 ? 'Sin otras consultas' : 'Seleccione consulta...'}
+                            {!loadingHistory && otherHistory.length === 0 ? 'Sin otras consultas' : 'Elegí una consulta anterior...'}
                         </option>
                         {otherHistory.map(c => (
                             <option key={c.id} value={c.id}>
