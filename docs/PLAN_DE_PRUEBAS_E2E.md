@@ -1,13 +1,17 @@
 # Plan de Pruebas End-to-End (E2E) y Lista de Control para Producción
-## Sistema de Gestión Clínica y Psiquiátrica — Consultorio Médico Profesional
+## PsiClínica — Sistema de Gestión Clínica y Psiquiátrica
 
 Este documento establece el protocolo formal de pruebas integrales **End-to-End (E2E)** para validar el funcionamiento del sistema en un entorno de pre-producción o staging antes de la entrega final al cliente, así como las recomendaciones y configuraciones críticas de paso a producción.
+
+Complementa a la "Historia de Pruebas" (checklist interactivo en el navegador, para
+recorrer la app como usuario) — este documento es a nivel técnico (API/curl), pensado
+para verificación formal antes de cada despliegue.
 
 ---
 
 ## 🧪 PARTE 1: Plan de Pruebas End-to-End (E2E) — Checklist Operativo
 
-Este plan divide las pruebas en **6 Módulos Críticos**, cubriendo desde la seguridad hasta el cumplimiento legal en Argentina (Ley 25.326 y Ley 26.529).
+Este plan divide las pruebas en **8 Módulos Críticos**, cubriendo desde la seguridad hasta el cumplimiento legal en Argentina (Ley 25.326 y Ley 26.529).
 
 ### 🟢 Módulo 1: Autenticación, Seguridad y Sesiones (Auth & Security)
 | ID | Caso de Prueba | Pasos de Ejecución | Resultado Esperado | Estado |
@@ -62,6 +66,28 @@ Este plan divide las pruebas en **6 Módulos Críticos**, cubriendo desde la seg
 | :--- | :--- | :--- | :--- | :---: |
 | **AUD-01** | Registro automático al ver ficha | 1. Con un usuario, llamar a `GET /api/pacientes/{id}`.<br>2. Con el usuario Admin, consultar la tabla `access_logs` (o endpoint `/api/access-logs`). | Aparece un nuevo registro de auditoría con la acción `VER_FICHA`, la fecha/hora exacta y la IP del usuario. | `[ ]` |
 | **AUD-02** | Registro automático de consultas | 1. Visualizar una consulta médica o historia psiquiátrica de un paciente. | Se registra la acción correspondiente (`VER_CONSULTA` o `VER_HISTORIA_PSIQUIATRICA`). | `[ ]` |
+
+---
+
+### 🟢 Módulo 7: Blindaje de Auditoría (Hash-Chain e Integridad)
+| ID | Caso de Prueba | Pasos de Ejecución | Resultado Esperado | Estado |
+| :--- | :--- | :--- | :--- | :---: |
+| **HASH-01** | Cadena intacta tras ediciones normales | 1. Editar una consulta 2-3 veces.<br>2. `GET /api/consultas/auditoria/verificar-cadena` (logueado como ADMIN). | Devuelve `{"intacta": true, "primerRegistroRoto": null}`. | `[ ]` |
+| **HASH-02** | Detección de alteración directa en la base | 1. Con acceso `mysql -u root`, hacer `UPDATE consulta_audit_logs SET modificado_por='x' WHERE id=N`.<br>2. Repetir `GET .../verificar-cadena`. | Devuelve `{"intacta": false, "primerRegistroRoto": N}`. | `[ ]` |
+| **HASH-03** | Usuario de la app no puede tocar tablas de auditoría | 1. Con `mysql -u NOMBRE_USUARIO_APP`, intentar `UPDATE`/`DELETE` sobre `consulta_audit_logs`, `historia_psiquiatrica_audit_logs` o `access_logs`. | Rechazado con error de permisos (`command denied`). | `[ ]` |
+| **HASH-04** | Backfill sobre historial preexistente | 1. `POST /api/consultas/auditoria/backfill-cadena` (ADMIN) sobre una tabla con registros previos a esta funcionalidad. | Recalcula la cadena completa y devuelve `intacta: true`. Idempotente — correrlo de nuevo da el mismo resultado. | `[ ]` |
+| **HASH-05** | Alerta automática por mail | 1. Alterar un registro de auditoría directo en la base.<br>2. `POST /api/auditoria/verificar-ahora` (ADMIN), o esperar al cron de cada 6hs. | Llega un mail de alerta a `BACKUP_EMAIL_TO` con el detalle de qué cadena se rompió. | `[ ]` |
+| **HASH-06** | Código de verificación en la Historia Clínica | 1. Descargar el PDF de HC de un paciente (`GET /api/pacientes/{id}/historia-clinica/exportar`). | El pie de cada página incluye un "Código de verificación" de 12 caracteres, y ese acceso queda en `GET /api/access-logs/paciente/{id}` con el mismo código en el detalle. | `[ ]` |
+
+---
+
+### 🟢 Módulo 8: Backups Automáticos
+| ID | Caso de Prueba | Pasos de Ejecución | Resultado Esperado | Estado |
+| :--- | :--- | :--- | :--- | :---: |
+| **BKP-01** | Backup manual | 1. `POST /api/backups` (ADMIN). | Devuelve 200 con el nombre del archivo `.zip` generado; el archivo aparece en `GET /api/backups`. | `[ ]` |
+| **BKP-02** | Envío por mail | 1. `POST /api/backups/test-email` (ADMIN). | El backend genera el backup y lo adjunta en un mail real a `BACKUP_EMAIL_TO` — confirmar que llega. | `[ ]` |
+| **BKP-03** | El ZIP requiere contraseña | 1. Descargar un backup (`GET /api/backups/{filename}`).<br>2. Intentar abrirlo sin la contraseña de `BACKUP_ZIP_PASSWORD`. | El archivo no se puede extraer sin la contraseña correcta. | `[ ]` |
+| **BKP-04** | Cron diario corre solo | 1. Dejar el backend corriendo de un día para el otro. | En los logs del servidor aparece el backup automático disparado a la hora de `BACKUP_CRON` (default 2am), sin intervención manual. | `[ ]` |
 
 ---
 ---

@@ -36,6 +36,7 @@ ALTER TABLE evaluaciones_psiquiatricas
     MODIFY COLUMN eje1                  TEXT,
     MODIFY COLUMN eje2                  TEXT,
     MODIFY COLUMN eje3                  TEXT,
+    ADD COLUMN IF NOT EXISTS orientacion TEXT,
     MODIFY COLUMN adherencia_tratamiento TEXT,
     MODIFY COLUMN efectos_adversos      TEXT;
 
@@ -62,7 +63,21 @@ ALTER TABLE historias_psiquiatricas
     MODIFY COLUMN tratamientos_previos       TEXT,
     MODIFY COLUMN desarrollo_psicomotor      TEXT,
     MODIFY COLUMN personalidad_previa        TEXT,
-    MODIFY COLUMN antecedentes_psicologicos  TEXT;
+    MODIFY COLUMN antecedentes_psicologicos  TEXT,
+    ADD COLUMN IF NOT EXISTS historia_sexual  TEXT,
+    ADD COLUMN IF NOT EXISTS historia_marital TEXT,
+    ADD COLUMN IF NOT EXISTS habitos          TEXT;
+
+-- --- medicaciones (nueva tabla — lista estructurada de fármacos por consulta) ---
+CREATE TABLE IF NOT EXISTS medicaciones (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    consulta_id BIGINT NOT NULL,
+    farmaco TEXT,
+    dosis TEXT,
+    frecuencia TEXT,
+    INDEX idx_medicacion_consulta_id (consulta_id),
+    CONSTRAINT fk_medicacion_consulta FOREIGN KEY (consulta_id) REFERENCES consultas(id)
+);
 
 -- --- pacientes ---
 ALTER TABLE pacientes
@@ -120,6 +135,7 @@ GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.historias_psiquiatricas TO 'NOMBR
 GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.pacientes TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
 GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.usuarios TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
 GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.revoked_tokens TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
+GRANT UPDATE, DELETE ON NOMBRE_BASE_PRODUCCION.medicaciones TO 'NOMBRE_USUARIO_APP'@'HOST_APP';
 FLUSH PRIVILEGES;
 
 -- Verificación posterior (debe fallar con "command denied"):

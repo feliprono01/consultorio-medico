@@ -1,5 +1,5 @@
 # Manual de Usuario y Guía de Operación
-## Sistema de Gestión Clínica y Psiquiátrica — Consultorio Médico Profesional
+## PsiClínica — Sistema de Gestión Clínica y Psiquiátrica
 
 ---
 

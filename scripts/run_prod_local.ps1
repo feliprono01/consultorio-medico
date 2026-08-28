@@ -1,9 +1,12 @@
 # Script para iniciar el entorno de produccion localmente cargando variables desde el archivo .env
+# Vive en scripts/, pero el .env y el proyecto (pom.xml, mvnw) están en la raíz.
 
 Write-Host "Cargando variables de entorno desde .env..."
 
+$raiz = Split-Path -Parent $PSScriptRoot
+
 # Buscar archivo .env
-$envFile = "$PSScriptRoot\.env"
+$envFile = "$raiz\.env"
 if (-Not (Test-Path $envFile)) {
     Write-Host "No se encontró el archivo .env. Por favor, crea uno basándote en .env.example." -ForegroundColor Red
     exit 1
@@ -34,4 +37,9 @@ Write-Host "Usa Ctrl+C para detener."
 Write-Host ""
 
 # Ejecutar el proyecto usando Maven (sin hardcodear el JAR) para que auto-detecte cambios
-.\mvnw spring-boot:run
+Push-Location $raiz
+try {
+    .\mvnw spring-boot:run
+} finally {
+    Pop-Location
+}

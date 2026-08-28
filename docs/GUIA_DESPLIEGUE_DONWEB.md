@@ -1,16 +1,19 @@
-# Guía de Despliegue — HCP SYSTEM en DonWeb
+# Guía de Despliegue — PsiClínica en DonWeb
 
 Plan paso a paso para llevar el sistema (hasta ahora corriendo solo en local, con XAMPP)
 a un servidor real en DonWeb, accesible desde cualquier lado.
 
 **Decisiones ya tomadas** (28/08/2026):
+- Nombre del sistema: **PsiClínica**.
 - Proveedor: **DonWeb** — Cloud Server, 2 vCPU / 2 GB RAM mínimo, Linux (Ubuntu LTS).
 - Método de despliegue: **Docker Compose** (`docker-compose.yml`, ya en el repo).
 - Base de datos de producción: **arranca vacía**, sin migrar los pacientes de prueba ni
   los datos actuales de la PC de desarrollo.
-- Dominio: **no hay todavía** — se accede por IP mientras tanto. Sin dominio no hay
-  HTTPS (Let's Encrypt lo necesita), así que el tráfico viaja sin encriptar hasta que
-  se sume uno — ver nota de seguridad en el Paso 7.
+- **Dominio + HTTPS: obligatorio, no opcional.** Se va a comprar un dominio antes de dar
+  el sistema por productivo — dado que maneja historias clínicas psiquiátricas, no se
+  considera aceptable dejarlo corriendo en HTTP plano (sin cifrar) ni siquiera
+  temporalmente. Ver Parte 4.5 — el HTTPS se configura como parte del despliegue
+  inicial, no como una mejora para "más adelante".
 
 ---
 
@@ -74,8 +77,8 @@ ufw enable
 
 ```bash
 cd /opt
-git clone https://github.com/feliprono01/consultorio-medico.git hcp-system
-cd hcp-system
+git clone https://github.com/feliprono01/consultorio-medico.git psiclinica
+cd psiclinica
 ```
 
 ### 3.2 Armar el `.env` de producción
@@ -112,7 +115,7 @@ Completar (generar valores nuevos y random para cada uno — no reciclar los de 
 
 ### 3.3 Aplicar el script de blindaje de auditoría
 
-Antes de levantar la app por primera vez, no hace falta correr `PRE_DEPLOY_PRODUCCION.sql`
+Antes de levantar la app por primera vez, no hace falta correr `scripts/PRE_DEPLOY_PRODUCCION.sql`
 (la base arranca vacía y las columnas/permisos se aplican solos). **Sí hay que correrlo
 igual una vez que el contenedor de MySQL esté arriba**, para bloquear los permisos del
 usuario de la app sobre las tablas de auditoría — ver Parte 4, paso 4.3.
@@ -148,7 +151,7 @@ Conectarse a la base dentro del contenedor:
 docker exec -it consultorio_db mysql -u root -p
 ```
 
-Correr el bloque de `REVOKE`/`GRANT` de `PRE_DEPLOY_PRODUCCION.sql` (sección "Auditoría
+Correr el bloque de `REVOKE`/`GRANT` de `scripts/PRE_DEPLOY_PRODUCCION.sql` (sección "Auditoría
 con encadenado de integridad"), reemplazando `NOMBRE_USUARIO_APP`/`HOST_APP` por el
 usuario real (`DB_USER` del `.env`) y `%` como host (dentro de Docker no es `localhost`).
 
@@ -158,12 +161,39 @@ El backend crea el admin inicial automáticamente usando `ADMIN_USERNAME`/`ADMIN
 del `.env` si no existe ningún usuario — confirmar entrando a `http://IP_DEL_SERVIDOR`
 con esas credenciales.
 
+### 4.5 Dominio + HTTPS (obligatorio antes de dar el sistema por productivo)
+
+1. Comprar un dominio (cualquier registrador — DonWeb también vende, o Namecheap, etc.).
+2. En el panel de DNS del dominio, crear un registro **A** apuntando al `IP_DEL_SERVIDOR`.
+3. Instalar [Caddy](https://caddyserver.com/) como proxy delante del contenedor de
+   frontend — obtiene y renueva el certificado de Let's Encrypt solo, sin configuración
+   manual de certificados:
+   ```bash
+   apt install -y debian-keyring debian-archive-keyring apt-transport-https
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
+   apt update && apt install -y caddy
+   ```
+4. Editar `/etc/caddy/Caddyfile` con el dominio real:
+   ```
+   tudominio.com {
+       reverse_proxy localhost:80
+   }
+   ```
+5. `systemctl reload caddy` — Caddy pide el certificado automáticamente en el primer
+   request. Confirmar entrando a `https://tudominio.com`.
+6. Actualizar `CORS_ALLOWED_ORIGINS` en el `.env` del backend a `https://tudominio.com`
+   y volver a levantar el backend (`docker compose up -d --build backend`).
+7. Cerrar el puerto 80 directo desde afuera si Caddy ya lo maneja internamente, y abrir
+   el 443: `ufw allow 443/tcp`.
+
 ---
 
 ## Parte 5 — Verificación final
 
 Mismo criterio que se usó en desarrollo esta noche, ahora contra el servidor real:
 
+- [ ] El sitio carga por `https://` con candado válido (sin advertencias del navegador).
 - [ ] Login funciona con las credenciales de `ADMIN_USERNAME`/`ADMIN_PASSWORD`.
 - [ ] Crear un paciente de prueba, confirmar que se guarda y se ve en el listado.
 - [ ] Disparar un backup manual desde el panel de Admin → Backups, confirmar que el
@@ -178,11 +208,6 @@ Mismo criterio que se usó en desarrollo esta noche, ahora contra el servidor re
 
 ## Parte 6 — Pendiente para más adelante
 
-- **Dominio + HTTPS**: en cuanto se consiga un dominio, apuntarlo a la IP del servidor
-  (registro DNS tipo `A`) y configurar un proxy con certificado automático — la opción
-  más simple es [Caddy](https://caddyserver.com/) (certificados Let's Encrypt solos,
-  sin configuración manual) delante del contenedor de frontend. Actualizar también
-  `CORS_ALLOWED_ORIGINS` en el `.env` al dominio nuevo.
 - **Acceso remoto ocasional sin exponer todo a internet**: si en algún momento se
   prefiere no tener el servidor abierto al público 24/7, la alternativa es volver al
   esquema "local + VPN" con Tailscale o Cloudflare Tunnel — quedó descartado por ahora
