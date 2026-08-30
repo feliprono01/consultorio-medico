@@ -48,6 +48,7 @@ public class ConsultaService {
 
         // Manejo de Evaluación Psiquiátrica
         if (dto.getEvaluacionPsiquiatrica() != null) {
+            validarFundamentacionRiesgo(dto.getEvaluacionPsiquiatrica());
             com.consultorio.model.EvaluacionPsiquiatrica evaluacion = evaluacionMapper.toEntity(dto.getEvaluacionPsiquiatrica());
             evaluacion.setConsulta(consulta);
             consulta.setEvaluacionPsiquiatrica(evaluacion);
@@ -70,7 +71,8 @@ public class ConsultaService {
         if (medicaciones == null) return;
         for (com.consultorio.dto.MedicacionDTO m : medicaciones) {
             if (m.getFarmaco() == null || m.getFarmaco().isBlank()) continue;
-            medicacionRepository.save(new com.consultorio.model.Medicacion(consulta, m.getFarmaco(), m.getDosis(), m.getFrecuencia()));
+            medicacionRepository.save(new com.consultorio.model.Medicacion(consulta, m.getFarmaco(), m.getDosis(),
+                    m.getFrecuencia(), m.getViaAdministracion(), m.getDuracionPrevista()));
         }
     }
 
@@ -86,13 +88,16 @@ public class ConsultaService {
             sb.append(m.getFarmaco());
             if (m.getDosis() != null && !m.getDosis().isBlank()) sb.append(" ").append(m.getDosis());
             if (m.getFrecuencia() != null && !m.getFrecuencia().isBlank()) sb.append(" ").append(m.getFrecuencia());
+            if (m.getViaAdministracion() != null && !m.getViaAdministracion().isBlank()) sb.append(" (").append(m.getViaAdministracion()).append(")");
+            if (m.getDuracionPrevista() != null && !m.getDuracionPrevista().isBlank()) sb.append(" - ").append(m.getDuracionPrevista());
         }
         return sb.length() > 0 ? sb.toString() : null;
     }
 
     private List<com.consultorio.dto.MedicacionDTO> obtenerMedicaciones(Long consultaId) {
         return medicacionRepository.findByConsultaIdOrderByIdAsc(consultaId).stream()
-                .map(m -> new com.consultorio.dto.MedicacionDTO(m.getId(), m.getFarmaco(), m.getDosis(), m.getFrecuencia()))
+                .map(m -> new com.consultorio.dto.MedicacionDTO(m.getId(), m.getFarmaco(), m.getDosis(),
+                        m.getFrecuencia(), m.getViaAdministracion(), m.getDuracionPrevista()))
                 .toList();
     }
 
@@ -134,7 +139,7 @@ public class ConsultaService {
         }
 
         List<ConsultaResponseDTO> candidatos = consultaRepository
-                .findTop500ByActiveTrueOrderByFechaConsultaDesc()
+                .findTop500ByActiveTrueOrderByFechaConsultaDesc(PageRequest.of(0, 500))
                 .stream()
                 .map(consultaMapper::toResponseDTO)
                 .filter(dto -> matchesSearch(dto, q))
@@ -158,6 +163,13 @@ public class ConsultaService {
         return value != null && value.toLowerCase().contains(term);
     }
 
+    /**
+     * Soft-delete — pensado solo para limpieza de datos de prueba o
+     * duplicados genuinos por error de carga, NO como sustituto de
+     * `corregirConsulta`. Bajo el modelo append-only, un registro clínico
+     * real nunca debería borrarse: si algo está mal, se corrige (queda la
+     * versión vieja Y la nueva, ambas visibles) en vez de desaparecer.
+     */
     @Transactional
     public void eliminarConsulta(Long id) {
         Consulta consulta = consultaRepository.findByIdAndActiveTrue(id)
@@ -182,103 +194,161 @@ public class ConsultaService {
         return response;
     }
 
+    /**
+     * Corrige una consulta ya guardada — modelo append-only (Ley 26.657 / guía
+     * de HCE psiquiátrica): la fila original de `id` NUNCA se modifica, ni un
+     * solo UPDATE sobre sus columnas clínicas. En vez de eso, se crea una
+     * fila completamente nueva (misma fecha_consulta — sigue siendo la misma
+     * visita, corregida) que apunta a la original vía `correccionDeId`. La
+     * original queda visible para siempre en la cadena de versiones; los
+     * listados normales solo muestran la más nueva (ver ConsultaRepository).
+     *
+     * Reemplaza a lo que antes era `actualizarConsulta` (edición en el
+     * lugar) — ese enfoque auditaba bien los cambios, pero seguía
+     * sobreescribiendo el registro original, que es justo lo que la ley
+     * prohíbe para evoluciones ya firmadas.
+     */
     @Transactional
-    public ConsultaResponseDTO actualizarConsulta(Long id, ConsultaRequestDTO dto) {
-        Consulta consulta = consultaRepository.findByIdAndActiveTrue(id)
+    public ConsultaResponseDTO corregirConsulta(Long id, ConsultaRequestDTO dto) {
+        Consulta original = consultaRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
 
-        // Validar versión para concurrencia optimista
-        if (dto.getVersion() != null && !dto.getVersion().equals(consulta.getVersion())) {
+        // Concurrencia: si ya existe una fila que corrige a esta, alguien se
+        // adelantó — no se puede corregir "a ciegas" una versión que ya dejó
+        // de ser la vigente (mismo espíritu que el chequeo de @Version de
+        // antes, adaptado al modelo append-only).
+        if (consultaRepository.existsByCorreccionDeId(id)) {
             throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Consulta.class, id);
         }
 
         String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // Actualizar datos de consulta general con auditoría
-        logIfChanged(consulta, "Motivo", consulta.getMotivo(), dto.getMotivo(), currentUser);
-        consulta.setMotivo(dto.getMotivo());
+        // Arma la fila nueva reusando el mapper de creación — mismos campos,
+        // misma validación — y la ata a la original.
+        Consulta correccion = consultaMapper.toEntity(dto, original.getPaciente());
+        correccion.setFechaConsulta(original.getFechaConsulta());
+        correccion.setCorreccionDeId(id);
 
-        logIfChanged(consulta, "Diagnóstico", consulta.getDiagnostico(), dto.getDiagnostico(), currentUser);
-        consulta.setDiagnostico(dto.getDiagnostico());
-
-        logIfChanged(consulta, "Tratamiento", consulta.getTratamiento(), dto.getTratamiento(), currentUser);
-        consulta.setTratamiento(dto.getTratamiento());
-
-        logIfChanged(consulta, "Notas", consulta.getNotas(), dto.getNotas(), currentUser);
-        consulta.setNotas(dto.getNotas());
-
-        logIfChanged(consulta, "Estado Ánimo", consulta.getEstadoAnimo(), dto.getEstadoAnimo(), currentUser);
-        consulta.setEstadoAnimo(dto.getEstadoAnimo());
-
-        logIfChanged(consulta, "Calidad Sueño", consulta.getCalidadSueno(), dto.getCalidadSueno(), currentUser);
-        consulta.setCalidadSueno(dto.getCalidadSueno());
-
-        logIfChanged(consulta, "Alimentación", consulta.getAlimentacion(), dto.getAlimentacion(), currentUser);
-        consulta.setAlimentacion(dto.getAlimentacion());
-
-        logIfChanged(consulta, "Sociabilidad", consulta.getSociabilidad(), dto.getSociabilidad(), currentUser);
-        consulta.setSociabilidad(dto.getSociabilidad());
-
-        logIfChanged(consulta, "Funcionalidad Laboral", consulta.getFuncionalidadLaboral(), dto.getFuncionalidadLaboral(), currentUser);
-        consulta.setFuncionalidadLaboral(dto.getFuncionalidadLaboral());
-
-        logIfChanged(consulta, "Funcionalidad Social", consulta.getFuncionalidadSocial(), dto.getFuncionalidadSocial(), currentUser);
-        consulta.setFuncionalidadSocial(dto.getFuncionalidadSocial());
-
-        logIfChanged(consulta, "Funcionalidad Familiar", consulta.getFuncionalidadFamiliar(), dto.getFuncionalidadFamiliar(), currentUser);
-        consulta.setFuncionalidadFamiliar(dto.getFuncionalidadFamiliar());
-
-        // Actualizar o crear Evaluación Psiquiátrica — se audita cada campo por
-        // separado, en particular los de riesgo (suicida/homicida/propio), que son
-        // los de mayor peso legal ante cualquier revisión de responsabilidad
-        // profesional: no puede quedar un cambio ahí sin quién, cuándo y con qué
-        // valor anterior.
+        com.consultorio.model.EvaluacionPsiquiatrica evalOriginal = original.getEvaluacionPsiquiatrica();
         if (dto.getEvaluacionPsiquiatrica() != null) {
-            com.consultorio.model.EvaluacionPsiquiatrica evaluacion = consulta.getEvaluacionPsiquiatrica();
-            if (evaluacion == null) {
-                evaluacion = new com.consultorio.model.EvaluacionPsiquiatrica();
-                evaluacion.setConsulta(consulta);
-                consulta.setEvaluacionPsiquiatrica(evaluacion);
-            }
-
-            var evalDto = dto.getEvaluacionPsiquiatrica();
-            logIfChanged(consulta, "Evaluación: Apariencia", evaluacion.getApariencia(), evalDto.getApariencia(), currentUser);
-            logIfChanged(consulta, "Evaluación: Conducta", evaluacion.getConducta(), evalDto.getConducta(), currentUser);
-            logIfChanged(consulta, "Evaluación: Lenguaje", evaluacion.getLenguaje(), evalDto.getLenguaje(), currentUser);
-            logIfChanged(consulta, "Evaluación: Ánimo", evaluacion.getAnimo(), evalDto.getAnimo(), currentUser);
-            logIfChanged(consulta, "Evaluación: Afecto", evaluacion.getAfecto(), evalDto.getAfecto(), currentUser);
-            logIfChanged(consulta, "Evaluación: Pensamiento", evaluacion.getPensamiento(), evalDto.getPensamiento(), currentUser);
-            logIfChanged(consulta, "Evaluación: Sensopercepción", evaluacion.getSensopercepcion(), evalDto.getSensopercepcion(), currentUser);
-            logIfChanged(consulta, "Evaluación: Juicio", evaluacion.getJuicio(), evalDto.getJuicio(), currentUser);
-            logIfChanged(consulta, "Evaluación: Memoria", evaluacion.getMemoria(), evalDto.getMemoria(), currentUser);
-            logIfChanged(consulta, "Evaluación: Atención", evaluacion.getAtencion(), evalDto.getAtencion(), currentUser);
-            logIfChanged(consulta, "Evaluación: Conciencia", evaluacion.getConciencia(), evalDto.getConciencia(), currentUser);
-            logIfChanged(consulta, "Evaluación: Orientación", evaluacion.getOrientacion(), evalDto.getOrientacion(), currentUser);
-            logIfChanged(consulta, "Evaluación: Riesgo Suicida", evaluacion.getRiesgoSuicida(), evalDto.getRiesgoSuicida(), currentUser);
-            logIfChanged(consulta, "Evaluación: Riesgo Homicida", evaluacion.getRiesgoHomicida(), evalDto.getRiesgoHomicida(), currentUser);
-            logIfChanged(consulta, "Evaluación: Riesgo Propio", evaluacion.getRiesgoPropio(), evalDto.getRiesgoPropio(), currentUser);
-            logIfChanged(consulta, "Evaluación: Eje I", evaluacion.getEje1(), evalDto.getEje1(), currentUser);
-            logIfChanged(consulta, "Evaluación: Eje II", evaluacion.getEje2(), evalDto.getEje2(), currentUser);
-            logIfChanged(consulta, "Evaluación: Eje III", evaluacion.getEje3(), evalDto.getEje3(), currentUser);
-            logIfChanged(consulta, "Evaluación: Adherencia al Tratamiento", evaluacion.getAdherenciaTratamiento(), evalDto.getAdherenciaTratamiento(), currentUser);
-            logIfChanged(consulta, "Evaluación: Efectos Adversos", evaluacion.getEfectosAdversos(), evalDto.getEfectosAdversos(), currentUser);
-
-            evaluacionMapper.updateEntityFromDTO(evalDto, evaluacion);
+            validarFundamentacionRiesgo(dto.getEvaluacionPsiquiatrica());
+            com.consultorio.model.EvaluacionPsiquiatrica nuevaEvaluacion =
+                    evaluacionMapper.toEntity(dto.getEvaluacionPsiquiatrica());
+            nuevaEvaluacion.setConsulta(correccion);
+            correccion.setEvaluacionPsiquiatrica(nuevaEvaluacion);
         }
 
-        // Medicación estructurada: se audita como un solo campo (texto legible
-        // antes/después), aunque internamente sea una lista — reutiliza el
-        // mismo hash-chain que el resto de los campos, sin duplicar lógica.
+        Consulta guardada = consultaRepository.save(correccion);
+        guardarMedicaciones(guardada, dto.getMedicaciones());
+
+        // Auditoría: compara la ORIGINAL contra la corrección recién guardada,
+        // y cada registro de auditoría queda asociado a la fila nueva (que ya
+        // tiene id). Mismo hash-chain de siempre, sin tocarlo.
+        var evalDto = dto.getEvaluacionPsiquiatrica();
+        logIfChanged(guardada, "Motivo", original.getMotivo(), dto.getMotivo(), currentUser);
+        logIfChanged(guardada, "Diagnóstico", original.getDiagnostico(), dto.getDiagnostico(), currentUser);
+        logIfChanged(guardada, "Diagnóstico CIE-10", original.getDiagnosticoCie10(), dto.getDiagnosticoCie10(), currentUser);
+        logIfChanged(guardada, "Tratamiento", original.getTratamiento(), dto.getTratamiento(), currentUser);
+        logIfChanged(guardada, "Notas", original.getNotas(), dto.getNotas(), currentUser);
+        logIfChanged(guardada, "Estado Ánimo", original.getEstadoAnimo(), dto.getEstadoAnimo(), currentUser);
+        logIfChanged(guardada, "Calidad Sueño", original.getCalidadSueno(), dto.getCalidadSueno(), currentUser);
+        logIfChanged(guardada, "Alimentación", original.getAlimentacion(), dto.getAlimentacion(), currentUser);
+        logIfChanged(guardada, "Sociabilidad", original.getSociabilidad(), dto.getSociabilidad(), currentUser);
+        logIfChanged(guardada, "Funcionalidad Laboral", original.getFuncionalidadLaboral(), dto.getFuncionalidadLaboral(), currentUser);
+        logIfChanged(guardada, "Funcionalidad Social", original.getFuncionalidadSocial(), dto.getFuncionalidadSocial(), currentUser);
+        logIfChanged(guardada, "Funcionalidad Familiar", original.getFuncionalidadFamiliar(), dto.getFuncionalidadFamiliar(), currentUser);
+
+        if (evalDto != null) {
+            logIfChanged(guardada, "Evaluación: Apariencia", evalOriginal == null ? null : evalOriginal.getApariencia(), evalDto.getApariencia(), currentUser);
+            logIfChanged(guardada, "Evaluación: Conducta", evalOriginal == null ? null : evalOriginal.getConducta(), evalDto.getConducta(), currentUser);
+            logIfChanged(guardada, "Evaluación: Lenguaje", evalOriginal == null ? null : evalOriginal.getLenguaje(), evalDto.getLenguaje(), currentUser);
+            logIfChanged(guardada, "Evaluación: Ánimo", evalOriginal == null ? null : evalOriginal.getAnimo(), evalDto.getAnimo(), currentUser);
+            logIfChanged(guardada, "Evaluación: Afecto", evalOriginal == null ? null : evalOriginal.getAfecto(), evalDto.getAfecto(), currentUser);
+            logIfChanged(guardada, "Evaluación: Pensamiento", evalOriginal == null ? null : evalOriginal.getPensamiento(), evalDto.getPensamiento(), currentUser);
+            logIfChanged(guardada, "Evaluación: Sensopercepción", evalOriginal == null ? null : evalOriginal.getSensopercepcion(), evalDto.getSensopercepcion(), currentUser);
+            logIfChanged(guardada, "Evaluación: Juicio", evalOriginal == null ? null : evalOriginal.getJuicio(), evalDto.getJuicio(), currentUser);
+            logIfChanged(guardada, "Evaluación: Memoria", evalOriginal == null ? null : evalOriginal.getMemoria(), evalDto.getMemoria(), currentUser);
+            logIfChanged(guardada, "Evaluación: Atención", evalOriginal == null ? null : evalOriginal.getAtencion(), evalDto.getAtencion(), currentUser);
+            logIfChanged(guardada, "Evaluación: Conciencia", evalOriginal == null ? null : evalOriginal.getConciencia(), evalDto.getConciencia(), currentUser);
+            logIfChanged(guardada, "Evaluación: Orientación", evalOriginal == null ? null : evalOriginal.getOrientacion(), evalDto.getOrientacion(), currentUser);
+            logIfChanged(guardada, "Evaluación: Riesgo Suicida", evalOriginal == null ? null : evalOriginal.getRiesgoSuicida(), evalDto.getRiesgoSuicida(), currentUser);
+            logIfChanged(guardada, "Evaluación: Riesgo Homicida", evalOriginal == null ? null : evalOriginal.getRiesgoHomicida(), evalDto.getRiesgoHomicida(), currentUser);
+            logIfChanged(guardada, "Evaluación: Riesgo Propio", evalOriginal == null ? null : evalOriginal.getRiesgoPropio(), evalDto.getRiesgoPropio(), currentUser);
+            logIfChanged(guardada, "Evaluación: Fundamentación de Riesgo", evalOriginal == null ? null : evalOriginal.getFundamentacionRiesgo(), evalDto.getFundamentacionRiesgo(), currentUser);
+            logIfChanged(guardada, "Evaluación: Eje I", evalOriginal == null ? null : evalOriginal.getEje1(), evalDto.getEje1(), currentUser);
+            logIfChanged(guardada, "Evaluación: Eje II", evalOriginal == null ? null : evalOriginal.getEje2(), evalDto.getEje2(), currentUser);
+            logIfChanged(guardada, "Evaluación: Eje III", evalOriginal == null ? null : evalOriginal.getEje3(), evalDto.getEje3(), currentUser);
+            logIfChanged(guardada, "Evaluación: Adherencia al Tratamiento", evalOriginal == null ? null : evalOriginal.getAdherenciaTratamiento(), evalDto.getAdherenciaTratamiento(), currentUser);
+            logIfChanged(guardada, "Evaluación: Efectos Adversos", evalOriginal == null ? null : evalOriginal.getEfectosAdversos(), evalDto.getEfectosAdversos(), currentUser);
+        }
+
         String medicacionAnterior = describirMedicaciones(obtenerMedicaciones(id));
         String medicacionNueva = describirMedicaciones(dto.getMedicaciones());
-        logIfChanged(consulta, "Medicación (estructurada)", medicacionAnterior, medicacionNueva, currentUser);
+        logIfChanged(guardada, "Medicación (estructurada)", medicacionAnterior, medicacionNueva, currentUser);
 
-        Consulta actualizada = consultaRepository.save(consulta);
-        guardarMedicaciones(actualizada, dto.getMedicaciones());
-
-        ConsultaResponseDTO response = consultaMapper.toResponseDTO(actualizada);
-        response.setMedicaciones(obtenerMedicaciones(id));
+        ConsultaResponseDTO response = consultaMapper.toResponseDTO(guardada);
+        response.setMedicaciones(obtenerMedicaciones(guardada.getId()));
+        response.setCorregida(false);
         return response;
+    }
+
+    /**
+     * Recorre toda la cadena de versiones de una consulta (original +
+     * correcciones), de la más vieja a la más nueva — para mostrarle al
+     * médico "así se veía antes de cada corrección". `id` puede ser
+     * cualquier eslabón de la cadena, no hace falta que sea el original.
+     */
+    @Transactional(readOnly = true)
+    public List<ConsultaResponseDTO> obtenerCadenaVersiones(Long id) {
+        Consulta actual = consultaRepository.findById(id)
+                .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException("Consulta", "id", id));
+
+        // Retroceder hasta el original de la cadena.
+        Consulta raiz = actual;
+        while (raiz.getCorreccionDeId() != null) {
+            Long idAnterior = raiz.getCorreccionDeId();
+            raiz = consultaRepository.findById(idAnterior)
+                    .orElseThrow(() -> new com.consultorio.exception.ResourceNotFoundException(
+                            "Consulta", "id", idAnterior));
+        }
+
+        // Avanzar desde el original juntando cada corrección posterior.
+        List<Consulta> cadena = new java.util.ArrayList<>();
+        cadena.add(raiz);
+        Consulta cursor = raiz;
+        while (consultaRepository.existsByCorreccionDeId(cursor.getId())) {
+            cursor = consultaRepository.findByCorreccionDeId(cursor.getId()).orElseThrow();
+            cadena.add(cursor);
+        }
+
+        List<ConsultaResponseDTO> resultado = new java.util.ArrayList<>();
+        for (int i = 0; i < cadena.size(); i++) {
+            Consulta version = cadena.get(i);
+            ConsultaResponseDTO dto = consultaMapper.toResponseDTO(version);
+            dto.setMedicaciones(obtenerMedicaciones(version.getId()));
+            dto.setCorregida(i < cadena.size() - 1); // todas menos la última ya fueron superadas
+            resultado.add(dto);
+        }
+        return resultado;
+    }
+
+    /**
+     * Ley 26.657: cualquier intervención en crisis o riesgo relevante exige
+     * fundamentación técnica explícita, no alcanza con marcar un nivel de
+     * riesgo. Rechaza (400, no 500 — mismo patrón que el resto de las
+     * validaciones de negocio) si algún riesgo es "Alto"/"Inminente" sin
+     * texto en fundamentacionRiesgo.
+     */
+    private void validarFundamentacionRiesgo(com.consultorio.dto.EvaluacionPsiquiatricaDTO evalDto) {
+        // riesgoPropio usa otro vocabulario ("Grave", no "Alto"/"Inminente") —
+        // ver PsychiatricEvaluationFields.jsx.
+        boolean riesgoAlto = java.util.List.of("Alto", "Inminente").contains(evalDto.getRiesgoSuicida())
+                || java.util.List.of("Alto", "Inminente").contains(evalDto.getRiesgoHomicida())
+                || "Grave".equals(evalDto.getRiesgoPropio());
+        if (riesgoAlto && (evalDto.getFundamentacionRiesgo() == null || evalDto.getFundamentacionRiesgo().isBlank())) {
+            throw new IllegalArgumentException(
+                    "Un riesgo marcado como Alto o Inminente requiere fundamentación técnica del riesgo.");
+        }
     }
 
     /**
@@ -382,7 +452,9 @@ public class ConsultaService {
 
     @Transactional(readOnly = true)
     public ConsultaResponseDTO obtenerUltimaConsulta(Long pacienteId) {
-        var resultado = consultaRepository.findFirstByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(pacienteId)
+        var resultado = consultaRepository.findFirstByPacienteIdAndActiveTrueOrderByFechaConsultaDesc(
+                        pacienteId, PageRequest.of(0, 1))
+                .stream().findFirst()
                 .map(consultaMapper::toResponseDTO)
                 .orElse(null);
 

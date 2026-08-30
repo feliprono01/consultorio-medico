@@ -110,28 +110,27 @@ class AuditChainIntegrityTest {
                 .andReturn();
         var creadoJson = objectMapper.readTree(creado.getResponse().getContentAsString());
         Long consultaId = creadoJson.get("id").asLong();
-        long version = creadoJson.get("version").asLong();
 
-        // Dos ediciones más, cada una debería sumar un eslabón a la cadena.
-        // Todo el test comparte una sola transacción (@Transactional de
-        // JUnit, para el rollback automático al final), así que hay que
-        // forzar el flush entre requests para que la versión incrementada
-        // por el @Version de la primera actualización sea visible para la
-        // segunda — igual patrón que usa EvaluacionPsiquiatricaEncryptionTest.
+        // Dos correcciones más, cada una debería sumar un eslabón a la
+        // cadena. Modelo append-only: cada corrección crea una fila NUEVA
+        // (con su propio id) que pasa a ser el objetivo de la siguiente
+        // corrección — no hay más @Version, la concurrencia se controla con
+        // existsByCorreccionDeId (ver ConsultaService.corregirConsulta).
         for (String motivo : new String[] { "Motivo editado 1", "Motivo editado 2" }) {
-            ConsultaRequestDTO actualizar = new ConsultaRequestDTO();
-            actualizar.setPacienteId(testPaciente.getId());
-            actualizar.setMotivo(motivo);
-            actualizar.setVersion(version);
-            mockMvc.perform(put("/api/consultas/" + consultaId)
+            ConsultaRequestDTO corregir = new ConsultaRequestDTO();
+            corregir.setPacienteId(testPaciente.getId());
+            corregir.setMotivo(motivo);
+            MvcResult corregido = mockMvc.perform(post("/api/consultas/" + consultaId + "/corregir")
                             .cookie(doctorCookie)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(actualizar)))
-                    .andExpect(status().isOk());
+                            .content(objectMapper.writeValueAsString(corregir)))
+                    .andExpect(status().isOk())
+                    .andReturn();
 
             entityManager.flush();
             entityManager.clear();
-            version = consultaRepository.findById(consultaId).orElseThrow().getVersion();
+            var corregidoJson = objectMapper.readTree(corregido.getResponse().getContentAsString());
+            consultaId = corregidoJson.get("id").asLong();
         }
 
         Cookie adminCookie = login("admin.chain");

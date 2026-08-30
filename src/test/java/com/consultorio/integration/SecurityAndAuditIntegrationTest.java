@@ -397,15 +397,29 @@ class SecurityAndAuditIntegrationTest {
 
         Long consultaId = objectMapper.readTree(creado.getResponse().getContentAsString()).get("id").asLong();
 
-        com.consultorio.dto.ConsultaRequestDTO actualizarDto = new com.consultorio.dto.ConsultaRequestDTO();
-        actualizarDto.setPacienteId(testPaciente.getId());
-        actualizarDto.setMotivo("Motivo actualizado");
-        actualizarDto.setVersion(99L); // Versión desactualizada
+        // Modelo append-only: corregir una vez funciona (crea una fila nueva).
+        com.consultorio.dto.ConsultaRequestDTO primeraCorreccion = new com.consultorio.dto.ConsultaRequestDTO();
+        primeraCorreccion.setPacienteId(testPaciente.getId());
+        primeraCorreccion.setMotivo("Motivo corregido");
 
-        mockMvc.perform(put("/api/consultas/" + consultaId)
+        mockMvc.perform(post("/api/consultas/" + consultaId + "/corregir")
                         .cookie(jwtCookie)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(actualizarDto)))
+                        .content(objectMapper.writeValueAsString(primeraCorreccion)))
+                .andExpect(status().isOk());
+
+        // Intentar corregir esa MISMA fila original de nuevo — ya no es la
+        // vigente (alguien más, en este caso el request anterior, ya la
+        // corrigió), así que debe rechazar con 409 en vez de crear una
+        // segunda corrección "a ciegas" sobre una versión vieja.
+        com.consultorio.dto.ConsultaRequestDTO segundaCorreccion = new com.consultorio.dto.ConsultaRequestDTO();
+        segundaCorreccion.setPacienteId(testPaciente.getId());
+        segundaCorreccion.setMotivo("Motivo actualizado a ciegas");
+
+        mockMvc.perform(post("/api/consultas/" + consultaId + "/corregir")
+                        .cookie(jwtCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(segundaCorreccion)))
                 .andExpect(status().isConflict());
     }
 

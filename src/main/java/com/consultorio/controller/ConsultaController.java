@@ -59,11 +59,27 @@ public class ConsultaController {
         return ResponseEntity.ok(consulta);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ConsultaResponseDTO> actualizarConsulta(@PathVariable Long id,
+    /**
+     * Corrige una consulta ya guardada — modelo append-only (Ley 26.657): NO
+     * modifica la fila original, crea una nueva versión que la referencia.
+     * Reemplaza al viejo PUT /{id} (edición en el lugar).
+     * POST /api/consultas/{id}/corregir
+     */
+    @PostMapping("/{id}/corregir")
+    public ResponseEntity<ConsultaResponseDTO> corregirConsulta(@PathVariable Long id,
             @Valid @RequestBody ConsultaRequestDTO dto) {
-        ConsultaResponseDTO actualizada = consultaService.actualizarConsulta(id, dto);
-        return ResponseEntity.ok(actualizada);
+        ConsultaResponseDTO corregida = consultaService.corregirConsulta(id, dto);
+        return ResponseEntity.ok(corregida);
+    }
+
+    /**
+     * Cadena completa de versiones de una consulta (original + correcciones
+     * posteriores, si las hay), de la más vieja a la más nueva.
+     * GET /api/consultas/{id}/versiones
+     */
+    @GetMapping("/{id}/versiones")
+    public ResponseEntity<List<ConsultaResponseDTO>> obtenerCadenaVersiones(@PathVariable Long id) {
+        return ResponseEntity.ok(consultaService.obtenerCadenaVersiones(id));
     }
 
     @DeleteMapping("/{id}")

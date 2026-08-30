@@ -15,6 +15,7 @@ public class ConsultaRequestDTO {
     private String motivo;
 
     private String diagnostico;
+    private String diagnosticoCie10;
 
     @Size(max = 2000, message = "El tratamiento no debe exceder los 2000 caracteres")
     private String tratamiento;
@@ -58,6 +59,14 @@ public class ConsultaRequestDTO {
 
     public void setDiagnostico(String diagnostico) {
         this.diagnostico = diagnostico;
+    }
+
+    public String getDiagnosticoCie10() {
+        return diagnosticoCie10;
+    }
+
+    public void setDiagnosticoCie10(String diagnosticoCie10) {
+        this.diagnosticoCie10 = diagnosticoCie10;
     }
 
     public String getTratamiento() {

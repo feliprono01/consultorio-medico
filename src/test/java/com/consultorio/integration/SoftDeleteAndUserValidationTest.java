@@ -130,7 +130,7 @@ class SoftDeleteAndUserValidationTest {
         dto.setPacienteId(pacienteActivo.getId());
         dto.setMotivo("Intento de edición");
 
-        mockMvc.perform(put("/api/consultas/" + consulta.getId())
+        mockMvc.perform(post("/api/consultas/" + consulta.getId() + "/corregir")
                         .cookie(doctorCookie)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))

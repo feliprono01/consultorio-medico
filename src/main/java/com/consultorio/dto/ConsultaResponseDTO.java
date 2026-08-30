@@ -13,6 +13,10 @@ public class ConsultaResponseDTO {
     private LocalDateTime fechaConsulta;
     private String motivo;
     private String diagnostico;
+    private String diagnosticoCie10;
+    private Long correccionDeId;
+    /** true si esta fila fue superada por una corrección más nueva (no es la vigente). */
+    private Boolean corregida;
     private String tratamiento;
     private String notas;
     private Integer estadoAnimo;
@@ -40,11 +44,11 @@ public class ConsultaResponseDTO {
     }
 
     public ConsultaResponseDTO(Long id, Long pacienteId, String nombrePaciente, String apellidoPaciente,
-            String dniPaciente, LocalDateTime fechaConsulta, String motivo, String diagnostico, String tratamiento,
+            String dniPaciente, LocalDateTime fechaConsulta, String motivo, String diagnostico, String diagnosticoCie10, String tratamiento,
             String notas, Integer estadoAnimo, Integer calidadSueno,
             Integer alimentacion, Integer sociabilidad, Integer funcionalidadLaboral,
             Integer funcionalidadSocial, Integer funcionalidadFamiliar,
-            EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica, Long version) {
+            EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica, Long version, Long correccionDeId) {
         this.id = id;
         this.pacienteId = pacienteId;
         this.nombrePaciente = nombrePaciente;
@@ -53,6 +57,7 @@ public class ConsultaResponseDTO {
         this.fechaConsulta = fechaConsulta;
         this.motivo = motivo;
         this.diagnostico = diagnostico;
+        this.diagnosticoCie10 = diagnosticoCie10;
         this.tratamiento = tratamiento;
         this.notas = notas;
         this.estadoAnimo = estadoAnimo;
@@ -64,6 +69,7 @@ public class ConsultaResponseDTO {
         this.funcionalidadFamiliar = funcionalidadFamiliar;
         this.evaluacionPsiquiatrica = evaluacionPsiquiatrica;
         this.version = version;
+        this.correccionDeId = correccionDeId;
     }
 
     public Long getId() {
@@ -128,6 +134,30 @@ public class ConsultaResponseDTO {
 
     public void setDiagnostico(String diagnostico) {
         this.diagnostico = diagnostico;
+    }
+
+    public String getDiagnosticoCie10() {
+        return diagnosticoCie10;
+    }
+
+    public void setDiagnosticoCie10(String diagnosticoCie10) {
+        this.diagnosticoCie10 = diagnosticoCie10;
+    }
+
+    public Long getCorreccionDeId() {
+        return correccionDeId;
+    }
+
+    public void setCorreccionDeId(Long correccionDeId) {
+        this.correccionDeId = correccionDeId;
+    }
+
+    public Boolean getCorregida() {
+        return corregida;
+    }
+
+    public void setCorregida(Boolean corregida) {
+        this.corregida = corregida;
     }
 
     public String getTratamiento() {
@@ -223,6 +253,7 @@ public class ConsultaResponseDTO {
         private LocalDateTime fechaConsulta;
         private String motivo;
         private String diagnostico;
+        private String diagnosticoCie10;
         private String tratamiento;
         private String notas;
         private Integer estadoAnimo;
@@ -234,6 +265,7 @@ public class ConsultaResponseDTO {
         private Integer funcionalidadFamiliar;
         private EvaluacionPsiquiatricaDTO evaluacionPsiquiatrica;
         private Long version;
+        private Long correccionDeId;
 
         public ConsultaResponseDTOBuilder id(Long id) {
             this.id = id;
@@ -272,6 +304,11 @@ public class ConsultaResponseDTO {
 
         public ConsultaResponseDTOBuilder diagnostico(String diagnostico) {
             this.diagnostico = diagnostico;
+            return this;
+        }
+
+        public ConsultaResponseDTOBuilder diagnosticoCie10(String diagnosticoCie10) {
+            this.diagnosticoCie10 = diagnosticoCie10;
             return this;
         }
 
@@ -330,11 +367,16 @@ public class ConsultaResponseDTO {
             return this;
         }
 
+        public ConsultaResponseDTOBuilder correccionDeId(Long correccionDeId) {
+            this.correccionDeId = correccionDeId;
+            return this;
+        }
+
         public ConsultaResponseDTO build() {
             return new ConsultaResponseDTO(id, pacienteId, nombrePaciente, apellidoPaciente, dniPaciente, fechaConsulta,
-                    motivo, diagnostico, tratamiento, notas, estadoAnimo, calidadSueno, alimentacion,
+                    motivo, diagnostico, diagnosticoCie10, tratamiento, notas, estadoAnimo, calidadSueno, alimentacion,
                     sociabilidad,
-                    funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica, version);
+                    funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica, version, correccionDeId);
         }
     }
 

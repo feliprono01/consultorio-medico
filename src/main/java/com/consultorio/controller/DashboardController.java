@@ -35,7 +35,9 @@ public class DashboardController {
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
         long consultasHoy = consultaRepository.countByFechaConsultaBetween(startOfDay, endOfDay);
 
-        Optional<Consulta> ultimaConsulta = consultaRepository.findFirstByActiveTrueOrderByFechaConsultaDesc();
+        Optional<Consulta> ultimaConsulta = consultaRepository
+                .findFirstByActiveTrueOrderByFechaConsultaDesc(org.springframework.data.domain.PageRequest.of(0, 1))
+                .stream().findFirst();
 
         String ultimaConsultaFecha = "Sin registros";
         String ultimaConsultaPaciente = "-";

@@ -36,6 +36,10 @@ public class Consulta extends Auditable {
     @Convert(converter = AttributeEncryptor.class)
     private String diagnostico;
 
+    /** Código CIE-10/CIE-11 del diagnóstico, junto al texto libre de arriba. */
+    @Column(name = "diagnostico_cie10", length = 20)
+    private String diagnosticoCie10;
+
     @Column(columnDefinition = "TEXT")
     @Convert(converter = AttributeEncryptor.class)
     private String tratamiento;
@@ -69,15 +73,27 @@ public class Consulta extends Auditable {
     @OneToOne(mappedBy = "consulta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private EvaluacionPsiquiatrica evaluacionPsiquiatrica;
 
+    /**
+     * Modelo append-only (Ley 26.657 / guía de HCE): una vez creada, una
+     * Consulta nunca se vuelve a modificar. Corregirla arma una fila NUEVA
+     * (con la misma fecha_consulta) que apunta acá con este campo — la fila
+     * original queda intacta para siempre. Sin FK física (igual criterio que
+     * ConsultaAuditLog.pacienteId) para no complicar cascadas de borrado.
+     * Null = esta fila es un original o el eslabón más viejo de su cadena.
+     * Ver ConsultaService.corregirConsulta / ConsultaRepository.
+     */
+    @Column(name = "correccion_de_id")
+    private Long correccionDeId;
+
     public Consulta() {
     }
 
     public Consulta(Long id, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean active, Paciente paciente,
-            LocalDateTime fechaConsulta, String motivo, String diagnostico, String tratamiento,
+            LocalDateTime fechaConsulta, String motivo, String diagnostico, String diagnosticoCie10, String tratamiento,
             String notas, Integer estadoAnimo, Integer calidadSueno,
             Integer alimentacion, Integer sociabilidad, Integer funcionalidadLaboral,
             Integer funcionalidadSocial, Integer funcionalidadFamiliar,
-            EvaluacionPsiquiatrica evaluacionPsiquiatrica) {
+            EvaluacionPsiquiatrica evaluacionPsiquiatrica, Long correccionDeId) {
         this.id = id;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -86,6 +102,7 @@ public class Consulta extends Auditable {
         this.fechaConsulta = fechaConsulta;
         this.motivo = motivo;
         this.diagnostico = diagnostico;
+        this.diagnosticoCie10 = diagnosticoCie10;
         this.tratamiento = tratamiento;
         this.notas = notas;
         this.estadoAnimo = estadoAnimo;
@@ -96,6 +113,7 @@ public class Consulta extends Auditable {
         this.funcionalidadSocial = funcionalidadSocial;
         this.funcionalidadFamiliar = funcionalidadFamiliar;
         this.evaluacionPsiquiatrica = evaluacionPsiquiatrica;
+        this.correccionDeId = correccionDeId;
     }
 
     public static ConsultaBuilder builder() {
@@ -111,6 +129,7 @@ public class Consulta extends Auditable {
         private LocalDateTime fechaConsulta;
         private String motivo;
         private String diagnostico;
+        private String diagnosticoCie10;
         private String tratamiento;
         private String notas;
         private Integer estadoAnimo;
@@ -121,6 +140,7 @@ public class Consulta extends Auditable {
         private Integer funcionalidadSocial;
         private Integer funcionalidadFamiliar;
         private EvaluacionPsiquiatrica evaluacionPsiquiatrica;
+        private Long correccionDeId;
 
         public ConsultaBuilder id(Long id) {
             this.id = id;
@@ -159,6 +179,11 @@ public class Consulta extends Auditable {
 
         public ConsultaBuilder diagnostico(String diagnostico) {
             this.diagnostico = diagnostico;
+            return this;
+        }
+
+        public ConsultaBuilder diagnosticoCie10(String diagnosticoCie10) {
+            this.diagnosticoCie10 = diagnosticoCie10;
             return this;
         }
 
@@ -212,10 +237,15 @@ public class Consulta extends Auditable {
             return this;
         }
 
+        public ConsultaBuilder correccionDeId(Long correccionDeId) {
+            this.correccionDeId = correccionDeId;
+            return this;
+        }
+
         public Consulta build() {
             return new Consulta(id, createdAt, updatedAt, active, paciente, fechaConsulta, motivo,
-                    diagnostico, tratamiento, notas, estadoAnimo, calidadSueno, alimentacion, sociabilidad,
-                    funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica);
+                    diagnostico, diagnosticoCie10, tratamiento, notas, estadoAnimo, calidadSueno, alimentacion, sociabilidad,
+                    funcionalidadLaboral, funcionalidadSocial, funcionalidadFamiliar, evaluacionPsiquiatrica, correccionDeId);
         }
     }
 
@@ -257,6 +287,22 @@ public class Consulta extends Auditable {
 
     public void setDiagnostico(String diagnostico) {
         this.diagnostico = diagnostico;
+    }
+
+    public String getDiagnosticoCie10() {
+        return diagnosticoCie10;
+    }
+
+    public void setDiagnosticoCie10(String diagnosticoCie10) {
+        this.diagnosticoCie10 = diagnosticoCie10;
+    }
+
+    public Long getCorreccionDeId() {
+        return correccionDeId;
+    }
+
+    public void setCorreccionDeId(Long correccionDeId) {
+        this.correccionDeId = correccionDeId;
     }
 
     public String getTratamiento() {
