@@ -59,6 +59,13 @@ public class HistoriaPsiquiatrica extends Auditable {
     @Convert(converter = AttributeEncryptor.class)
     private String habitos;
 
+    /** Directivas Anticipadas en Salud Mental (Ley 26.657 art. 3) — voluntad del
+     *  paciente sobre decisiones de tratamiento durante eventuales períodos de
+     *  pérdida de capacidad de discernimiento. */
+    @Column(name = "directivas_anticipadas", columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
+    private String directivasAnticipadas;
+
 
     public HistoriaPsiquiatrica() {
     }
@@ -66,7 +73,7 @@ public class HistoriaPsiquiatrica extends Auditable {
     public HistoriaPsiquiatrica(Paciente paciente, String antecedentesFamiliares, String antecedentesPersonales,
             String historiaConsumo, String enfermedadActual, String tratamientosPrevios, String desarrolloPsicomotor,
             String personalidadPrevia, String antecedentesPsicologicos, String historiaSexual,
-            String historiaMarital, String habitos) {
+            String historiaMarital, String habitos, String directivasAnticipadas) {
         this.paciente = paciente;
         this.antecedentesFamiliares = antecedentesFamiliares;
         this.antecedentesPersonales = antecedentesPersonales;
@@ -79,6 +86,7 @@ public class HistoriaPsiquiatrica extends Auditable {
         this.historiaSexual = historiaSexual;
         this.historiaMarital = historiaMarital;
         this.habitos = habitos;
+        this.directivasAnticipadas = directivasAnticipadas;
     }
 
     public Paciente getPaciente() {
@@ -177,6 +185,14 @@ public class HistoriaPsiquiatrica extends Auditable {
         this.habitos = habitos;
     }
 
+    public String getDirectivasAnticipadas() {
+        return directivasAnticipadas;
+    }
+
+    public void setDirectivasAnticipadas(String directivasAnticipadas) {
+        this.directivasAnticipadas = directivasAnticipadas;
+    }
+
     public static HistoriaPsiquiatricaBuilder builder() {
         return new HistoriaPsiquiatricaBuilder();
     }
@@ -194,6 +210,7 @@ public class HistoriaPsiquiatrica extends Auditable {
         private String historiaSexual;
         private String historiaMarital;
         private String habitos;
+        private String directivasAnticipadas;
 
         public HistoriaPsiquiatricaBuilder paciente(Paciente paciente) {
             this.paciente = paciente;
@@ -255,10 +272,15 @@ public class HistoriaPsiquiatrica extends Auditable {
             return this;
         }
 
+        public HistoriaPsiquiatricaBuilder directivasAnticipadas(String directivasAnticipadas) {
+            this.directivasAnticipadas = directivasAnticipadas;
+            return this;
+        }
+
         public HistoriaPsiquiatrica build() {
             return new HistoriaPsiquiatrica(paciente, antecedentesFamiliares, antecedentesPersonales, historiaConsumo,
                     enfermedadActual, tratamientosPrevios, desarrolloPsicomotor, personalidadPrevia,
-                    antecedentesPsicologicos, historiaSexual, historiaMarital, habitos);
+                    antecedentesPsicologicos, historiaSexual, historiaMarital, habitos, directivasAnticipadas);
         }
     }
 }

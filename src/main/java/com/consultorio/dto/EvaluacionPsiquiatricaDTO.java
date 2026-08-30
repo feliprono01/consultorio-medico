@@ -15,6 +15,7 @@ public class EvaluacionPsiquiatricaDTO {
     private String riesgoSuicida;
     private String riesgoHomicida;
     private String riesgoPropio;
+    private String fundamentacionRiesgo;
     private String conciencia;
     private String orientacion;
     private String eje1;
@@ -28,7 +29,7 @@ public class EvaluacionPsiquiatricaDTO {
 
     public EvaluacionPsiquiatricaDTO(Long id, String apariencia, String conducta, String lenguaje, String animo,
             String afecto, String pensamiento, String sensopercepcion, String juicio, String memoria, String atencion,
-            String riesgoSuicida, String riesgoHomicida, String riesgoPropio, String conciencia, String orientacion,
+            String riesgoSuicida, String riesgoHomicida, String riesgoPropio, String fundamentacionRiesgo, String conciencia, String orientacion,
             String eje1, String eje2, String eje3, String adherenciaTratamiento, String efectosAdversos) {
         this.id = id;
         this.apariencia = apariencia;
@@ -44,6 +45,7 @@ public class EvaluacionPsiquiatricaDTO {
         this.riesgoSuicida = riesgoSuicida;
         this.riesgoHomicida = riesgoHomicida;
         this.riesgoPropio = riesgoPropio;
+        this.fundamentacionRiesgo = fundamentacionRiesgo;
         this.conciencia = conciencia;
         this.orientacion = orientacion;
         this.eje1 = eje1;
@@ -72,6 +74,7 @@ public class EvaluacionPsiquiatricaDTO {
         private String riesgoSuicida;
         private String riesgoHomicida;
         private String riesgoPropio;
+        private String fundamentacionRiesgo;
         private String conciencia;
         private String orientacion;
         private String eje1;
@@ -150,6 +153,11 @@ public class EvaluacionPsiquiatricaDTO {
             return this;
         }
 
+        public EvaluacionPsiquiatricaDTOBuilder fundamentacionRiesgo(String fundamentacionRiesgo) {
+            this.fundamentacionRiesgo = fundamentacionRiesgo;
+            return this;
+        }
+
         public EvaluacionPsiquiatricaDTOBuilder conciencia(String conciencia) {
             this.conciencia = conciencia;
             return this;
@@ -187,7 +195,7 @@ public class EvaluacionPsiquiatricaDTO {
 
         public EvaluacionPsiquiatricaDTO build() {
             return new EvaluacionPsiquiatricaDTO(id, apariencia, conducta, lenguaje, animo, afecto, pensamiento,
-                    sensopercepcion, juicio, memoria, atencion, riesgoSuicida, riesgoHomicida, riesgoPropio, conciencia,
+                    sensopercepcion, juicio, memoria, atencion, riesgoSuicida, riesgoHomicida, riesgoPropio, fundamentacionRiesgo, conciencia,
                     orientacion, eje1, eje2, eje3, adherenciaTratamiento, efectosAdversos);
         }
     }
@@ -302,6 +310,14 @@ public class EvaluacionPsiquiatricaDTO {
 
     public void setRiesgoPropio(String riesgoPropio) {
         this.riesgoPropio = riesgoPropio;
+    }
+
+    public String getFundamentacionRiesgo() {
+        return fundamentacionRiesgo;
+    }
+
+    public void setFundamentacionRiesgo(String fundamentacionRiesgo) {
+        this.fundamentacionRiesgo = fundamentacionRiesgo;
     }
 
     public String getConciencia() {

@@ -11,15 +11,20 @@ public class MedicacionDTO {
     private String farmaco;
     private String dosis;
     private String frecuencia;
+    private String viaAdministracion;
+    private String duracionPrevista;
 
     public MedicacionDTO() {
     }
 
-    public MedicacionDTO(Long id, String farmaco, String dosis, String frecuencia) {
+    public MedicacionDTO(Long id, String farmaco, String dosis, String frecuencia,
+            String viaAdministracion, String duracionPrevista) {
         this.id = id;
         this.farmaco = farmaco;
         this.dosis = dosis;
         this.frecuencia = frecuencia;
+        this.viaAdministracion = viaAdministracion;
+        this.duracionPrevista = duracionPrevista;
     }
 
     public Long getId() {
@@ -52,5 +57,21 @@ public class MedicacionDTO {
 
     public void setFrecuencia(String frecuencia) {
         this.frecuencia = frecuencia;
+    }
+
+    public String getViaAdministracion() {
+        return viaAdministracion;
+    }
+
+    public void setViaAdministracion(String viaAdministracion) {
+        this.viaAdministracion = viaAdministracion;
+    }
+
+    public String getDuracionPrevista() {
+        return duracionPrevista;
+    }
+
+    public void setDuracionPrevista(String duracionPrevista) {
+        this.duracionPrevista = duracionPrevista;
     }
 }

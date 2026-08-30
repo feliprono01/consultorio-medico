@@ -275,6 +275,8 @@ public class PacienteService {
                 historia.getHistoriaMarital(), dto.getHistoriaMarital(), currentUser);
         logHpIfChanged(pacienteId, "Hábitos",
                 historia.getHabitos(), dto.getHabitos(), currentUser);
+        logHpIfChanged(pacienteId, "Directivas Anticipadas",
+                historia.getDirectivasAnticipadas(), dto.getDirectivasAnticipadas(), currentUser);
 
         // Actualizar campos
         historia.setAntecedentesFamiliares(dto.getAntecedentesFamiliares());
@@ -288,6 +290,7 @@ public class PacienteService {
         historia.setHistoriaSexual(dto.getHistoriaSexual());
         historia.setHistoriaMarital(dto.getHistoriaMarital());
         historia.setHabitos(dto.getHabitos());
+        historia.setDirectivasAnticipadas(dto.getDirectivasAnticipadas());
 
         paciente.setHistoriaPsiquiatrica(historia);
         Paciente pacienteGuardado = pacienteRepository.save(paciente);

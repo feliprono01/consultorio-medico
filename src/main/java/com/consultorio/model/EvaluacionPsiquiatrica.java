@@ -55,6 +55,14 @@ public class EvaluacionPsiquiatrica extends Auditable {
     @Convert(converter = AttributeEncryptor.class)
     private String riesgoSuicida;
 
+    /** Fundamentación técnica del riesgo — obligatoria cuando algún riesgo
+     *  (suicida/homicida/propio) es "Alto" o "Inminente" (Ley 26.657, art. 20/21:
+     *  la internación involuntaria y las intervenciones en crisis requieren
+     *  justificación técnica explícita, no solo un nivel marcado). */
+    @Column(name = "fundamentacion_riesgo", columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
+    private String fundamentacionRiesgo;
+
     @Column(columnDefinition = "TEXT")
     @Convert(converter = AttributeEncryptor.class)
     private String riesgoHomicida;
@@ -198,6 +206,14 @@ public class EvaluacionPsiquiatrica extends Auditable {
 
     public void setRiesgoSuicida(String riesgoSuicida) {
         this.riesgoSuicida = riesgoSuicida;
+    }
+
+    public String getFundamentacionRiesgo() {
+        return fundamentacionRiesgo;
+    }
+
+    public void setFundamentacionRiesgo(String fundamentacionRiesgo) {
+        this.fundamentacionRiesgo = fundamentacionRiesgo;
     }
 
     public String getRiesgoHomicida() {

@@ -68,6 +68,28 @@ public class Paciente extends Auditable {
     @Convert(converter = AttributeEncryptor.class)
     private String datosHermanos;
 
+    // --- Datos administrativos exigidos por la guía de HCE (Ley 26.529 / 27.706) ---
+
+    /** CUIL/CUIT del paciente — dato filiatorio obligatorio en una HCE. */
+    @Column(name = "cuil_cuit", length = 20)
+    private String cuilCuit;
+
+    /** Obra social o prepaga. */
+    @Column(name = "obra_social", length = 150)
+    private String obraSocial;
+
+    /** Número de afiliado a esa cobertura. */
+    @Column(name = "numero_afiliado", length = 50)
+    private String numeroAfiliado;
+
+    /** Nombre del contacto de emergencia o representante legal. */
+    @Column(name = "contacto_emergencia_nombre", length = 150)
+    private String contactoEmergenciaNombre;
+
+    /** Teléfono del contacto de emergencia o representante legal. */
+    @Column(name = "contacto_emergencia_telefono", length = 50)
+    private String contactoEmergenciaTelefono;
+
 
     /**
      * Indica si el paciente firmó el Consentimiento Informado.
@@ -96,6 +118,8 @@ public class Paciente extends Auditable {
             String ciudad, String direccion, String sexo,
             String ocupacion, String estadoCivil, String escolaridad,
             String datosPadres, String datosHijos, String datosHermanos,
+            String cuilCuit, String obraSocial, String numeroAfiliado,
+            String contactoEmergenciaNombre, String contactoEmergenciaTelefono,
             Boolean consentimientoInformado, LocalDate fechaConsentimiento,
             List<Consulta> consultas, HistoriaPsiquiatrica historiaPsiquiatrica) {
         this.id = id;
@@ -117,6 +141,11 @@ public class Paciente extends Auditable {
         this.datosPadres = datosPadres;
         this.datosHijos = datosHijos;
         this.datosHermanos = datosHermanos;
+        this.cuilCuit = cuilCuit;
+        this.obraSocial = obraSocial;
+        this.numeroAfiliado = numeroAfiliado;
+        this.contactoEmergenciaNombre = contactoEmergenciaNombre;
+        this.contactoEmergenciaTelefono = contactoEmergenciaTelefono;
         this.consentimientoInformado = consentimientoInformado != null ? consentimientoInformado : false;
         this.fechaConsentimiento = fechaConsentimiento;
         this.consultas = consultas != null ? consultas : new ArrayList<>();
@@ -148,6 +177,11 @@ public class Paciente extends Auditable {
         private String datosPadres;
         private String datosHijos;
         private String datosHermanos;
+        private String cuilCuit;
+        private String obraSocial;
+        private String numeroAfiliado;
+        private String contactoEmergenciaNombre;
+        private String contactoEmergenciaTelefono;
         private Boolean consentimientoInformado = false;
         private LocalDate fechaConsentimiento;
         private List<Consulta> consultas = new ArrayList<>();
@@ -248,6 +282,31 @@ public class Paciente extends Auditable {
             return this;
         }
 
+        public PacienteBuilder cuilCuit(String cuilCuit) {
+            this.cuilCuit = cuilCuit;
+            return this;
+        }
+
+        public PacienteBuilder obraSocial(String obraSocial) {
+            this.obraSocial = obraSocial;
+            return this;
+        }
+
+        public PacienteBuilder numeroAfiliado(String numeroAfiliado) {
+            this.numeroAfiliado = numeroAfiliado;
+            return this;
+        }
+
+        public PacienteBuilder contactoEmergenciaNombre(String contactoEmergenciaNombre) {
+            this.contactoEmergenciaNombre = contactoEmergenciaNombre;
+            return this;
+        }
+
+        public PacienteBuilder contactoEmergenciaTelefono(String contactoEmergenciaTelefono) {
+            this.contactoEmergenciaTelefono = contactoEmergenciaTelefono;
+            return this;
+        }
+
         public PacienteBuilder consentimientoInformado(Boolean consentimientoInformado) {
             this.consentimientoInformado = consentimientoInformado;
             return this;
@@ -271,8 +330,9 @@ public class Paciente extends Auditable {
         public Paciente build() {
             return new Paciente(id, createdAt, updatedAt, active, nombre, apellido, dni, email, telefono,
                     fechaNacimiento, ciudad, direccion, sexo, ocupacion, estadoCivil, escolaridad,
-                    datosPadres, datosHijos, datosHermanos, consentimientoInformado, fechaConsentimiento,
-                    consultas, historiaPsiquiatrica);
+                    datosPadres, datosHijos, datosHermanos, cuilCuit, obraSocial, numeroAfiliado,
+                    contactoEmergenciaNombre, contactoEmergenciaTelefono, consentimientoInformado,
+                    fechaConsentimiento, consultas, historiaPsiquiatrica);
         }
     }
 
@@ -390,6 +450,46 @@ public class Paciente extends Auditable {
 
     public void setDatosHijos(String datosHijos) {
         this.datosHijos = datosHijos;
+    }
+
+    public String getCuilCuit() {
+        return cuilCuit;
+    }
+
+    public void setCuilCuit(String cuilCuit) {
+        this.cuilCuit = cuilCuit;
+    }
+
+    public String getObraSocial() {
+        return obraSocial;
+    }
+
+    public void setObraSocial(String obraSocial) {
+        this.obraSocial = obraSocial;
+    }
+
+    public String getNumeroAfiliado() {
+        return numeroAfiliado;
+    }
+
+    public void setNumeroAfiliado(String numeroAfiliado) {
+        this.numeroAfiliado = numeroAfiliado;
+    }
+
+    public String getContactoEmergenciaNombre() {
+        return contactoEmergenciaNombre;
+    }
+
+    public void setContactoEmergenciaNombre(String contactoEmergenciaNombre) {
+        this.contactoEmergenciaNombre = contactoEmergenciaNombre;
+    }
+
+    public String getContactoEmergenciaTelefono() {
+        return contactoEmergenciaTelefono;
+    }
+
+    public void setContactoEmergenciaTelefono(String contactoEmergenciaTelefono) {
+        this.contactoEmergenciaTelefono = contactoEmergenciaTelefono;
     }
 
     public String getDatosHermanos() {

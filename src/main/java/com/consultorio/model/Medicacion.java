@@ -41,14 +41,27 @@ public class Medicacion {
     @Convert(converter = AttributeEncryptor.class)
     private String frecuencia;
 
+    /** Vía de administración (oral, sublingual, intramuscular, etc.) — exigido por la guía de HCE. */
+    @Column(name = "via_administracion", columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
+    private String viaAdministracion;
+
+    /** Duración prevista del tratamiento (ej. "3 meses", "hasta reevaluación"). */
+    @Column(name = "duracion_prevista", columnDefinition = "TEXT")
+    @Convert(converter = AttributeEncryptor.class)
+    private String duracionPrevista;
+
     public Medicacion() {
     }
 
-    public Medicacion(Consulta consulta, String farmaco, String dosis, String frecuencia) {
+    public Medicacion(Consulta consulta, String farmaco, String dosis, String frecuencia,
+            String viaAdministracion, String duracionPrevista) {
         this.consulta = consulta;
         this.farmaco = farmaco;
         this.dosis = dosis;
         this.frecuencia = frecuencia;
+        this.viaAdministracion = viaAdministracion;
+        this.duracionPrevista = duracionPrevista;
     }
 
     public Long getId() {
@@ -89,5 +102,21 @@ public class Medicacion {
 
     public void setFrecuencia(String frecuencia) {
         this.frecuencia = frecuencia;
+    }
+
+    public String getViaAdministracion() {
+        return viaAdministracion;
+    }
+
+    public void setViaAdministracion(String viaAdministracion) {
+        this.viaAdministracion = viaAdministracion;
+    }
+
+    public String getDuracionPrevista() {
+        return duracionPrevista;
+    }
+
+    public void setDuracionPrevista(String duracionPrevista) {
+        this.duracionPrevista = duracionPrevista;
     }
 }

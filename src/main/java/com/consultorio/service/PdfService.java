@@ -265,6 +265,12 @@ public class PdfService {
         agregarFilaTabla(tabla, "Escolaridad",      nvl(p.getEscolaridad()));
         agregarFilaTabla(tabla, "Ciudad",           nvl(p.getCiudad()));
         agregarFilaTabla(tabla, "Dirección",        nvl(p.getDireccion()));
+        agregarFilaTabla(tabla, "CUIL/CUIT",        nvl(p.getCuilCuit()));
+        agregarFilaTabla(tabla, "Obra Social",      nvl(p.getObraSocial()));
+        agregarFilaTabla(tabla, "N° Afiliado",      nvl(p.getNumeroAfiliado()));
+        agregarFilaTabla(tabla, "Contacto Emergencia", nvl(p.getContactoEmergenciaNombre())
+                + (p.getContactoEmergenciaTelefono() != null && !p.getContactoEmergenciaTelefono().isBlank()
+                        ? " — " + p.getContactoEmergenciaTelefono() : ""));
 
         doc.add(tabla);
 
@@ -290,6 +296,7 @@ public class PdfService {
         agregarCampoTextoLargo(doc, "Historia Sexual",            hp.getHistoriaSexual());
         agregarCampoTextoLargo(doc, "Historia Marital",           hp.getHistoriaMarital());
         agregarCampoTextoLargo(doc, "Hábitos Generales",          hp.getHabitos());
+        agregarCampoTextoLargo(doc, "Directivas Anticipadas",     hp.getDirectivasAnticipadas());
 
         doc.add(Chunk.NEWLINE);
     }
@@ -338,6 +345,9 @@ public class PdfService {
 
         agregarParrafoCampo(bodyCell, "Motivo de Consulta", c.getMotivo());
         agregarParrafoCampo(bodyCell, "Diagnóstico",        c.getDiagnostico());
+        if (c.getDiagnosticoCie10() != null && !c.getDiagnosticoCie10().isBlank()) {
+            agregarParrafoCampo(bodyCell, "Código CIE-10",  c.getDiagnosticoCie10());
+        }
         agregarParrafoCampo(bodyCell, "Tratamiento",        c.getTratamiento());
 
         List<com.consultorio.model.Medicacion> medicaciones = medicacionRepository.findByConsultaIdOrderByIdAsc(c.getId());
@@ -345,7 +355,7 @@ public class PdfService {
             bodyCell.addElement(new Paragraph("Medicación:", FUENTE_LABEL));
             for (com.consultorio.model.Medicacion m : medicaciones) {
                 String linea = String.join(" — ", java.util.stream.Stream
-                        .of(m.getFarmaco(), m.getDosis(), m.getFrecuencia())
+                        .of(m.getFarmaco(), m.getDosis(), m.getFrecuencia(), m.getViaAdministracion(), m.getDuracionPrevista())
                         .filter(s -> s != null && !s.isBlank())
                         .toList());
                 Paragraph p = new Paragraph("• " + linea, FUENTE_VALOR);
@@ -394,6 +404,7 @@ public class PdfService {
             agregarFilaTablaInterno(evTable, "Riesgo Suicida",  nvl(ev.getRiesgoSuicida()));
             agregarFilaTablaInterno(evTable, "Riesgo Homicida", nvl(ev.getRiesgoHomicida()));
             agregarFilaTablaInterno(evTable, "Riesgo Propio",   nvl(ev.getRiesgoPropio()));
+            agregarFilaTablaInterno(evTable, "Fundamentación",  nvl(ev.getFundamentacionRiesgo()));
             agregarFilaTablaInterno(evTable, "Eje 1",           nvl(ev.getEje1()));
             agregarFilaTablaInterno(evTable, "Eje 2",           nvl(ev.getEje2()));
             agregarFilaTablaInterno(evTable, "Eje 3",           nvl(ev.getEje3()));

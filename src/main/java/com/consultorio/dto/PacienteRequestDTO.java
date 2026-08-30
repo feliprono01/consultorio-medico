@@ -47,6 +47,13 @@ public class PacienteRequestDTO {
     private String datosHijos;
     private String datosHermanos;
 
+    // --- Datos administrativos exigidos por la guía de HCE (Ley 26.529 / 27.706) ---
+    private String cuilCuit;
+    private String obraSocial;
+    private String numeroAfiliado;
+    private String contactoEmergenciaNombre;
+    private String contactoEmergenciaTelefono;
+
     /**
      * Indica si el paciente firmó el Consentimiento Informado (Ley 25.326).
      */
@@ -66,6 +73,8 @@ public class PacienteRequestDTO {
             LocalDate fechaNacimiento, String ciudad, String direccion, String sexo,
             String ocupacion, String estadoCivil, String escolaridad,
             String datosPadres, String datosHijos, String datosHermanos,
+            String cuilCuit, String obraSocial, String numeroAfiliado,
+            String contactoEmergenciaNombre, String contactoEmergenciaTelefono,
             Boolean consentimientoInformado, LocalDate fechaConsentimiento, Long version) {
         this.nombre = nombre;
         this.apellido = apellido;
@@ -82,6 +91,11 @@ public class PacienteRequestDTO {
         this.datosPadres = datosPadres;
         this.datosHijos = datosHijos;
         this.datosHermanos = datosHermanos;
+        this.cuilCuit = cuilCuit;
+        this.obraSocial = obraSocial;
+        this.numeroAfiliado = numeroAfiliado;
+        this.contactoEmergenciaNombre = contactoEmergenciaNombre;
+        this.contactoEmergenciaTelefono = contactoEmergenciaTelefono;
         this.consentimientoInformado = consentimientoInformado != null ? consentimientoInformado : false;
         this.fechaConsentimiento = fechaConsentimiento;
         this.version = version;
@@ -207,6 +221,46 @@ public class PacienteRequestDTO {
         this.datosHermanos = datosHermanos;
     }
 
+    public String getCuilCuit() {
+        return cuilCuit;
+    }
+
+    public void setCuilCuit(String cuilCuit) {
+        this.cuilCuit = cuilCuit;
+    }
+
+    public String getObraSocial() {
+        return obraSocial;
+    }
+
+    public void setObraSocial(String obraSocial) {
+        this.obraSocial = obraSocial;
+    }
+
+    public String getNumeroAfiliado() {
+        return numeroAfiliado;
+    }
+
+    public void setNumeroAfiliado(String numeroAfiliado) {
+        this.numeroAfiliado = numeroAfiliado;
+    }
+
+    public String getContactoEmergenciaNombre() {
+        return contactoEmergenciaNombre;
+    }
+
+    public void setContactoEmergenciaNombre(String contactoEmergenciaNombre) {
+        this.contactoEmergenciaNombre = contactoEmergenciaNombre;
+    }
+
+    public String getContactoEmergenciaTelefono() {
+        return contactoEmergenciaTelefono;
+    }
+
+    public void setContactoEmergenciaTelefono(String contactoEmergenciaTelefono) {
+        this.contactoEmergenciaTelefono = contactoEmergenciaTelefono;
+    }
+
     public static PacienteRequestDTOBuilder builder() {
         return new PacienteRequestDTOBuilder();
     }
@@ -228,6 +282,11 @@ public class PacienteRequestDTO {
         private String datosPadres;
         private String datosHijos;
         private String datosHermanos;
+        private String cuilCuit;
+        private String obraSocial;
+        private String numeroAfiliado;
+        private String contactoEmergenciaNombre;
+        private String contactoEmergenciaTelefono;
         private Boolean consentimientoInformado = false;
         private LocalDate fechaConsentimiento;
         private Long version;
@@ -307,6 +366,31 @@ public class PacienteRequestDTO {
             return this;
         }
 
+        public PacienteRequestDTOBuilder cuilCuit(String cuilCuit) {
+            this.cuilCuit = cuilCuit;
+            return this;
+        }
+
+        public PacienteRequestDTOBuilder obraSocial(String obraSocial) {
+            this.obraSocial = obraSocial;
+            return this;
+        }
+
+        public PacienteRequestDTOBuilder numeroAfiliado(String numeroAfiliado) {
+            this.numeroAfiliado = numeroAfiliado;
+            return this;
+        }
+
+        public PacienteRequestDTOBuilder contactoEmergenciaNombre(String contactoEmergenciaNombre) {
+            this.contactoEmergenciaNombre = contactoEmergenciaNombre;
+            return this;
+        }
+
+        public PacienteRequestDTOBuilder contactoEmergenciaTelefono(String contactoEmergenciaTelefono) {
+            this.contactoEmergenciaTelefono = contactoEmergenciaTelefono;
+            return this;
+        }
+
         public PacienteRequestDTOBuilder consentimientoInformado(Boolean consentimientoInformado) {
             this.consentimientoInformado = consentimientoInformado;
             return this;
@@ -325,6 +409,7 @@ public class PacienteRequestDTO {
         public PacienteRequestDTO build() {
             return new PacienteRequestDTO(nombre, apellido, dni, email, telefono, fechaNacimiento, ciudad, direccion,
                     sexo, ocupacion, estadoCivil, escolaridad, datosPadres, datosHijos, datosHermanos,
+                    cuilCuit, obraSocial, numeroAfiliado, contactoEmergenciaNombre, contactoEmergenciaTelefono,
                     consentimientoInformado, fechaConsentimiento, version);
         }
     }
@@ -353,4 +438,3 @@ public class PacienteRequestDTO {
         this.version = version;
     }
 }
-
