@@ -88,10 +88,16 @@ function ConsultationSplitViewBody({ routeId: id, pacienteIdFromQuery }) {
      * del split view (comportamiento anterior, que rompía la vista dividida),
      * refresca el panel de historial izquierdo. Si era una consulta nueva,
      * pasa a modo edición de esa misma consulta sin salir de la vista.
+     *
+     * Modelo append-only: "corregir" una consulta ya existente crea una fila
+     * NUEVA con su propio id — la URL tiene que actualizarse a ese id nuevo
+     * (con `replace`, no se apila en el historial del navegador), si no la
+     * próxima corrección apuntaría a la fila vieja, que ya dejó de ser la
+     * vigente y el backend la rechaza con 409.
      */
     const handleSaved = (consulta) => {
         toast.success('Consulta guardada.');
-        if (!id && consulta?.id) {
+        if (consulta?.id && String(consulta.id) !== String(id)) {
             navigate(`/consultas/edit/${consulta.id}`, { replace: true });
         } else if (resolvedPacienteId) {
             fetchHistory(resolvedPacienteId);

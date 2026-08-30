@@ -38,8 +38,8 @@ export function RiskAssessmentFields({ values, onChange }) {
                     Evaluación de Riesgo Vital
                 </h4>
                 <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ color: '#9f1239' }}>Riesgo Suicida</label>
-                    <select className="form-input" name="riesgoSuicida" value={values?.riesgoSuicida || ''} onChange={onChange} style={{ borderColor: '#fecdd3', background: 'white' }}>
+                    <label style={{ color: '#9f1239' }}>Riesgo Suicida *</label>
+                    <select className="form-input" name="riesgoSuicida" value={values?.riesgoSuicida || ''} onChange={onChange} style={{ borderColor: '#fecdd3', background: 'white' }} required>
                         <option value="">Seleccione riesgo...</option>
                         <option value="Nulo">Nulo</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option><option value="Inminente">Inminente</option>
                     </select>
@@ -48,8 +48,8 @@ export function RiskAssessmentFields({ values, onChange }) {
 
             <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '1.5rem', borderRadius: '12px' }}>
                 <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ color: '#b45309' }}>Riesgo Heteroagresivo (Hacia terceros)</label>
-                    <select className="form-input" name="riesgoHomicida" value={values?.riesgoHomicida || ''} onChange={onChange} style={{ borderColor: '#fde68a', background: 'white' }}>
+                    <label style={{ color: '#b45309' }}>Riesgo Heteroagresivo (Hacia terceros) *</label>
+                    <select className="form-input" name="riesgoHomicida" value={values?.riesgoHomicida || ''} onChange={onChange} style={{ borderColor: '#fde68a', background: 'white' }} required>
                         <option value="">Seleccione riesgo...</option>
                         <option value="Nulo">Nulo</option><option value="Bajo">Bajo</option><option value="Medio">Medio</option><option value="Alto">Alto</option>
                     </select>
@@ -58,13 +58,22 @@ export function RiskAssessmentFields({ values, onChange }) {
 
             <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1.5rem', borderRadius: '12px' }}>
                 <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ color: '#1d4ed8' }}>Riesgo Propio (Autocuidado / Negligencia)</label>
-                    <select className="form-input" name="riesgoPropio" value={values?.riesgoPropio || ''} onChange={onChange} style={{ borderColor: '#bfdbfe', background: 'white' }}>
+                    <label style={{ color: '#1d4ed8' }}>Riesgo Propio (Autocuidado / Negligencia) *</label>
+                    <select className="form-input" name="riesgoPropio" value={values?.riesgoPropio || ''} onChange={onChange} style={{ borderColor: '#bfdbfe', background: 'white' }} required>
                         <option value="">Seleccione riesgo...</option>
                         <option value="Conservado">Conservado (Sin riesgo)</option><option value="Leve">Leve (Descuido ocasional)</option><option value="Moderado">Moderado</option><option value="Grave">Grave (Abandono total)</option>
                     </select>
                 </div>
             </div>
+
+            {(['Alto', 'Inminente'].includes(values?.riesgoSuicida) || values?.riesgoHomicida === 'Alto' || values?.riesgoPropio === 'Grave') && (
+                <div style={{ background: '#fef2f2', border: '2px solid #fca5a5', padding: '1.5rem', borderRadius: '12px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ color: '#991b1b' }}>Fundamentación técnica del riesgo *</label>
+                        <textarea className="form-input" name="fundamentacionRiesgo" value={values?.fundamentacionRiesgo || ''} onChange={onChange} rows="3" placeholder="Justificación clínica del nivel de riesgo marcado — obligatoria para riesgo Alto/Inminente/Grave (Ley 26.657)." style={{ borderColor: '#fca5a5' }} required />
+                    </div>
+                </div>
+            )}
         </>
     );
 }

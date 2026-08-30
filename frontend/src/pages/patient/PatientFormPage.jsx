@@ -13,14 +13,16 @@ const EMPTY_FORM = {
     nombre: '', apellido: '', dni: '', email: '', telefono: '',
     fechaNacimiento: '', ciudad: '', direccion: '', sexo: '',
     ocupacion: '', estadoCivil: '', escolaridad: '',
-    datosPadres: '', datosHijos: '', datosHermanos: ''
+    datosPadres: '', datosHijos: '', datosHermanos: '',
+    cuilCuit: '', obraSocial: '', numeroAfiliado: '',
+    contactoEmergenciaNombre: '', contactoEmergenciaTelefono: ''
 };
 
 const EMPTY_HISTORY = {
     antecedentesFamiliares: '', antecedentesPersonales: '', historiaConsumo: '',
     enfermedadActual: '', tratamientosPrevios: '', desarrolloPsicomotor: '',
     personalidadPrevia: '', antecedentesPsicologicos: '',
-    historiaSexual: '', historiaMarital: '', habitos: ''
+    historiaSexual: '', historiaMarital: '', habitos: '', directivasAnticipadas: ''
 };
 
 // "Datos Personales" y "Familiares" viven en el mismo objeto `form` (son
@@ -319,6 +321,32 @@ function PatientFormPageBody({ routeId: id }) {
                             </div>
                         </div>
 
+                        <div>
+                            <SectionHeader title="Datos Administrativos" subtitle="Cobertura de salud y contacto de emergencia — exigidos por la guía de HCE" />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="paciente-cuilCuit">CUIL/CUIT</label>
+                                    <input id="paciente-cuilCuit" className="form-input" name="cuilCuit" value={form.cuilCuit || ''} onChange={handleChange} placeholder="Ej. 20-12345678-9" />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="paciente-obraSocial">Obra Social / Prepaga</label>
+                                    <input id="paciente-obraSocial" className="form-input" name="obraSocial" value={form.obraSocial || ''} onChange={handleChange} placeholder="Ej. OSDE, PAMI..." />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="paciente-numeroAfiliado">N° de Afiliado</label>
+                                    <input id="paciente-numeroAfiliado" className="form-input" name="numeroAfiliado" value={form.numeroAfiliado || ''} onChange={handleChange} />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="paciente-contactoEmergenciaNombre">Contacto de Emergencia / Representante Legal</label>
+                                    <input id="paciente-contactoEmergenciaNombre" className="form-input" name="contactoEmergenciaNombre" value={form.contactoEmergenciaNombre || ''} onChange={handleChange} placeholder="Nombre completo" />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="paciente-contactoEmergenciaTelefono">Teléfono del Contacto</label>
+                                    <input id="paciente-contactoEmergenciaTelefono" className="form-input" name="contactoEmergenciaTelefono" value={form.contactoEmergenciaTelefono || ''} onChange={handleChange} />
+                                </div>
+                            </div>
+                        </div>
+
                         <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
                             <button type="button" className="btn btn-secondary" onClick={handleBack}>Cancelar</button>
                             <button type="submit" className="btn" disabled={loading}>
@@ -387,6 +415,10 @@ function PatientFormPageBody({ routeId: id }) {
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label htmlFor="historia-habitos">Hábitos Generales</label>
                                     <textarea id="historia-habitos" className="form-input" name="habitos" value={historyForm.habitos || ''} onChange={handleHistoryChange} rows="2" placeholder="Sueño, alimentación, actividad física, rutina diaria (distinto de consumo de sustancias)..." />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label htmlFor="historia-directivasAnticipadas">Directivas Anticipadas en Salud Mental</label>
+                                    <textarea id="historia-directivasAnticipadas" className="form-input" name="directivasAnticipadas" value={historyForm.directivasAnticipadas || ''} onChange={handleHistoryChange} rows="2" placeholder="Voluntad del paciente sobre decisiones de tratamiento ante una eventual pérdida de capacidad de discernimiento (Ley 26.657, art. 3)..." />
                                 </div>
                             </div>
                         </div>

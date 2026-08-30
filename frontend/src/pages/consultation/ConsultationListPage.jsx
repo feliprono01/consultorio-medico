@@ -249,8 +249,15 @@ export default function ConsultationListPage() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
                                             <Avatar nombre={c.nombrePaciente} apellido={c.apellidoPaciente} />
                                             <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                                                <p style={{ margin: 0, fontWeight: 700, fontFamily: 'Figtree, sans-serif', fontSize: '0.9rem', color: 'var(--text-header)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                <p style={{ margin: 0, fontWeight: 700, fontFamily: 'Figtree, sans-serif', fontSize: '0.9rem', color: 'var(--text-header)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                                     {c.nombrePaciente} {c.apellidoPaciente}
+                                                    {c.correccionDeId != null && (
+                                                        <span
+                                                            title="Esta nota tiene versiones anteriores — la original se conserva intacta."
+                                                            style={{ flexShrink: 0, padding: '0.1rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, background: '#fef3c7', color: '#92400e' }}>
+                                                            Corregida
+                                                        </span>
+                                                    )}
                                                 </p>
                                                 <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                     DNI: {c.dniPaciente}

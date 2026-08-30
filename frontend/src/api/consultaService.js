@@ -16,8 +16,14 @@ export const consultaService = {
     create: (data) =>
         api.post('/consultas', data),
 
-    update: (id, data) =>
-        api.put(`/consultas/${id}`, data),
+    // Modelo append-only (Ley 26.657): "editar" una consulta ya no la
+    // modifica en el lugar -- crea una version nueva que la corrige. La
+    // fila original queda intacta para siempre. Ver docs/ROADMAP_CUMPLIMIENTO_LEGAL.md.
+    corregir: (id, data) =>
+        api.post(`/consultas/${id}/corregir`, data),
+
+    getVersiones: (id) =>
+        api.get(`/consultas/${id}/versiones`),
 
     delete: (id) =>
         api.delete(`/consultas/${id}`),

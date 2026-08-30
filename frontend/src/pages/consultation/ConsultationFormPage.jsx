@@ -35,7 +35,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
     const [activeTab, setActiveTab] = useState('general');
 
     const [form, setForm] = useState({
-        pacienteId: '', motivo: '', diagnostico: '', tratamiento: '', notas: '',
+        pacienteId: '', motivo: '', diagnostico: '', diagnosticoCie10: '', tratamiento: '', notas: '',
         estadoAnimo: 5, calidadSueno: 5, alimentacion: 5, sociabilidad: 5,
         funcionalidadLaboral: 5, funcionalidadSocial: 5, funcionalidadFamiliar: 5,
         medicaciones: [],
@@ -43,7 +43,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
             apariencia: '', conducta: '', lenguaje: '', animo: '', afecto: '',
             pensamiento: '', sensopercepcion: '', juicio: '', memoria: '',
             atencion: '', conciencia: '', orientacion: '', riesgoSuicida: '', riesgoHomicida: '',
-            riesgoPropio: '', eje1: '', eje2: '', eje3: '',
+            riesgoPropio: '', fundamentacionRiesgo: '', eje1: '', eje2: '', eje3: '',
             adherenciaTratamiento: '', efectosAdversos: ''
         }
     });
@@ -72,6 +72,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                         pacienteId: data.pacienteId,
                         motivo: data.motivo,
                         diagnostico: data.diagnostico || '',
+                        diagnosticoCie10: data.diagnosticoCie10 || '',
                         tratamiento: data.tratamiento || '',
                         notas: data.notas || '',
                         estadoAnimo: data.estadoAnimo || 5,
@@ -86,7 +87,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                             apariencia: '', conducta: '', lenguaje: '', animo: '', afecto: '',
                             pensamiento: '', sensopercepcion: '', juicio: '', memoria: '',
                             atencion: '', conciencia: '', orientacion: '', riesgoSuicida: '', riesgoHomicida: '',
-                            riesgoPropio: '', eje1: '', eje2: '', eje3: '',
+                            riesgoPropio: '', fundamentacionRiesgo: '', eje1: '', eje2: '', eje3: '',
                             adherenciaTratamiento: '', efectosAdversos: '',
                             ...(data.evaluacionPsiquiatrica || {})
                         }
@@ -178,7 +179,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
     };
 
     const handleAddMedicacion = () => {
-        setForm({ ...form, medicaciones: [...(form.medicaciones || []), { farmaco: '', dosis: '', frecuencia: '' }] });
+        setForm({ ...form, medicaciones: [...(form.medicaciones || []), { farmaco: '', dosis: '', frecuencia: '', viaAdministracion: '', duracionPrevista: '' }] });
     };
 
     const handleMedicacionChange = (index, field, value) => {
@@ -201,7 +202,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
 
         try {
             const res = isEdit
-                ? await consultaService.update(id, form)
+                ? await consultaService.corregir(id, form)
                 : await consultaService.create(form);
 
             if (onSaved) {
@@ -229,7 +230,7 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                     </button>
                     <h1 style={{ marginBottom: '0.25rem' }}>{isEdit ? 'Detalles de Consulta' : 'Nueva Consulta Inicial'}</h1>
                     <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
-                        {isEdit ? 'Ver y modificar detalles de la atención médica.' : 'Registrar primera atención para evaluación y diagnóstico de un paciente.'}
+                        {isEdit ? 'Ver y corregir detalles de la atención médica.' : 'Registrar primera atención para evaluación y diagnóstico de un paciente.'}
                     </p>
                 </div>
                 {isEdit && !hideHistoryButton && (
@@ -414,6 +415,10 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                             <SectionHeader title="Resumen" subtitle="Descripción general del diagnóstico" />
                             <textarea className="form-input" name="diagnostico" value={form.diagnostico} onChange={handleChange} rows="4" placeholder="Conclusión diagnóstica general..." />
                         </div>
+                        <div className="form-group" style={{ margin: 0, maxWidth: '280px' }}>
+                            <label>Código CIE-10</label>
+                            <input className="form-input" name="diagnosticoCie10" value={form.diagnosticoCie10 || ''} onChange={handleChange} placeholder="Ej. F32.1" />
+                        </div>
                     </div>
 
                     {/* Tab: Tratamiento */}
@@ -424,16 +429,22 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                         </div>
 
                         <div>
-                            <SectionHeader title="Medicación" subtitle="Fármaco, dosis y frecuencia por separado — complementa el texto de arriba" />
+                            <SectionHeader title="Medicación" subtitle="Fármaco, dosis, frecuencia, vía y duración — complementa el texto de arriba" />
                             <div style={{ display: 'grid', gap: '0.75rem' }}>
                                 {(form.medicaciones || []).map((med, i) => (
-                                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr auto', gap: '0.6rem', alignItems: 'center' }}>
-                                        <input className="form-input" value={med.farmaco || ''} onChange={e => handleMedicacionChange(i, 'farmaco', e.target.value)} placeholder="Fármaco (ej. Sertralina)" aria-label={`Fármaco ${i + 1}`} />
-                                        <input className="form-input" value={med.dosis || ''} onChange={e => handleMedicacionChange(i, 'dosis', e.target.value)} placeholder="Dosis (ej. 50mg)" aria-label={`Dosis ${i + 1}`} />
-                                        <input className="form-input" value={med.frecuencia || ''} onChange={e => handleMedicacionChange(i, 'frecuencia', e.target.value)} placeholder="Frecuencia (ej. 1x/día)" aria-label={`Frecuencia ${i + 1}`} />
-                                        <button type="button" onClick={() => handleRemoveMedicacion(i)} aria-label={`Quitar medicación ${i + 1}`} title="Quitar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--destructive)', padding: '0.4rem' }}>
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                        </button>
+                                    <div key={i} style={{ display: 'grid', gap: '0.4rem', padding: '0.75rem', background: 'var(--muted)', borderRadius: 'var(--radius)' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr auto', gap: '0.6rem', alignItems: 'center' }}>
+                                            <input className="form-input" value={med.farmaco || ''} onChange={e => handleMedicacionChange(i, 'farmaco', e.target.value)} placeholder="Fármaco (ej. Sertralina)" aria-label={`Fármaco ${i + 1}`} />
+                                            <input className="form-input" value={med.dosis || ''} onChange={e => handleMedicacionChange(i, 'dosis', e.target.value)} placeholder="Dosis (ej. 50mg)" aria-label={`Dosis ${i + 1}`} />
+                                            <input className="form-input" value={med.frecuencia || ''} onChange={e => handleMedicacionChange(i, 'frecuencia', e.target.value)} placeholder="Frecuencia (ej. 1x/día)" aria-label={`Frecuencia ${i + 1}`} />
+                                            <button type="button" onClick={() => handleRemoveMedicacion(i)} aria-label={`Quitar medicación ${i + 1}`} title="Quitar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--destructive)', padding: '0.4rem' }}>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                            </button>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                                            <input className="form-input" value={med.viaAdministracion || ''} onChange={e => handleMedicacionChange(i, 'viaAdministracion', e.target.value)} placeholder="Vía (ej. Oral, Sublingual)" aria-label={`Vía de administración ${i + 1}`} />
+                                            <input className="form-input" value={med.duracionPrevista || ''} onChange={e => handleMedicacionChange(i, 'duracionPrevista', e.target.value)} placeholder="Duración prevista (ej. 3 meses)" aria-label={`Duración prevista ${i + 1}`} />
+                                        </div>
                                     </div>
                                 ))}
                                 <button type="button" className="btn btn-secondary" onClick={handleAddMedicacion} style={{ justifySelf: 'start' }}>
@@ -465,13 +476,20 @@ export default function ConsultationFormPage({ pacienteId: pacienteIdProp, consu
                         </div>
                     </div>
 
+                    {isEdit && (
+                        <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 'var(--radius)', padding: '0.85rem 1.1rem', marginTop: '1rem', fontSize: '0.82rem', color: '#1E3A8A', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: '0.1rem' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span>Esta consulta ya está guardada. Al confirmar se crea una <b>corrección</b> nueva — el registro original queda preservado tal cual se escribió, como exige la normativa de historia clínica.</span>
+                        </div>
+                    )}
+
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
                         <button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
                             Cancelar
                         </button>
                         <button type="submit" className="btn" disabled={loading}>
-                            {loading ? 'Guardando...' : (isEdit ? 'Guardar Cambios' : 'Registrar Consulta')}
+                            {loading ? 'Guardando...' : (isEdit ? 'Guardar Corrección' : 'Registrar Consulta')}
                         </button>
                     </div>
 

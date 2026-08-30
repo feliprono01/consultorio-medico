@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function ConsultationHistoryModal({ consultaId, onClose }) {
     const [history, setHistory] = useState([]);
+    const [versiones, setVersiones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [exportando, setExportando] = useState(false);
     const toast = useToast();
@@ -13,8 +14,12 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const res = await consultaService.getHistorial(consultaId);
-                setHistory(res.data);
+                const [historialRes, versionesRes] = await Promise.all([
+                    consultaService.getHistorial(consultaId),
+                    consultaService.getVersiones(consultaId).catch(() => ({ data: [] })),
+                ]);
+                setHistory(historialRes.data);
+                setVersiones(versionesRes.data);
             } catch (err) {
                 console.error("Error fetching history", err);
                 toast.error('No se pudo cargar el historial de cambios.');
@@ -59,6 +64,29 @@ export default function ConsultationHistoryModal({ consultaId, onClose }) {
                     <h2 style={{ margin: 0 }}>Historial de Cambios</h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
                 </div>
+
+                {!loading && versiones.length > 1 && (
+                    <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Versiones anteriores</h3>
+                        <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            Cada corrección de esta consulta crea una entrada nueva; ninguna versión anterior se modifica ni se borra.
+                        </p>
+                        <ol style={{ margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            {versiones.map((v) => (
+                                <li key={v.id} style={{ fontSize: '0.9rem' }}>
+                                    {new Date(v.fechaConsulta).toLocaleDateString('es-AR')} — {v.motivo}
+                                    {' '}
+                                    <span style={{
+                                        marginLeft: '0.4rem', padding: '0.1rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600,
+                                        background: v.corregida ? '#fef3c7' : '#dcfce7', color: v.corregida ? '#92400e' : '#166534',
+                                    }}>
+                                        {v.corregida ? 'Corregida' : 'Vigente'}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+                )}
 
                 {loading ? (
                     <p>Cargando historial...</p>
