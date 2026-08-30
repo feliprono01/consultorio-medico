@@ -215,3 +215,10 @@ Mismo criterio que se usó en desarrollo esta noche, ahora contra el servidor re
 - **Backups fuera del servidor**: hoy los backups salen por mail (ya es una copia
   externa), pero si el volumen de datos crece, considerar además subirlos a un storage
   externo (ver opciones "Nivel 2" charladas en la sesión de blindaje de auditoría).
+- **Retención legal de 10 años (Ley 26.529)**: `backup.retention.days` solo controla
+  cuánto tiempo se guardan los backups *en este servidor* (por defecto 365 días, para no
+  llenar el disco) — no es, por sí solo, el cumplimiento de la retención legal de 10
+  años de la historia clínica. Para eso, sumar un storage externo de bajo costo y larga
+  duración (por ejemplo un bucket S3-compatible con política de retención, o Google
+  Drive/Backblaze) donde los backups por mail (o un job aparte) se archiven sin rotarse
+  ni borrarse nunca antes de los 10 años.

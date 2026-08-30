@@ -79,11 +79,49 @@ CREATE TABLE IF NOT EXISTS medicaciones (
     CONSTRAINT fk_medicacion_consulta FOREIGN KEY (consulta_id) REFERENCES consultas(id)
 );
 
+ALTER TABLE medicaciones
+    ADD COLUMN IF NOT EXISTS via_administracion TEXT,
+    ADD COLUMN IF NOT EXISTS duracion_prevista   TEXT;
+
 -- --- pacientes ---
 ALTER TABLE pacientes
     MODIFY COLUMN datos_padres    TEXT,
     MODIFY COLUMN datos_hijos     TEXT,
     MODIFY COLUMN datos_hermanos  TEXT;
+
+ALTER TABLE pacientes
+    ADD COLUMN IF NOT EXISTS cuil_cuit                     VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS obra_social                   VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS numero_afiliado                VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS contacto_emergencia_nombre     VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS contacto_emergencia_telefono   VARCHAR(50);
+
+-- ============================================================================
+-- Cumplimiento legal — modelo append-only de Consulta + campos Nivel 1
+--
+-- Ver docs/ROADMAP_CUMPLIMIENTO_LEGAL.md para el detalle de qué exige cada
+-- ley y por qué. Resumen de lo que agregan estos ALTER:
+--   - consultas.correccion_de_id: sostiene el modelo append-only (Ley 26.657) —
+--     al "corregir" una consulta ya no se pisa la fila, se crea una fila nueva
+--     que apunta a la anterior con esta columna. NULL = original o eslabón más
+--     viejo de una cadena de correcciones.
+--   - consultas.diagnostico_cie10: código de diagnóstico junto al texto libre.
+--   - evaluaciones_psiquiatricas.fundamentacion_riesgo: justificación clínica
+--     obligatoria (validada en backend) cuando el riesgo suicida/homicida/propio
+--     se marca Alto, Inminente o Grave (arts. 20/21, Ley 26.657).
+--   - historias_psiquiatricas.directivas_anticipadas: directivas anticipadas en
+--     salud mental (Ley 26.657, art. 7 inc. n).
+-- ============================================================================
+
+ALTER TABLE consultas
+    ADD COLUMN IF NOT EXISTS correccion_de_id  BIGINT,
+    ADD COLUMN IF NOT EXISTS diagnostico_cie10 VARCHAR(20);
+
+ALTER TABLE evaluaciones_psiquiatricas
+    ADD COLUMN IF NOT EXISTS fundamentacion_riesgo TEXT;
+
+ALTER TABLE historias_psiquiatricas
+    ADD COLUMN IF NOT EXISTS directivas_anticipadas TEXT;
 
 -- ============================================================================
 -- Verificación posterior: confirmar que no quedó ninguna VARCHAR donde el

@@ -55,6 +55,40 @@ cambios de una consulta no fue alterado, ¿con qué se cuenta? Se implementó:
 
 ---
 
+## ✅ Fase 2.6: Registros inalterables + campos faltantes — completa
+
+Surgió de auditar la app contra `anexo/Requerimientos_HCE_Psiquiatrica_Argentina.pdf`
+(guía de cumplimiento Argentina: leyes 26.529, 27.706, 26.657, 25.326, 25.506). Se
+encontraron brechas reales y se cerraron:
+
+- **Modelo append-only real para `Consulta`** (Ley 26.657 — una evolución ya firmada no
+  se altera nunca). Corregir una consulta ya no hace `UPDATE` sobre la fila existente:
+  crea una fila nueva completa que referencia a la anterior vía `correccionDeId`
+  (`POST /api/consultas/{id}/corregir`). La fila original queda intacta para siempre —
+  verificable directamente en la base. La cadena completa de versiones de una consulta
+  se puede recorrer con `GET /api/consultas/{id}/versiones`. El hash-chain de auditoría
+  existente (Fase 2.5) no se tocó — sigue protegiendo el detalle de qué cambió en cada
+  corrección. `HistoriaPsiquiatrica` (el perfil de base del paciente, no una nota de
+  sesión firmada) sigue editable como antes, con su protección de hash-chain propia.
+- **Riesgo cierto e inminente fundamentado** (Ley 26.657, arts. 20/21): los tres campos
+  de riesgo (suicida, heteroagresivo, autocuidado) pasan a ser obligatorios en cada
+  consulta, y cuando el nivel marcado es Alto/Inminente/Grave, la app exige una
+  "Fundamentación técnica del riesgo" — tanto en el frontend como con una validación de
+  respaldo en el backend (`ConsultaService.validarFundamentacionRiesgo`, rechaza con 400
+  y mensaje claro si falta).
+- **Directivas Anticipadas en Salud Mental** (Ley 26.657, art. 7 inc. n): campo nuevo en
+  `HistoriaPsiquiatrica`, cifrado como el resto de los antecedentes.
+- **Datos administrativos del paciente**: CUIL/CUIT, obra social, N° de afiliado, y
+  contacto de emergencia (nombre + teléfono) — campos habituales en cualquier HCE
+  formal que faltaban.
+- **Diagnóstico codificado** (`diagnosticoCie10`): campo de texto junto al diagnóstico
+  libre para anotar el código CIE-10 correspondiente, sin buscador de terminología.
+- **Medicación estructurada, más completa**: se sumaron vía de administración y
+  duración prevista a cada fármaco recetado (fármaco/dosis/frecuencia ya existían de una
+  ronda anterior).
+
+---
+
 ## 🟡 Fase 3: Firma Digital (Ley 25.506) — opcional, no requerida hoy
 
 **Conclusión para un consultorio de uno o pocos profesionales:** la firma física
@@ -73,6 +107,33 @@ acá como posibilidad para el futuro, no como brecha a cerrar.
 *   Guardar la firma (`byte[]`) y el certificado público en `Consulta`.
 *   Frontend + un "Agente Firmador" local en Windows que hable con el token USB, pida el
     PIN, y devuelva el hash firmado.
+
+---
+
+## 🔴 Brechas conocidas y deliberadas — no implementadas, y por qué
+
+A diferencia de todo lo anterior, esto no quedó afuera por descuido: se evaluó, se
+decidió no implementarlo ahora, y se deja anotado para que quede claro que es una
+decisión y no un olvido.
+
+- **HL7 FHIR / SNOMED-CT (Ley 27.706 — Historia Clínica Electrónica Interoperable)**:
+  desproporcionado para un consultorio de un solo profesional que hoy no necesita
+  interoperar con otro sistema de salud. Adoptar un estándar de interoperabilidad
+  completo (recursos FHIR, terminología SNOMED-CT) tiene sentido si en el futuro la app
+  necesita intercambiar historia clínica con una obra social, un hospital, u otro
+  sistema — no antes.
+- **Rol RBAC "Administrativo"** (personal de recepción/turnos sin acceso a notas
+  clínicas): hoy todos los usuarios con cuenta tienen el mismo rol de acceso clínico
+  completo. Separar un rol sin acceso a contenido clínico es una mejora real de
+  minimización de accesos, pero no se implementó en esta pasada por tamaño — queda como
+  siguiente paso si se suma personal no clínico al sistema.
+- **Timestamp certificado por una autoridad externa (RFC 3161)** en los logs de
+  auditoría: el hash-chain actual (Fase 2.5) prueba que un registro no fue alterado
+  *después* de escrito, pero la fecha de esa escritura depende del reloj del propio
+  servidor. Un timestamp sellado por un tercero (una Autoridad de Sellado de Tiempo)
+  agregaría prueba independiente de *cuándo* se escribió, no solo de que no se tocó
+  después — mejora real, pero de complejidad e integración externa que no se justifica
+  hoy para la escala del proyecto.
 
 ---
 
